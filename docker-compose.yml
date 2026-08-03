@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: mona_interior_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: StrongPassword123!
+      MYSQL_DATABASE: mona_interior
+      MYSQL_USER: mona_user
+      MYSQL_PASSWORD: StrongPassword123!
+    ports:
+      - "3310:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  backend:
+    build: 
+      context: ./server/Mona_Interior
+      dockerfile: Dockerfile
+    container_name: mona_interior_backend
+    restart: always
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5000
+      - ConnectionStrings__DefaultConnection=server=db;port=3306;database=mona_interior;user=mona_user;password=StrongPassword123!;
+    ports:
+      - "5050:5000"
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: mona_interior_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  db_data:

@@ -75,12 +75,12 @@ html.dark {
 @layer base {
   html {
     font-size: 13px;
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
   }
   body {
     background-color: var(--bg);
     color: var(--text-primary);
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
     font-size: 13px;
     line-height: 1.5;
     @apply antialiased;
@@ -110,7 +110,7 @@ html.dark {
   min-height: 100vh;
   position: relative;
   overflow: hidden;
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
   transition: background-color 0.3s ease;
 }
 

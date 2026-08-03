@@ -189,22 +189,23 @@ const Dashboard = () => {
   const stagger = { hidden:{opacity:0}, show:{opacity:1,transition:{staggerChildren:0.08}} };
 
   // ── KPI Card component ──
-  const KpiCard = ({ label, value, icon: Icon, color, sub }) => (
+  const KpiCard = ({ label, value, icon: Icon, color, sub, hideLeftStroke }) => (
     <motion.div variants={fade}
-      className={`relative overflow-hidden rounded-2xl p-5 ${t.card} ${t.cardHover} flex flex-col gap-3 border border-[var(--border-color)]`}
+      className={`relative overflow-hidden rounded-lg p-5 ${t.card} ${t.cardHover} flex items-center gap-4 border border-[var(--border-color)]`}
       style={{
-        background: d ? `linear-gradient(135deg, var(--bg-card), rgba(0,0,0,0.2))` : `linear-gradient(135deg, white, #f8f9fc)`
+        background: d ? `linear-gradient(135deg, var(--bg-card), rgba(0,0,0,0.2))` : `linear-gradient(135deg, white, #f8f9fc)`,
+        borderLeft: hideLeftStroke ? 'none' : `3px solid ${color}`
       }}>
-      {/* icon watermark */}
-      <div className="absolute -right-3 -top-3 opacity-[0.06]"><Icon size={72} style={{color}}/></div>
-      <div className="flex items-center gap-2">
-        <span className="p-2 rounded-xl shadow-sm border border-black/5 dark:border-white/5" style={{background: color+'22'}}>
-          <Icon size={14} style={{color}}/>
+      <div className="flex-shrink-0">
+        <span className="p-3 rounded-lg shadow-sm border border-black/5 dark:border-white/5 inline-flex" style={{background: color+'22'}}>
+          <Icon size={24} style={{color}}/>
         </span>
-        <p className={t.label}>{label}</p>
       </div>
-      <p className="text-2xl font-black tracking-tight" style={{color}}>{value}</p>
-      {sub && <p className={`${t.muted} -mt-1`}>{sub}</p>}
+      <div className="flex flex-col">
+        <p className={t.label}>{label}</p>
+        <p className="text-2xl font-black tracking-tight" style={{color}}>{value}</p>
+        {sub && <p className={`${t.muted} mt-0.5`}>{sub}</p>}
+      </div>
     </motion.div>
   );
 
@@ -264,29 +265,31 @@ const Dashboard = () => {
           <KpiCard label="Work Order Revenue" value={fmt(totalWOValue)} icon={Building} color={accentMain}
             sub={`${sites.length} total projects`}/>
           <motion.div variants={fade}
-            className={`relative overflow-hidden rounded-2xl p-5 ${t.card} ${t.cardHover} flex flex-col gap-3`}
+            className={`relative overflow-hidden rounded-lg p-5 ${t.card} ${t.cardHover} flex items-center gap-4`}
             style={{borderLeft:`3px solid ${profitPositive?incomeColor:expenseColor}`}}>
-            <div className="flex items-center gap-2">
-              <span className="p-2 rounded-xl shadow-sm border border-black/5 dark:border-white/5" style={{background:(profitPositive?incomeColor:expenseColor)+'22'}}>
-                <IndianRupee size={14} style={{color:profitPositive?incomeColor:expenseColor}}/>
+            <div className="flex-shrink-0">
+              <span className="p-3 rounded-lg shadow-sm border border-black/5 dark:border-white/5 inline-flex" style={{background:(profitPositive?incomeColor:expenseColor)+'22'}}>
+                <IndianRupee size={24} style={{color:profitPositive?incomeColor:expenseColor}}/>
               </span>
-              <p className={t.label}>Net Profit / Loss</p>
             </div>
-            <p className="text-2xl font-black tracking-tight drop-shadow-sm" style={{color:profitPositive?incomeColor:expenseColor}}>
-              {profitPositive?'+':''}{fmt(netProfit)}
-            </p>
-            <p className={t.muted}>Income minus expenses</p>
+            <div className="flex flex-col">
+              <p className={t.label}>Net Profit / Loss</p>
+              <p className="text-2xl font-black tracking-tight drop-shadow-sm" style={{color:profitPositive?incomeColor:expenseColor}}>
+                {profitPositive?'+':''}{fmt(netProfit)}
+              </p>
+              <p className={`${t.muted} mt-0.5`}>Income minus expenses</p>
+            </div>
           </motion.div>
         </div>
 
         {/* ── Row 2: Operations KPIs ── */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          <KpiCard label="Pending Quotations" value={pendingQuotes} icon={FileText} color={d?"#fb923c":"#C9A227"}/>
-          <KpiCard label="In-Process Sites" value={inProcessSites} icon={HardHat} color={d?"#8b5cf6":"#3D5A8A"}/>
-          <KpiCard label="Pending Work Orders" value={pendingWO} icon={ClipboardCheck} color={d?"#38bdf8":"#0ea5e9"}/>
-          <KpiCard label="Total Payroll" value={fmt(totalPayroll)} icon={Banknote} color={d?"#a78bfa":"#6366f1"}/>
-          <KpiCard label="Total Advances" value={fmt(totalAdvances)} icon={Wallet} color={d?"#f472b6":"#ec4899"}/>
-          <KpiCard label="Present Today" value={`${presentToday} staff`} icon={CalendarCheck} color={incomeColor}/>
+          <KpiCard label="Pending Quotations" value={pendingQuotes} icon={FileText} color={d?"#fb923c":"#C9A227"} hideLeftStroke/>
+          <KpiCard label="In-Process Sites" value={inProcessSites} icon={HardHat} color={d?"#8b5cf6":"#3D5A8A"} hideLeftStroke/>
+          <KpiCard label="Pending Work Orders" value={pendingWO} icon={ClipboardCheck} color={d?"#38bdf8":"#0ea5e9"} hideLeftStroke/>
+          <KpiCard label="Total Payroll" value={fmt(totalPayroll)} icon={Banknote} color={d?"#a78bfa":"#6366f1"} hideLeftStroke/>
+          <KpiCard label="Total Advances" value={fmt(totalAdvances)} icon={Wallet} color={d?"#f472b6":"#ec4899"} hideLeftStroke/>
+          <KpiCard label="Present Today" value={`${presentToday} staff`} icon={CalendarCheck} color={incomeColor} hideLeftStroke/>
         </div>
 
         {/* ── Row 3: Charts ── */}
@@ -412,7 +415,7 @@ const Dashboard = () => {
             ].map((btn,i) => (
               <motion.button key={i} variants={fade} whileHover={{scale:1.02}} whileTap={{scale:0.98}}
                 onClick={()=>navigate(btn.path)}
-                className={`w-full text-left p-3.5 rounded-xl flex items-center justify-between group transition-all ${t.card} ${t.cardHover}`}
+                className={`w-full text-left p-3.5 rounded-lg flex items-center justify-between group transition-all ${t.card} ${t.cardHover}`}
                 style={{borderLeft:`3px solid ${btn.color}`}}>
                 <div>
                   <p className={`font-black text-xs ${d?"text-white":"text-[#1C2B4B]"}`}>{btn.label}</p>

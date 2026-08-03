@@ -38,6 +38,10 @@ try
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<MonainteriorDbContext>();
+    
+    // Apply pending migrations automatically on startup
+    db.Database.Migrate();
+    
     db.Database.CanConnect();
     Console.WriteLine("DB CONNECTION SUCCESSFUL!");
     
