@@ -63,6 +63,8 @@ catch (Exception ex)
 }
 
 // 5. PIPELINE
+app.UseMiddleware<Mona_Interior.Middleware.GlobalExceptionMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
