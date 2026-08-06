@@ -32,7 +32,7 @@ export default function QuotationPage() {
 
   const [quoteId, setQuoteId] = useState(null);
   const [quoteNo, setQuoteNo] = useState("");
-  const [quoteDate] = useState(new Date().toLocaleDateString("en-GB"));
+  const [quoteDate, setQuoteDate] = useState(new Date().toISOString().split('T')[0]);
 
 
 
@@ -68,6 +68,7 @@ export default function QuotationPage() {
       setWorkDescription(d.workDescription || "");
       setBillType(d.billType || "GST");
       setQuoteId(d.quoteId || null);
+      if (d.quoteDate) setQuoteDate(d.quoteDate);
       if (d.quoteNo) setQuoteNo(d.quoteNo);
     } else {
       // Clear for a new session if no data
@@ -81,7 +82,7 @@ export default function QuotationPage() {
       setQuoteId(null);
       
       // Fetch the next quotation number from the backend
-      fetch("/api/quotations/next-number")
+      fetch(`/api/quotations/next-number?date=${quoteDate}`)
         .then(res => res.json())
         .then(data => {
           if (data && data.nextNumber) {
@@ -99,11 +100,11 @@ export default function QuotationPage() {
       setSessions(prev => prev.map(s => s.id === activeSessionId ? {
         ...s,
         title: clientName || "New Quote",
-        data: { items, clientName, organizationName, clientAddress, projectTitle, workDescription, billType, quoteNo, quoteId }
+        data: { items, clientName, organizationName, clientAddress, projectTitle, workDescription, billType, quoteNo, quoteId, quoteDate }
       } : s));
     }, 500);
     return () => clearTimeout(timer);
-  }, [items, clientName, organizationName, clientAddress, projectTitle, workDescription, billType, quoteNo, quoteId, activeSessionId]);
+  }, [items, clientName, organizationName, clientAddress, projectTitle, workDescription, billType, quoteNo, quoteId, quoteDate, activeSessionId]);
 
   useEffect(() => {
     localStorage.setItem("quotation_sessions", JSON.stringify(sessions));
@@ -155,7 +156,8 @@ export default function QuotationPage() {
           workDescription: q.workDescription || "",
           billType: q.billType || "GST",
           quoteNo: q.quoteNo || "",
-          quoteId: q.id || null
+          quoteId: q.id || null,
+          quoteDate: q.date || new Date().toISOString().split('T')[0]
         }
       };
       setSessions(prev => [...prev, newSession]);
@@ -309,7 +311,7 @@ export default function QuotationPage() {
           setProjectTitle("");
           setWorkDescription("");
           setQuoteId(null);
-          fetch("/api/quotations/next-number")
+          fetch(`/api/quotations/next-number?date=${quoteDate}`)
             .then(res => res.json())
             .then(data => { if (data && data.nextNumber) setQuoteNo(data.nextNumber); })
             .catch(() => setQuoteNo(""));
@@ -423,7 +425,19 @@ export default function QuotationPage() {
 
         <div className="col-span-2">
           <label className="block text-[10px] font-bold text-muted uppercase">Date</label>
-          <input disabled value={quoteDate}
+          <input 
+            type="date" 
+            value={quoteDate}
+            onChange={(e) => {
+              const newDate = e.target.value;
+              setQuoteDate(newDate);
+              if (!quoteId) {
+                 fetch(`/api/quotations/next-number?date=${newDate}`)
+                  .then(res => res.json())
+                  .then(data => { if (data && data.nextNumber) setQuoteNo(data.nextNumber); })
+                  .catch(() => setQuoteNo(""));
+              }
+            }}
             className="w-full bg-[var(--accent-soft)] border border-[var(--accent)]/30 text-amber-800 dark:text-[var(--accent)] px-2 py-1 text-sm font-bold rounded" />
         </div>
 

@@ -40,6 +40,7 @@ export default function ReceiptPage() {
     date: new Date().toISOString().split("T")[0],
     siteId: "",
     clientName: "",
+    organizationName: "",
     totalAmount: "",
     category: "Advance Payment",
     description: "",
@@ -93,7 +94,8 @@ export default function ReceiptPage() {
       setFormData(prev => ({ 
         ...prev, 
         siteId: siteId || "",
-        clientName: organizationName || name || "", 
+        clientName: name || "", 
+        organizationName: organizationName || "",
         description: desc || "",
         totalAmount: amountPaid ? amountPaid.toString() : prev.totalAmount,
         category: category || prev.category
@@ -106,12 +108,14 @@ export default function ReceiptPage() {
     if (selectedSiteId) {
       const site = sites.find(s => s.id === selectedSiteId);
       if (site) {
-        let clientNm = site.organizationName || site.clientName;
+        let clientNm = site.clientName || "";
+        let orgNm = site.organizationName || "";
         let desc = site.name;
         setFormData(prev => ({
           ...prev,
           siteId: site.id,
           clientName: clientNm,
+          organizationName: orgNm,
           description: desc
         }));
       }
@@ -247,6 +251,7 @@ export default function ReceiptPage() {
       date: receipt.date ? receipt.date.split("T")[0] : new Date().toISOString().split("T")[0],
       siteId: receipt.siteId || "",
       clientName: receipt.clientName || "",
+      organizationName: receipt.organizationName || "",
       totalAmount: receipt.totalAmount ? receipt.totalAmount.toString() : "",
       category: receipt.category || "Advance Payment",
       description: receipt.description || "",
@@ -348,7 +353,10 @@ export default function ReceiptPage() {
       <div className="border border-gray-300 rounded-lg overflow-hidden mt-4">
         <div className="grid grid-cols-3 border-b border-gray-300">
           <div className="p-3 bg-gray-50 text-xs font-bold uppercase tracking-widest text-gray-600 border-r border-gray-300 flex items-center">Received From</div>
-          <div className="p-3 col-span-2 font-black text-gray-900">{data.clientName}</div>
+          <div className="p-3 col-span-2">
+             <div className="font-black text-gray-900">{data.clientName}</div>
+             {data.organizationName && <div className="text-sm font-bold text-gray-600">{data.organizationName}</div>}
+          </div>
         </div>
         <div className="grid grid-cols-3 border-b border-gray-300">
           <div className="p-3 bg-gray-50 text-xs font-bold uppercase tracking-widest text-gray-600 border-r border-gray-300 flex items-center">Amount Received</div>
@@ -444,6 +452,10 @@ export default function ReceiptPage() {
                          <div>
                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Client Name *</label>
                            <input required value={formData.clientName} onChange={e => setFormData({...formData, clientName: e.target.value})} placeholder="e.g. John Doe" className="w-full py-1.5 px-3 border border-[var(--border-color)] themed-input rounded-xl text-sm font-bold outline-none focus:border-blue-500" />
+                         </div>
+                         <div>
+                           <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Organization Name (Optional)</label>
+                           <input value={formData.organizationName} onChange={e => setFormData({...formData, organizationName: e.target.value})} placeholder="e.g. Acme Corp" className="w-full py-1.5 px-3 border border-[var(--border-color)] themed-input rounded-xl text-sm font-bold outline-none focus:border-blue-500" />
                          </div>
                          <div>
                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Received (₹) *</label>

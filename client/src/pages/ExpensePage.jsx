@@ -183,8 +183,8 @@ export default function ExpensePage() {
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ 
             date: bulkDate, 
-            category: actualType === "Overhead" ? bulkCategory : actualType === "Credit" ? bulkCategory : "", 
-            description: actualType === "Overhead" || actualType === "Credit" ? item.material : "", 
+            category: actualType === "Client" ? "Material Purchase" : bulkCategory, 
+            description: item.material, 
             amount: cost, 
             clientId: actualType === "Client" ? bulkClient.toString() : "", 
             type: actualType 
@@ -232,7 +232,7 @@ export default function ExpensePage() {
     try {
       const payload = { 
         date: entry.date, 
-        category: entry.category || "", 
+        category: entry.expenseType === "Client" ? "Material Purchase" : entry.category || "", 
         description: entry.expenseType === "Client" ? entry.material : entry.description, 
         amount: entry.cost, 
         clientId: entry.client ? entry.client.toString() : "", 
@@ -792,6 +792,11 @@ export default function ExpensePage() {
                       <span className="text-[var(--accent)] font-black text-xs uppercase tracking-wide">
                         {sites.find(s => s.id.toString() === expense.client?.toString())?.name || expense.client}
                       </span>
+                    ) : expense.expenseType === "Credit" ? (
+                      <span className="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-2 py-0.5 rounded-lg text-[10px] font-black uppercase">
+                        <Tag size={10} />
+                        {expense.category}
+                      </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-lg text-[10px] font-black uppercase">
                         <Tag size={10} />
@@ -799,10 +804,10 @@ export default function ExpensePage() {
                       </span>
                     )}
                   </td>
-                  <td className="px-8 py-5 text-xs text-slate-500 font-bold uppercase">
+                  <td className="px-8 py-5 text-center text-sm text-slate-500 font-bold">
                     {expense.qty || "—"}
                   </td>
-                  <td className="px-8 py-5 text-right font-black text-themed text-base">
+                  <td className={`px-8 py-5 text-right font-black ${expense.expenseType === 'Credit' ? 'text-emerald-500' : 'text-rose-500'}`}>
                     ₹{expense.cost.toLocaleString()}
                   </td>
                   <td className="px-8 py-5 text-center">

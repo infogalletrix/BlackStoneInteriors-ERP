@@ -12,6 +12,7 @@ namespace Mona_Interior.models
 
         public string SiteId { get; set; } = string.Empty;
         public string ClientName { get; set; } = string.Empty;
+        public string OrganizationName { get; set; } = string.Empty;
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal TotalAmount { get; set; }

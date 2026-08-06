@@ -61,7 +61,30 @@ export default function SitesPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedLoadQuoteId, setSelectedLoadQuoteId] = useState("");
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
+  const [mediaFileBase64, setMediaFileBase64] = useState("");
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+
+  const handleMaintenanceChange = () => {
+    const container = document.getElementById("maintenance-form-container");
+    if (!container) return;
+    const frequency = container.querySelector('[name="frequency"]').value;
+    const lastDone = container.querySelector('[name="lastDone"]').value;
+    const nextDueInput = container.querySelector('[name="nextDue"]');
+    
+    if (frequency && lastDone) {
+      const date = new Date(lastDone);
+      if (frequency === "Monthly") {
+        date.setMonth(date.getMonth() + 1);
+      } else if (frequency === "Quarterly") {
+        date.setMonth(date.getMonth() + 3);
+      } else if (frequency === "Bi-Annually") {
+        date.setMonth(date.getMonth() + 6);
+      } else if (frequency === "Yearly") {
+        date.setFullYear(date.getFullYear() + 1);
+      }
+      nextDueInput.value = date.toISOString().split("T")[0];
+    }
+  };
 
   // Form State for Editing
   const [editFormData, setEditFormData] = useState(null);
@@ -234,7 +257,8 @@ export default function SitesPage() {
       budget: key === "budget" ? parseFloat(value) : s.budget,
       description: key === "description" ? value : s.description,
       isArchived: s.isArchived,
-      maintenance: key === "maintenance" ? value : s.maintenance
+      maintenance: key === "maintenance" ? value : s.maintenance,
+      media: key === "media" ? value : s.media
     };
 
     try {
@@ -287,7 +311,8 @@ export default function SitesPage() {
       negotiationDetails: fd.get("negotiationDetails") || "",
       isArchived: selectedSite.isArchived,
       workHistory: selectedSite.workHistory, // Preserving original history
-      maintenance: selectedSite.maintenance // Preserving maintenance
+      maintenance: selectedSite.maintenance, // Preserving maintenance
+      media: selectedSite.media
     };
 
     try {
@@ -330,7 +355,8 @@ export default function SitesPage() {
       isNegotiated: isNeg,
       negotiationDetails: fd.get("negotiationDetails") || "",
       isArchived: false,
-      workHistory: [] 
+      workHistory: [],
+      media: []
     };
 
     try {
@@ -375,10 +401,49 @@ export default function SitesPage() {
   };
 
 
+  const handleMediaFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setMediaFileBase64(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setMediaFileBase64("");
+    }
+  };
+
   const handleAddMedia = async (e) => {
     e.preventDefault();
-    showDialog({ title: "Info", message: "Media added (Mock).", type: "info" });
+    const fd = new FormData(e.target);
+    const type = fd.get("type");
+    const category = fd.get("category");
+    let url = fd.get("url") || "";
+
+    if (mediaFileBase64) {
+      url = mediaFileBase64;
+    }
+
+    if (!url) {
+      showDialog({ title: "Error", message: "Please provide a media URL or upload a file.", type: "error" });
+      return;
+    }
+
+    const newMedia = {
+      id: `media-${Date.now()}`,
+      type,
+      category,
+      url
+    };
+
+    const s = sites.find(s => s.id === selectedSiteId);
+    if (!s) return;
+    const updatedMedia = [newMedia, ...(s.media || [])];
+    await updateSiteProperty(selectedSiteId, "media", updatedMedia);
     setIsMediaModalOpen(false);
+    setMediaFileBase64("");
+    showDialog({ title: "Success", message: "Media added successfully.", type: "success" });
   };
 
   const handleAddHistory = async (e) => {
@@ -899,6 +964,7 @@ export default function SitesPage() {
                               <select
                                 name="frequency"
                                 defaultValue={selectedSite.maintenance?.frequency || ""}
+                                onChange={handleMaintenanceChange}
                                 className="w-full p-2 themed-input rounded-lg outline-none focus:border-amber-500 text-sm"
                               >
                                 <option value="">Select...</option>
@@ -915,6 +981,7 @@ export default function SitesPage() {
                                 type="date"
                                 name="lastDone"
                                 defaultValue={selectedSite.maintenance?.lastDone}
+                                onChange={handleMaintenanceChange}
                                 className="w-full p-2 themed-input rounded-lg outline-none focus:border-amber-500 text-sm"
                               />
                             </div>
@@ -1154,8 +1221,10 @@ export default function SitesPage() {
                 <input required name="category" placeholder="e.g. Master Bedroom" className="w-full border themed-input p-3 rounded-xl outline-none" />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Media URL</label>
-                <input required name="url" placeholder="https://..." className="w-full border themed-input p-3 rounded-xl outline-none" />
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Upload File (Optional)</label>
+                <input type="file" accept="image/*,video/*" onChange={handleMediaFileChange} className="w-full border themed-input p-3 rounded-xl outline-none mb-3" />
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Or provide Media URL</label>
+                <input name="url" placeholder="https://..." className="w-full border themed-input p-3 rounded-xl outline-none" disabled={!!mediaFileBase64} />
               </div>
               <button type="submit" className="w-full bg-[#C9A227] text-white py-3 rounded-xl font-bold mt-2">Add to Gallery</button>
             </div>

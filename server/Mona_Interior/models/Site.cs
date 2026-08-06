@@ -36,5 +36,8 @@ namespace Mona_Interior.models
 
         [Column(TypeName = "longtext")]
         public string Maintenance { get; set; } = "{}";
+
+        [Column(TypeName = "longtext")]
+        public string Media { get; set; } = "[]";
     }
 }

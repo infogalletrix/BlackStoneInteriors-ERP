@@ -20,19 +20,24 @@ namespace Mona_Interior.Controllers
         public async Task<IActionResult> GetContacts()
         {
             var contacts = await _db.CrmContacts.ToListAsync();
-            var result = contacts.Select(c => new
-            {
-                id = c.Id.ToString(),
-                name = c.Name,
-                organizationName = c.OrganizationName,
-                phone = c.Phone,
-                email = c.Email,
-                project = c.Project,
-                address = c.Address,
-                status = c.Status,
-                source = c.Source,
-                tags = JsonSerializer.Deserialize<List<string>>(c.Tags ?? "[]"),
-                date = c.Date
+            var result = contacts.Select(c => {
+                List<string> parsedTags = new List<string>();
+                try { if (!string.IsNullOrWhiteSpace(c.Tags)) parsedTags = JsonSerializer.Deserialize<List<string>>(c.Tags); } catch {}
+                
+                return new
+                {
+                    id = c.Id.ToString(),
+                    name = c.Name,
+                    organizationName = c.OrganizationName,
+                    phone = c.Phone,
+                    email = c.Email,
+                    project = c.Project,
+                    address = c.Address,
+                    status = c.Status,
+                    source = c.Source,
+                    tags = parsedTags,
+                    date = c.Date
+                };
             });
             return Ok(result);
         }

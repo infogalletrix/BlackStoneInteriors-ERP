@@ -286,7 +286,7 @@ export default function BillingPage() {
       if (isNonGST) setBillType("Non-GST");
       const mapped = q.items.map((i) => {
         const areaVal = parseFloat(i.area) || 0;
-        const rateVal = parseFloat(i.rate) || 0;
+        const rateVal = parseFloat(i.rate) || parseFloat(i.price) || 0;
         const taxable = areaVal * rateVal;
         const gst = isNonGST ? 0 : (taxable * 18) / 100;
         return {
@@ -385,8 +385,8 @@ export default function BillingPage() {
     setBillType(type);
     
     const mappedItems = quote.items.map((i) => {
-      const areaVal = parseFloat(i.area) || 0;
-      const rateVal = parseFloat(i.rate) || 0;
+      const areaVal = parseFloat(i.area) || 1;
+      const rateVal = parseFloat(i.rate) || parseFloat(i.price) || 0;
       const taxable = areaVal * rateVal;
       const gst = isNonGST ? 0 : (taxable * 18) / 100;
       return {
@@ -442,10 +442,10 @@ export default function BillingPage() {
       return prevItems.map((item) => {
         if (item.id === id) {
           const updatedItem = { ...item, [field]: value };
-          const area = parseFloat(updatedItem.area || 0);
-          const price = parseFloat(updatedItem.price || 0);
+          const area = parseFloat(updatedItem.area) || 1;
+          const price = parseFloat(updatedItem.price) || 0;
           const taxableAmount = area * price;
-          const effectiveGST = billType === "Non-GST" ? 0 : parseFloat(updatedItem.gstPerc || 0);
+          const effectiveGST = billType === "Non-GST" ? 0 : (parseFloat(updatedItem.gstPerc) || 0);
           const gstAmount = (taxableAmount * effectiveGST) / 100;
           const amount = taxableAmount + gstAmount;
           return { ...updatedItem, taxableAmount, gstAmount, amount };
@@ -525,10 +525,10 @@ export default function BillingPage() {
     }
   };
 
-  const subTotal = items.reduce((sum, item) => sum + item.taxableAmount, 0);
-  const totalGst = items.reduce((sum, item) => sum + item.gstAmount, 0);
+  const subTotal = items.reduce((sum, item) => sum + (parseFloat(item.taxableAmount) || 0), 0);
+  const totalGst = items.reduce((sum, item) => sum + (parseFloat(item.gstAmount) || 0), 0);
   const totalArea = items.reduce(
-    (sum, item) => sum + parseFloat(item.area || 0),
+    (sum, item) => sum + (parseFloat(item.area) || 0),
     0,
   );
 
@@ -728,7 +728,7 @@ export default function BillingPage() {
 
     setItems((prevItems) =>
       prevItems.map((item) => {
-        const taxable = parseFloat(item.area || 1) * parseFloat(item.price);
+        const taxable = (parseFloat(item.area) || 1) * (parseFloat(item.price) || 0);
         const gst = type === "Non-GST" ? 0 : (taxable * 18) / 100;
         return {
           ...item,

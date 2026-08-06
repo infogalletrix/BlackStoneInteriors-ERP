@@ -26,7 +26,7 @@ builder.Services.AddCors(options =>
 
 // 3. MYSQL via Pomelo EF Core
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-var serverVersion = ServerVersion.AutoDetect(connectionString);
+var serverVersion = ServerVersion.Parse("8.0.36-mysql");
 builder.Services.AddDbContext<MonainteriorDbContext>(options =>
     options.UseMySql(connectionString, serverVersion));
 

@@ -19,5 +19,6 @@ namespace Mona_Interior.Dtos
         public bool IsArchived { get; set; }
         public JsonElement? WorkHistory { get; set; }
         public JsonElement? Maintenance { get; set; }
+        public JsonElement? Media { get; set; }
     }
 }

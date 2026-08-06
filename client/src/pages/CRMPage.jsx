@@ -576,19 +576,16 @@ const CRMPage = () => {
             {/* Metrics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
               <div className="themed-card p-6 rounded-[2rem] relative overflow-hidden group shadow-sm hover:shadow-md transition-all">
-                <div className="absolute -top-4 -right-4 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><DollarSign size={100} className="text-white" /></div>
                 <h3 className="text-slate-400 font-bold text-xs mb-2 uppercase tracking-widest flex items-center gap-2"><DollarSign size={14}/> Total Pipeline</h3>
                 <div className="text-3xl font-black text-themed">₹{(totalValue / 100000).toFixed(2)}L</div>
                 <div className="mt-3 flex items-center text-xs font-bold text-slate-400">All Deals Pipeline Value</div>
               </div>
               <div className="bg-emerald-500/10 border border-emerald-500/20 p-6 rounded-[2rem] relative overflow-hidden group shadow-sm hover:shadow-md transition-all">
-                <div className="absolute -top-4 -right-4 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><TrendingUp size={100} className="text-emerald-400" /></div>
                 <h3 className="text-emerald-400 font-bold text-xs mb-2 uppercase tracking-widest flex items-center gap-2"><Percent size={14}/> Closed Revenue</h3>
                 <div className="text-3xl font-black text-emerald-400">₹{(wonValue / 100000).toFixed(2)}L</div>
                 <div className="mt-3 flex items-center text-xs font-bold text-emerald-400 bg-emerald-500/10 w-max px-2 py-0.5 rounded-lg border border-emerald-500/20">Revenue successfully closed</div>
               </div>
               <div className="dark:bg-blue-500/10 bg-amber-500/10 dark:border-blue-500/20 border-amber-500/20 border p-6 rounded-[2rem] relative overflow-hidden group shadow-sm hover:shadow-md transition-all">
-                <div className="absolute -top-4 -right-4 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><Briefcase size={100} className="dark:text-blue-400 text-amber-500" /></div>
                 <h3 className="dark:text-blue-400 text-amber-600 font-bold text-xs mb-2 uppercase tracking-widest flex items-center gap-2"><Activity size={14}/> Active Projects</h3>
                 <div className="text-3xl font-black dark:text-blue-400 text-amber-600">{activeCount}</div>
                 <div className="mt-3 flex items-center text-xs font-bold dark:text-blue-400 text-amber-600 dark:bg-blue-500/10 bg-amber-500/10 w-max px-2 py-0.5 rounded-lg dark:border-blue-500/20 border-amber-500/20 border">Currently in pipeline</div>
@@ -638,7 +635,6 @@ const CRMPage = () => {
                 </div>
 
                 <div className="dark:bg-violet-700 bg-[#D4AF37] rounded-[2rem] p-6 text-white shadow-xl relative overflow-hidden">
-                  <div className="absolute -right-4 -bottom-4 opacity-10"><Activity size={100} /></div>
                   <h3 className="text-sm font-black dark:text-violet-300 text-orange-100 mb-2 uppercase tracking-widest">Win Rate</h3>
                   <div className="text-4xl font-black text-white">
                     {totalValue > 0 ? Math.round((wonValue / totalValue) * 100) : 0}%

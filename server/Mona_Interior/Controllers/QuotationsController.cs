@@ -14,14 +14,15 @@ namespace Mona_Interior.Controllers
         public QuotationsController(MonainteriorDbContext db) => _db = db;
 
         // Shared helper: compute next serial for YY-MM-XXXX within current month
-        private int ComputeNextQuoteSerial()
+        private int ComputeNextQuoteSerial(DateTime date)
         {
-            string yy = DateTime.Now.ToString("yy");
-            string mm = DateTime.Now.ToString("MM");
-            string monthPrefix = $"QT-{mm}{yy}-";
+            string yy = date.ToString("yy");
+            string mm = date.ToString("MM");
+            string dd = date.ToString("dd");
+            string datePrefix = $"QT-{dd}{mm}{yy}-";
 
             var currentMonthNums = _db.Quotations
-                .Where(q => q.QuoteNo != null && q.QuoteNo.StartsWith(monthPrefix))
+                .Where(q => q.QuoteNo != null && q.QuoteNo.StartsWith(datePrefix))
                 .Select(q => q.QuoteNo)
                 .AsEnumerable()
                 .Select(qno =>
@@ -37,12 +38,18 @@ namespace Mona_Interior.Controllers
 
         // GET /api/quotations/next-number  (preview only — does NOT reserve a number)
         [HttpGet("next-number")]
-        public IActionResult GetNextQuoteNumber()
+        public IActionResult GetNextQuoteNumber([FromQuery] string date = null)
         {
-            string yy = DateTime.Now.ToString("yy");
-            string mm = DateTime.Now.ToString("MM");
-            int next = ComputeNextQuoteSerial();
-            return Ok(new { nextNumber = $"QT-{mm}{yy}-{next:D4}" });
+            DateTime parsedDate = DateTime.Now;
+            if (!string.IsNullOrEmpty(date) && DateTime.TryParse(date, out DateTime d))
+            {
+                parsedDate = d;
+            }
+            string yy = parsedDate.ToString("yy");
+            string mm = parsedDate.ToString("MM");
+            string dd = parsedDate.ToString("dd");
+            int next = ComputeNextQuoteSerial(parsedDate);
+            return Ok(new { nextNumber = $"QT-{dd}{mm}{yy}-{next:D4}" });
         }
 
         // GET /api/quotations
@@ -75,12 +82,19 @@ namespace Mona_Interior.Controllers
         {
             // Auto-generate quote number at save time to prevent gaps from abandoned drafts
             string assignedNo = dto.QuoteNo;
+            DateTime parsedDate = DateTime.Now;
+            if (!string.IsNullOrEmpty(dto.Date) && DateTime.TryParse(dto.Date, out DateTime d))
+            {
+                parsedDate = d;
+            }
+
             if (string.IsNullOrWhiteSpace(assignedNo))
             {
-                string yy = DateTime.Now.ToString("yy");
-                string mm = DateTime.Now.ToString("MM");
-                int next = ComputeNextQuoteSerial();
-                assignedNo = $"QT-{mm}{yy}-{next:D4}";
+                string yy = parsedDate.ToString("yy");
+                string mm = parsedDate.ToString("MM");
+                string dd = parsedDate.ToString("dd");
+                int next = ComputeNextQuoteSerial(parsedDate);
+                assignedNo = $"QT-{dd}{mm}{yy}-{next:D4}";
             }
 
             // Try to find a matching CrmContact

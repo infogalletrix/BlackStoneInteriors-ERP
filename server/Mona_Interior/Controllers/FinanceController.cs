@@ -52,22 +52,27 @@ namespace Mona_Interior.Controllers
         public async Task<IActionResult> GetInvoices()
         {
             var invoices = await _db.Invoices.OrderByDescending(i => i.Date).ToListAsync();
-            var result = invoices.Select(i => new
-            {
-                id = i.Id.ToString(),
-                invoiceNo = i.InvoiceNo,
-                invoiceDate = i.InvoiceDate,
-                clientName = i.ClientName,
-                clientAddress = i.ClientAddress,
-                organizationName = i.OrganizationName,
-                gstNumber = i.GstNumber,
-                projectTitle = i.ProjectTitle,
-                workDescription = i.WorkDescription,
-                items = JsonSerializer.Deserialize<JsonElement>(i.Items ?? "{}"),
-                total = i.Total,
-                billType = i.BillType,
-                status = i.Status,
-                date = i.Date
+            var result = invoices.Select(i => {
+                object parsedItems = new object();
+                try { if (!string.IsNullOrWhiteSpace(i.Items)) parsedItems = JsonSerializer.Deserialize<JsonElement>(i.Items); else parsedItems = JsonSerializer.Deserialize<JsonElement>("{}"); } catch { parsedItems = JsonSerializer.Deserialize<JsonElement>("{}"); }
+
+                return new
+                {
+                    id = i.Id.ToString(),
+                    invoiceNo = i.InvoiceNo,
+                    invoiceDate = i.InvoiceDate,
+                    clientName = i.ClientName,
+                    clientAddress = i.ClientAddress,
+                    organizationName = i.OrganizationName,
+                    gstNumber = i.GstNumber,
+                    projectTitle = i.ProjectTitle,
+                    workDescription = i.WorkDescription,
+                    items = parsedItems,
+                    total = i.Total,
+                    billType = i.BillType,
+                    status = i.Status,
+                    date = i.Date
+                };
             });
             return Ok(result);
         }
@@ -248,20 +253,23 @@ namespace Mona_Interior.Controllers
         public async Task<IActionResult> GetPayroll()
         {
             var records = await _db.PayrollRecords.Where(p => p.Status != "Reversed").OrderByDescending(p => p.Year).ThenBy(p => p.Month).ToListAsync();
-            var result = records.Select(p => new
-            {
-                id = p.Id.ToString(),
-                employeeId = p.EmployeeId,
-                month = p.Month,
-                year = p.Year,
-                baseSalary = p.BaseSalary,
-                deductions = p.Deductions,
-                netPay = p.NetPay,
-                paidDate = p.PaidDate,
-                status = p.Status,
-                attendanceBreakdown = string.IsNullOrEmpty(p.AttendanceBreakdown)
-                    ? (object)"{}"
-                    : JsonSerializer.Deserialize<JsonElement>(p.AttendanceBreakdown)
+            var result = records.Select(p => {
+                object parsedAttendance = new object();
+                try { if (!string.IsNullOrWhiteSpace(p.AttendanceBreakdown)) parsedAttendance = JsonSerializer.Deserialize<JsonElement>(p.AttendanceBreakdown); else parsedAttendance = JsonSerializer.Deserialize<JsonElement>("{}"); } catch { parsedAttendance = JsonSerializer.Deserialize<JsonElement>("{}"); }
+
+                return new
+                {
+                    id = p.Id.ToString(),
+                    employeeId = p.EmployeeId,
+                    month = p.Month,
+                    year = p.Year,
+                    baseSalary = p.BaseSalary,
+                    deductions = p.Deductions,
+                    netPay = p.NetPay,
+                    paidDate = p.PaidDate,
+                    status = p.Status,
+                    attendanceBreakdown = parsedAttendance
+                };
             });
             return Ok(result);
         }
@@ -388,6 +396,7 @@ namespace Mona_Interior.Controllers
                 date = r.Date,
                 siteId = r.SiteId,
                 clientName = r.ClientName,
+                organizationName = r.OrganizationName,
                 totalAmount = r.TotalAmount,
                 amountPaid = r.AmountPaid,
                 remainingAmount = r.RemainingAmount,
@@ -451,6 +460,7 @@ namespace Mona_Interior.Controllers
                 Date = rawDate,
                 SiteId = dto.SiteId,
                 ClientName = dto.ClientName,
+                OrganizationName = dto.OrganizationName ?? string.Empty,
                 TotalAmount = dto.TotalAmount,
                 AmountPaid = dto.AmountPaid,
                 RemainingAmount = dto.RemainingAmount,
@@ -482,6 +492,7 @@ namespace Mona_Interior.Controllers
             r.Date = dto.Date;
             r.SiteId = dto.SiteId;
             r.ClientName = dto.ClientName;
+            r.OrganizationName = dto.OrganizationName ?? string.Empty;
             r.TotalAmount = dto.TotalAmount;
             r.AmountPaid = dto.AmountPaid;
             r.RemainingAmount = dto.RemainingAmount;
