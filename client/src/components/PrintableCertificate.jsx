@@ -9,7 +9,7 @@ const PrintableCertificate = forwardRef(({ site }, ref) => {
       className="p-10 bg-white text-black font-sans w-full max-w-4xl mx-auto min-h-[100vh] flex flex-col"
     >
       {/* Header - Letter Pad Style */}
-      <div className="flex justify-between border-b-2 border-slate-900 pb-6 mb-12">
+      <div className="flex justify-between border-b-2 border-slate-900 pb-6 mb-8">
         <div className="flex items-center gap-4">
           <img 
             src="/logo.png" 
@@ -23,12 +23,15 @@ const PrintableCertificate = forwardRef(({ site }, ref) => {
           </div>
         </div>
         <div className="text-right flex flex-col justify-center">
-          <h2 className="text-2xl font-bold uppercase text-slate-800 tracking-wide">Completion Certificate</h2>
           <p className="text-sm font-semibold text-slate-600 mt-2">Date: {new Date().toLocaleDateString("en-GB")}</p>
           {site.id && (
             <p className="text-xs font-bold text-slate-500 mt-1">Ref WO: {site.id}</p>
           )}
         </div>
+      </div>
+
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold uppercase text-slate-800 tracking-wider border-b-2 border-slate-800 inline-block pb-2 px-6">Completion Certificate</h2>
       </div>
 
       {/* Certificate Body */}

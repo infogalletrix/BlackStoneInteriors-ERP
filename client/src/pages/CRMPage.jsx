@@ -203,7 +203,7 @@ const CRMPage = () => {
   };
 
   // Filters
-  const filteredContacts = contacts.filter((c) => c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.project.toLowerCase().includes(searchTerm.toLowerCase()) || (c.tags && c.tags.join(" ").toLowerCase().includes(searchTerm.toLowerCase())));
+  const filteredContacts = contacts.filter((c) => c.name.toLowerCase().includes(searchTerm.toLowerCase()) || (c.project || "").toLowerCase().includes(searchTerm.toLowerCase()) || (c.tags && c.tags.join(" ").toLowerCase().includes(searchTerm.toLowerCase())));
   const filteredActivities = activities.filter((a) => {
     const clientName = contacts.find(c => c.id === a.client)?.name || "";
     return clientName.toLowerCase().includes(searchTerm.toLowerCase()) || a.type.toLowerCase().includes(searchTerm.toLowerCase());
