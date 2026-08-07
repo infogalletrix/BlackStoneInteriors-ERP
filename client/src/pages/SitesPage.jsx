@@ -27,11 +27,13 @@ import {
   ArrowRight,
   TrendingUp,
   Trash2,
-  Printer
+  Printer,
+  Award
 } from "lucide-react";
 import { useDialog } from "../contexts/DialogContext";
 import { useReactToPrint } from "react-to-print";
 import FinalSettlementSheet from "../components/FinalSettlementSheet";
+import PrintableCertificate from "../components/PrintableCertificate";
 import NotificationWidget from "../components/NotificationWidget";
 import SearchableSelect from "../components/SearchableSelect";
 
@@ -40,6 +42,7 @@ export default function SitesPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const settlementRef = useRef();
+  const certificateRef = useRef();
   const [sites, setSites] = useState([]);
   const [clients, setClients] = useState([]);
   const [quotations, setQuotations] = useState([]);
@@ -53,7 +56,12 @@ export default function SitesPage() {
 
   const handlePrintSettlement = useReactToPrint({
     contentRef: settlementRef,
-    documentTitle: 'Final_Settlement_Sheet',
+    documentTitle: `Final_Settlement_WO_${selectedSiteId}`,
+  });
+
+  const handlePrintCertificate = useReactToPrint({
+    contentRef: certificateRef,
+    documentTitle: `Completion_Certificate_WO_${selectedSiteId}`,
   });
 
   // Modals
@@ -646,6 +654,15 @@ export default function SitesPage() {
                         >
                           <Printer size={14} /> Final Settlement
                         </button>
+                        {selectedSite.status === "Completed" && (
+                          <button
+                            onClick={handlePrintCertificate}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-lg text-emerald-500 text-xs font-bold transition-colors border border-emerald-500/20"
+                            title="Download Completion Certificate"
+                          >
+                            <Award size={14} /> Certificate
+                          </button>
+                        )}
                         <button
                           onClick={() => {
                             setEditFormData(selectedSite);
@@ -1039,6 +1056,16 @@ export default function SitesPage() {
           site={selectedSite} 
           receipts={receipts.filter(r => String(r.siteId) === String(selectedSite.id))} 
         />
+      )}
+
+      {/* Hidden Printable Completion Certificate */}
+      {selectedSite && selectedSite.status === "Completed" && (
+        <div className="hidden">
+          <PrintableCertificate 
+            ref={certificateRef} 
+            site={selectedSite} 
+          />
+        </div>
       )}
 
       {/* ── MODALS ── */}

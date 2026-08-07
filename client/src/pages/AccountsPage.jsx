@@ -96,7 +96,9 @@ export default function AccountsPage() {
 
   const finalFiltered = timeFiltered.filter((t) => {
     const q = searchTerm.toLowerCase();
-    const matchSearch = !q || t.description.toLowerCase().includes(q) || t.category.toLowerCase().includes(q);
+    const desc = t.description || "";
+    const cat = t.category || "";
+    const matchSearch = !q || desc.toLowerCase().includes(q) || cat.toLowerCase().includes(q);
     const matchCat = categoryFilter === "All" || t.category === categoryFilter;
     const matchType = typeFilter === "All" || t.type === typeFilter;
     return matchSearch && matchCat && matchType;

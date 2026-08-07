@@ -97,10 +97,59 @@ namespace Mona_Interior.Controllers
             site.IsArchived = dto.IsArchived;
             if (dto.WorkHistory.HasValue)
                 site.WorkHistory = dto.WorkHistory.Value.GetRawText();
+            
             if (dto.Maintenance.HasValue)
-                site.Maintenance = dto.Maintenance.Value.GetRawText();
+            {
+                var maintenanceJson = dto.Maintenance.Value.GetRawText();
+                site.Maintenance = maintenanceJson;
+
+                try 
+                {
+                    var maintObj = JsonSerializer.Deserialize<JsonElement>(maintenanceJson);
+                    if (maintObj.TryGetProperty("required", out JsonElement reqProp) && reqProp.GetBoolean())
+                    {
+                        var clientName = site.ClientName ?? "Unknown Client";
+                        var contact = await _db.CrmContacts.FirstOrDefaultAsync(c => c.Name == clientName);
+                        if (contact == null)
+                        {
+                            contact = new CrmContact
+                            {
+                                Name = clientName,
+                                OrganizationName = site.OrganizationName ?? "",
+                                Project = site.Name ?? "",
+                                Address = site.Address ?? "",
+                                Status = "Lead",
+                                Source = "Auto (Maintenance)",
+                                Date = DateTime.Now.ToString("yyyy-MM-dd"),
+                                Tags = "[\"Maintenance\"]"
+                            };
+                            _db.CrmContacts.Add(contact);
+                            await _db.SaveChangesAsync(); // Save to get the ContactId
+                        }
+
+                        string dealTitle = $"{site.Name} - Maintenance";
+                        var existingDeal = await _db.Deals.FirstOrDefaultAsync(d => d.ContactId == contact.Id && d.Title == dealTitle);
+                        
+                        if (existingDeal == null)
+                        {
+                            var deal = new Deal
+                            {
+                                Title = dealTitle,
+                                Value = 0,
+                                ContactId = contact.Id,
+                                Stage = "LEAD",
+                                CloseDate = maintObj.TryGetProperty("nextDue", out JsonElement dueProp) ? dueProp.GetString() ?? "" : ""
+                            };
+                            _db.Deals.Add(deal);
+                        }
+                    }
+                }
+                catch { /* Ignore parse errors */ }
+            }
+
             if (dto.Media.HasValue)
                 site.Media = dto.Media.Value.GetRawText();
+                
             await _db.SaveChangesAsync();
             return Ok(new { message = "Site updated" });
         }

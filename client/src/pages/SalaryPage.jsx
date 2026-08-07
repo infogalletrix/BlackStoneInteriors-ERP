@@ -859,12 +859,10 @@ export default function SalaryPage() {
             className="grid grid-cols-2 gap-6 shrink-0"
           >
             <div className="themed-card border border-violet-500/30 p-6 rounded-3xl shadow-lg relative overflow-hidden">
-              <div className="absolute -right-6 -top-6 text-violet-500/20"><Wallet size={120} /></div>
               <p className="text-violet-500 text-[10px] font-black uppercase tracking-widest mb-2 relative z-10">Total Salary Paid ({selectedMonth})</p>
               <h2 className="text-4xl font-black text-themed tracking-tighter relative z-10">₹{totalSalaryPaid.toLocaleString()}</h2>
             </div>
             <div className="themed-card border border-amber-500/30 p-6 rounded-3xl shadow-lg relative overflow-hidden">
-              <div className="absolute -right-6 -top-6 text-amber-500/10"><CreditCard size={120} /></div>
               <p className="text-amber-500 text-[10px] font-black uppercase tracking-widest mb-2 relative z-10">Advances Given ({selectedMonth})</p>
               <h2 className="text-4xl font-black text-themed tracking-tighter relative z-10">₹{totalAdvancePaid.toLocaleString()}</h2>
             </div>
