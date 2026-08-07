@@ -80,10 +80,10 @@ export default function AttendancePage() {
         setCurrentRecords(attendanceData[dateToUse].records);
         setIsLocked(attendanceData[dateToUse].isLocked);
       } else {
-        // Initialize default (everyone present, 0 OT)
+        // Initialize default (unselected status, 0 OT)
         const defaults = {};
         employees.forEach(emp => {
-          defaults[emp.id] = { status: "present", overtime: 0 };
+          defaults[emp.id] = { status: "", overtime: 0 };
         });
         setCurrentRecords(defaults);
         setIsLocked(false);
@@ -102,6 +102,13 @@ export default function AttendancePage() {
 
   // --- ACTIONS ---
   const saveAttendance = async (lock = false) => {
+    // Validate that all statuses are explicitly chosen
+    const hasUnselected = Object.values(currentRecords).some(r => !r.status);
+    if (hasUnselected) {
+      alert("Please select an attendance status for all employees before saving.");
+      return;
+    }
+
     const payload = Object.keys(currentRecords).map(empId => ({
       employeeId: parseInt(empId),
       date: selectedDate,
@@ -260,7 +267,7 @@ export default function AttendancePage() {
     if (activeTab === "daily" || activeTab === "history") {
       header.push("Name", "Phone", "Role", "Status", "Overtime (Hrs)");
       filteredEmployees.forEach(emp => {
-        const rec = currentRecords[emp.id] || { status: "absent", overtime: 0 };
+        const rec = currentRecords[emp.id] || { status: "", overtime: 0 };
         rows.push([emp.name, emp.phone, emp.role, rec.status.toUpperCase(), rec.overtime || 0]);
       });
     } else if (activeTab === "weekly") {
@@ -593,7 +600,7 @@ export default function AttendancePage() {
               {activeTab === "daily" || activeTab === "history" ? (
                 // DAILY / HISTORY VIEW
                 filteredEmployees.map((emp) => {
-                  const record = currentRecords[emp.id] || { status: "absent", overtime: 0 };
+                  const record = currentRecords[emp.id] || { status: "", overtime: 0 };
                   return (
                     <tr key={emp.id} className="group themed-row">
                       <td className="px-4 py-3">
