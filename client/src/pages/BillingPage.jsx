@@ -598,7 +598,7 @@ export default function BillingPage() {
       date: new Date().toISOString().split("T")[0], // For database
       total: grandTotal,
       billType,
-      status: (isAmountMatched || grandTotal === 0 || isForceFinal) ? "Unpaid" : "Draft",
+      status: (isAmountMatched || grandTotal === 0 || isForceFinal) ? "Paid" : "Draft",
     };
 
     try {
