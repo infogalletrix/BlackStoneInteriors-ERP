@@ -183,6 +183,7 @@ namespace Mona_Interior.Controllers
                 category = e.Category,
                 description = e.Description,
                 amount = e.Amount,
+                qty = e.Qty,
                 clientId = e.ClientId,
                 type = e.Type
             });
@@ -202,6 +203,7 @@ namespace Mona_Interior.Controllers
                 Category = dto.Category,
                 Description = dto.Description,
                 Amount = dto.Amount,
+                Qty = dto.Qty,
                 ClientId = dto.ClientId,
                 Type = dto.Type
             };
@@ -228,6 +230,7 @@ namespace Mona_Interior.Controllers
             exp.Category = dto.Category;
             exp.Description = dto.Description;
             exp.Amount = dto.Amount;
+            exp.Qty = dto.Qty;
             exp.ClientId = dto.ClientId;
             exp.Type = dto.Type;
 

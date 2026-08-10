@@ -8,6 +8,7 @@ namespace Mona_Interior.Dtos
         public string Description { get; set; } = string.Empty;
         public decimal Amount { get; set; }
         public string? ClientId { get; set; }
+        public string Qty { get; set; } = string.Empty;
         public string Type { get; set; } = "general";
     }
 }

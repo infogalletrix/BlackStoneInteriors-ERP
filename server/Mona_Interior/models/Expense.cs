@@ -20,6 +20,8 @@ namespace Mona_Interior.models
         // Null = general overhead; set to link to a specific client/site
         public string? ClientId { get; set; }
 
+        public string Qty { get; set; } = string.Empty;
+
         // "general" | "client-specific"
         public string Type { get; set; } = "general";
     }

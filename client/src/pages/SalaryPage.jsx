@@ -150,22 +150,24 @@ export default function SalaryPage() {
         // Total days in the selected month
         const daysInMonth = new Date(selectedYear, MONTHS.indexOf(selectedMonth) + 1, 0).getDate();
         
-        // Count absences (Half-Day counts as full day for salary)
-        const absentDays = attData.filter(d => d.status?.toLowerCase() === "absent").length;
+        // Calculate precise paid days based purely on attendance
+        let presentCount = 0;
+        let halfDayCount = 0;
+        
+        attData.forEach(d => {
+           if (d.status?.toLowerCase() === "present") presentCount++;
+           if (d.status?.toLowerCase() === "half-day") halfDayCount++;
+        });
+
+        // Computed paid days is based purely on the attendance records (half day = 0.5)
+        computedPaidDays = presentCount + (halfDayCount * 0.5);
         
         // Sum Overtime hours
         computedOtHours = attData.reduce((sum, d) => sum + (Number(d.overtime) || 0), 0);
         
-        if (emp.salaryType === "Daily") {
-          // For Daily wages, only count days explicitly marked as present or half-day
-          const presentDays = attData.filter(d => 
-            d.status?.toLowerCase() === "present" || d.status?.toLowerCase() === "half-day"
-          ).length;
-          computedPaidDays = presentDays;
-        } else {
-          // For Monthly wages, assume full month minus explicitly marked absences
-          computedPaidDays = daysInMonth - absentDays;
-          computedLopDays = absentDays;
+        if (emp.salaryType !== "Daily") {
+          // For Monthly wages, LOP is simply the days in the month minus the paid days
+          computedLopDays = daysInMonth - computedPaidDays;
         }
       }
     } catch (e) {
@@ -727,7 +729,14 @@ export default function SalaryPage() {
 
                     <div className="mb-3">
                       <label className={labelClass}>Payroll Period</label>
-                      <input type="text" readOnly value={`${selectedMonth} ${selectedYear}`} className="w-full p-2.5 border border-[var(--border-color)] rounded-xl themed-input outline-none font-bold text-sm opacity-60 cursor-not-allowed" />
+                      <div className="flex gap-2">
+                        <select className="flex-1 p-2.5 border border-[var(--border-color)] rounded-xl themed-input outline-none focus:border-violet-500 font-bold text-sm transition" value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)}>
+                          {MONTHS.map(m => <option key={m} value={m} className="bg-[var(--modal-bg)]">{m}</option>)}
+                        </select>
+                        <select className="w-24 p-2.5 border border-[var(--border-color)] rounded-xl themed-input outline-none focus:border-violet-500 font-bold text-sm transition" value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))}>
+                          {[today.getFullYear() - 1, today.getFullYear(), today.getFullYear() + 1].map(y => <option key={y} value={y} className="bg-[var(--modal-bg)]">{y}</option>)}
+                        </select>
+                      </div>
                     </div>
                     
                     <div className="grid grid-cols-3 gap-3 mb-3">
@@ -815,7 +824,14 @@ export default function SalaryPage() {
                   >
                     <div className="mb-3">
                       <label className={labelClass}>Payroll Period</label>
-                      <input type="text" readOnly value={`${selectedMonth} ${selectedYear}`} className="w-full p-2.5 border border-[var(--border-color)] rounded-xl themed-input outline-none font-bold text-sm opacity-60 cursor-not-allowed" />
+                      <div className="flex gap-2">
+                        <select className="flex-1 p-2.5 border border-[var(--border-color)] rounded-xl themed-input outline-none focus:border-violet-500 font-bold text-sm transition" value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)}>
+                          {MONTHS.map(m => <option key={m} value={m} className="bg-[var(--modal-bg)]">{m}</option>)}
+                        </select>
+                        <select className="w-24 p-2.5 border border-[var(--border-color)] rounded-xl themed-input outline-none focus:border-violet-500 font-bold text-sm transition" value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))}>
+                          {[today.getFullYear() - 1, today.getFullYear(), today.getFullYear() + 1].map(y => <option key={y} value={y} className="bg-[var(--modal-bg)]">{y}</option>)}
+                        </select>
+                      </div>
                     </div>
                     <div className="mb-3">
                       <label className={labelClass}>Advance Amount</label>

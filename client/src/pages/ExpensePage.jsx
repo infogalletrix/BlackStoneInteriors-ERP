@@ -185,7 +185,8 @@ export default function ExpensePage() {
             date: bulkDate, 
             category: actualType === "Client" ? "Material Purchase" : bulkCategory, 
             description: item.material, 
-            amount: cost, 
+            amount: cost,
+            qty: item.qty,
             clientId: actualType === "Client" ? bulkClient.toString() : "", 
             type: actualType 
           })
@@ -234,7 +235,8 @@ export default function ExpensePage() {
         date: entry.date, 
         category: entry.expenseType === "Client" ? "Material Purchase" : entry.category || "", 
         description: entry.expenseType === "Client" ? entry.material : entry.description, 
-        amount: entry.cost, 
+        amount: entry.cost,
+        qty: entry.qty,
         clientId: entry.client ? entry.client.toString() : "", 
         type: entry.expenseType 
       };
