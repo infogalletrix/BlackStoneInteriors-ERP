@@ -31,6 +31,7 @@ const CRMPage = () => {
   const { showDialog } = useDialog();
   const [activeTab, setActiveTab] = useState("contacts");
   const [searchTerm, setSearchTerm] = useState("");
+  const [monthFilter, setMonthFilter] = useState("All");
   const [viewMode, setViewMode] = useState("list");
 
   const [contacts, setContacts] = useState([]);
@@ -203,10 +204,42 @@ const CRMPage = () => {
   };
 
   // Filters
-  const filteredContacts = contacts.filter((c) => c.name.toLowerCase().includes(searchTerm.toLowerCase()) || (c.project || "").toLowerCase().includes(searchTerm.toLowerCase()) || (c.tags && c.tags.join(" ").toLowerCase().includes(searchTerm.toLowerCase())));
+  const checkMonth = (dateString) => {
+    if (monthFilter === "All" || !dateString) return true;
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return true;
+    
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    const dMonth = date.getMonth();
+    const dYear = date.getFullYear();
+
+    if (monthFilter === "Current") {
+      return dMonth === currentMonth && dYear === currentYear;
+    }
+    if (monthFilter === "Previous") {
+      const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+      const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+      return dMonth === prevMonth && dYear === prevYear;
+    }
+    if (monthFilter === "Next") {
+      const nextMonth = currentMonth === 11 ? 0 : currentMonth + 1;
+      const nextYear = currentMonth === 11 ? currentYear + 1 : currentYear;
+      return dMonth === nextMonth && dYear === nextYear;
+    }
+    return true;
+  };
+
+  const filteredContacts = contacts.filter((c) => {
+    const searchMatch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) || (c.project || "").toLowerCase().includes(searchTerm.toLowerCase()) || (c.tags && c.tags.join(" ").toLowerCase().includes(searchTerm.toLowerCase()));
+    return searchMatch && checkMonth(c.date);
+  });
+
   const filteredActivities = activities.filter((a) => {
     const clientName = contacts.find(c => c.id === a.client)?.name || "";
-    return clientName.toLowerCase().includes(searchTerm.toLowerCase()) || a.type.toLowerCase().includes(searchTerm.toLowerCase());
+    const searchMatch = clientName.toLowerCase().includes(searchTerm.toLowerCase()) || a.type.toLowerCase().includes(searchTerm.toLowerCase());
+    return searchMatch && checkMonth(a.date);
   });
 
   const onDragEnd = async (result) => {
@@ -264,10 +297,22 @@ const CRMPage = () => {
             ))}
           </div>
 
-          {/* SEARCH BAR (Middle) */}
-          <div className="relative w-full lg:w-96 group shadow-sm rounded-xl order-1 lg:order-2 flex-1 max-w-xl">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-themed transition-colors" size={16} />
-            <input type="text" placeholder={`Search ${activeTab}...`} className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-[var(--border-color)] themed-input text-sm focus:ring-2 focus:ring-violet-500 outline-none transition-all" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          {/* SEARCH BAR & FILTER (Middle) */}
+          <div className="flex flex-col sm:flex-row w-full lg:w-[32rem] gap-2 order-1 lg:order-2 max-w-2xl items-center">
+            <div className="relative w-full group shadow-sm rounded-xl">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-themed transition-colors" size={16} />
+              <input type="text" placeholder={`Search ${activeTab}...`} className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-[var(--border-color)] themed-input text-sm focus:ring-2 focus:ring-violet-500 outline-none transition-all" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            </div>
+            <select 
+              value={monthFilter} 
+              onChange={(e) => setMonthFilter(e.target.value)}
+              className="w-full sm:w-40 py-2.5 px-3 rounded-xl border border-[var(--border-color)] themed-input text-sm focus:ring-2 focus:ring-violet-500 outline-none transition-all [&>option]:bg-[var(--modal-bg)]"
+            >
+              <option value="All">All Months</option>
+              <option value="Previous">Previous Month</option>
+              <option value="Current">Current Month</option>
+              <option value="Next">Next Month</option>
+            </select>
           </div>
 
           {/* ADD BUTTON (Right) */}
@@ -321,7 +366,7 @@ const CRMPage = () => {
                     }}>
                       {(provided, snapshot) => (
                         <div {...provided.droppableProps} ref={provided.innerRef} className={`flex-1 min-h-[300px] rounded-[1rem] transition-colors ${snapshot.isDraggingOver ? "bg-violet-500/10 border-2 border-dashed border-violet-500/40 p-1" : ""}`}>
-                          {column.deals.filter((d) => d.title.toLowerCase().includes(searchTerm.toLowerCase())).map((deal, index) => {
+                          {column.deals.filter((d) => d.title.toLowerCase().includes(searchTerm.toLowerCase()) && checkMonth(d.closeDate)).map((deal, index) => {
                             const contact = contacts.find((c) => c.id === deal.contactId);
 
                             return (
