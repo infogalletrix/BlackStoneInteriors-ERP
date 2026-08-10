@@ -32,6 +32,7 @@ const CRMPage = () => {
   const [activeTab, setActiveTab] = useState("contacts");
   const [searchTerm, setSearchTerm] = useState("");
   const [monthFilter, setMonthFilter] = useState("All");
+  const [customDateRange, setCustomDateRange] = useState({ start: '', end: '' });
   const [viewMode, setViewMode] = useState("list");
 
   const [contacts, setContacts] = useState([]);
@@ -228,6 +229,14 @@ const CRMPage = () => {
       const nextYear = currentMonth === 11 ? currentYear + 1 : currentYear;
       return dMonth === nextMonth && dYear === nextYear;
     }
+    if (monthFilter === "Custom") {
+      if (!customDateRange.start && !customDateRange.end) return true;
+      const start = customDateRange.start ? new Date(customDateRange.start) : new Date('1970-01-01');
+      const end = customDateRange.end ? new Date(customDateRange.end) : new Date('2099-12-31');
+      start.setHours(0,0,0,0);
+      end.setHours(23,59,59,999);
+      return date >= start && date <= end;
+    }
     return true;
   };
 
@@ -298,8 +307,8 @@ const CRMPage = () => {
           </div>
 
           {/* SEARCH BAR & FILTER (Middle) */}
-          <div className="flex flex-col sm:flex-row w-full lg:w-[32rem] gap-2 order-1 lg:order-2 max-w-2xl items-center">
-            <div className="relative w-full group shadow-sm rounded-xl">
+          <div className="flex flex-col sm:flex-row w-full lg:w-auto gap-2 order-1 lg:order-2 flex-1 items-center justify-center">
+            <div className="relative w-full group shadow-sm rounded-xl max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-themed transition-colors" size={16} />
               <input type="text" placeholder={`Search ${activeTab}...`} className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-[var(--border-color)] themed-input text-sm focus:ring-2 focus:ring-violet-500 outline-none transition-all" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
@@ -312,7 +321,15 @@ const CRMPage = () => {
               <option value="Previous">Previous Month</option>
               <option value="Current">Current Month</option>
               <option value="Next">Next Month</option>
+              <option value="Custom">Custom Date Range</option>
             </select>
+            {monthFilter === "Custom" && (
+              <div className="flex gap-2 w-full sm:w-auto items-center">
+                <input type="date" value={customDateRange.start} onChange={(e) => setCustomDateRange({...customDateRange, start: e.target.value})} className="w-full sm:w-auto py-2.5 px-2 rounded-xl border border-[var(--border-color)] themed-input text-sm focus:ring-2 focus:ring-violet-500 outline-none transition-all" />
+                <span className="text-muted text-xs font-bold uppercase">to</span>
+                <input type="date" value={customDateRange.end} onChange={(e) => setCustomDateRange({...customDateRange, end: e.target.value})} className="w-full sm:w-auto py-2.5 px-2 rounded-xl border border-[var(--border-color)] themed-input text-sm focus:ring-2 focus:ring-violet-500 outline-none transition-all" />
+              </div>
+            )}
           </div>
 
           {/* ADD BUTTON (Right) */}
