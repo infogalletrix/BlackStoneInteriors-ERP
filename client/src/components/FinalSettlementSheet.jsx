@@ -19,6 +19,16 @@ const FinalSettlementSheet = forwardRef(({ site, receipts }, ref) => {
   return (
     <div className="hidden">
       <div ref={ref} className="bg-white text-black p-8 font-sans w-[210mm] min-h-[297mm] mx-auto text-sm flex flex-col print:flex print:w-full print:h-[297mm] print:m-0 print:p-8">
+        {/* Header Section */}
+        <div className="flex items-center gap-4 mb-4 border-b border-black pb-4">
+          <img src="/logo.png" alt="Logo" className="w-16 h-16 object-contain rounded-lg" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} />
+          <div>
+            <h1 className="text-2xl font-black uppercase tracking-tighter text-gray-900">Mona Interior Studio</h1>
+            <p className="font-bold text-gray-600 text-[10px] mt-1">Phone: +91 91 76093 482</p>
+            <p className="font-bold text-gray-600 text-[9px] leading-tight mt-0.5">Address: No 378, Kagidhapuram, 4th Cross St, Shakti Nagar, S.Kolathur, Madipakkam, Chennai, Tamil Nadu 600117</p>
+          </div>
+        </div>
+
         {/* Title */}
         <h1 className="text-center font-bold text-lg mb-2 uppercase underline underline-offset-4 tracking-wider">
           Final Settlement Sheet

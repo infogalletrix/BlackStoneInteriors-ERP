@@ -337,6 +337,8 @@ export default function ReceiptPage() {
           <div>
             <h1 className="text-2xl font-black uppercase tracking-tighter text-gray-900">Mona Interior Studio</h1>
             <p className="font-bold text-gray-600 text-sm">Official Payment Receipt</p>
+            <p className="text-xs text-gray-600 mt-1">Phone: +91 91 76093 482</p>
+            <p className="text-[10px] text-gray-600 leading-tight mt-0.5 max-w-[280px]">Address: No 378, Kagidhapuram, 4th Cross St, Shakti Nagar, S.Kolathur, Madipakkam, Chennai, Tamil Nadu 600117</p>
             <div className="mt-2">
                <span className="px-2 py-0.5 rounded border border-gray-600 text-[10px] font-black uppercase tracking-widest text-gray-800">
                  Status: {data.status}

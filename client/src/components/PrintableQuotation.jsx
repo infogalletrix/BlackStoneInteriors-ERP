@@ -43,8 +43,9 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
           <p className="font-bold text-xs uppercase text-gray-700">From:</p>
           <p className="font-bold text-base">Mona Interior Studio</p>
           <p>Professional Interior Design & Services</p>
-          <p>Phone: +91 98765 43210</p>
-          <p>Email: contact@monastudio.com</p>
+          <p>Phone: +91 91 76093 482</p>
+          <p className="whitespace-normal w-64 leading-tight mt-0.5">Address: No 378, Kagidhapuram, 4th Cross St, Shakti Nagar, S.Kolathur, Madipakkam, Chennai, Tamil Nadu 600117</p>
+          <p className="mt-0.5">Email: contact@monastudio.com</p>
         </div>
         <div className="w-1/2 text-right">
           <p className="font-bold text-xs uppercase text-gray-700">To:</p>
