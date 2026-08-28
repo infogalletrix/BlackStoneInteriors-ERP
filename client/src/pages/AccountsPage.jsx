@@ -128,7 +128,7 @@ export default function AccountsPage() {
   const exportToPDF = () => {
     const doc = new jsPDF();
     doc.setFontSize(18);
-    doc.text("MONA INTERIOR — ACCOUNT STATEMENT", 14, 18);
+    doc.text("BLACKSTONE INTERIOR — ACCOUNT STATEMENT", 14, 18);
     doc.setFontSize(10);
     doc.text(`Period: ${viewType} | Generated: ${new Date().toLocaleDateString("en-IN")}`, 14, 26);
     autoTable(doc, {
@@ -166,7 +166,7 @@ export default function AccountsPage() {
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Statement");
-    XLSX.writeFile(wb, `Mona_Statement_${viewType}_${Date.now()}.xlsx`);
+    XLSX.writeFile(wb, `Blackstone_Statement_${viewType}_${Date.now()}.xlsx`);
   };
 
   return (

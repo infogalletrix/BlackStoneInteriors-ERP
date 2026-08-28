@@ -196,7 +196,7 @@ const CRMPage = () => {
   const exportContactsToPDF = () => {
     const doc = new jsPDF();
     doc.setFont("helvetica", "bold"); doc.setFontSize(20);
-    doc.text("Mona Interior Studio - Client List", 14, 22);
+    doc.text("Blackstone Interior Studio - Client List", 14, 22);
     const tableColumn = ["Name", "Project", "Phone", "Status", "Source"];
     const tableRows = contacts.map(c => [c.name, c.project, c.phone, c.status, c.source || "N/A"]);
     autoTable(doc, { head: [tableColumn], body: tableRows, startY: 30, theme: 'grid', headStyles: { fillColor: [41, 37, 36] } });

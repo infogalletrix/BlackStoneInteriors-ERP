@@ -37,7 +37,7 @@ async function testEndpoint(name, method, url, body = null) {
 
 async function runTests() {
     console.log("=====================================");
-    console.log("   MONA INTERIOR - API TEST SUITE    ");
+    console.log("   BLACKSTONE INTERIOR - API TEST SUITE    ");
     console.log("=====================================");
 
     // --- 1. CRM MODULE ---

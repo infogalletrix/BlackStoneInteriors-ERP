@@ -23,7 +23,7 @@ const FinalSettlementSheet = forwardRef(({ site, receipts }, ref) => {
         <div className="flex items-center gap-4 mb-4 border-b border-black pb-4">
           <img src="/logo.png" alt="Logo" className="w-16 h-16 object-contain rounded-lg" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} />
           <div>
-            <h1 className="text-2xl font-black uppercase tracking-tighter text-gray-900">Mona Interior Studio</h1>
+            <h1 className="text-2xl font-black uppercase tracking-tighter text-gray-900">Blackstone Interior Studio</h1>
             <p className="font-bold text-gray-600 text-[10px] mt-1">Phone: +91 91 76093 482</p>
             <p className="font-bold text-gray-600 text-[9px] leading-tight mt-0.5">Address: No 378, Kagidhapuram, 4th Cross St, Shakti Nagar, S.Kolathur, Madipakkam, Chennai, Tamil Nadu 600117</p>
           </div>

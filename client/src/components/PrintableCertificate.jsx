@@ -19,7 +19,7 @@ const PrintableCertificate = forwardRef(({ site }, ref) => {
             onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} 
           />
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Mona Interior Studio</h1>
+            <h1 className="text-3xl font-bold text-slate-900">Blackstone Interior Studio</h1>
             <p className="text-slate-600">Professional Interior Design Services</p>
             <p className="text-xs text-slate-500 mt-1">Phone: +91 91 76093 482</p>
             <p className="text-[10px] text-slate-500 leading-tight mt-0.5 max-w-xs">Address: No 378, Kagidhapuram, 4th Cross St, Shakti Nagar,<br/>S.Kolathur, Madipakkam, Chennai, Tamil Nadu 600117</p>

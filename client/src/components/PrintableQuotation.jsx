@@ -23,7 +23,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         <div className="flex items-center gap-4">
           <img src="/logo.png" alt="Logo" className="w-20 h-20 object-contain rounded-lg" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} />
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 uppercase">Mona Interior Studio</h1>
+            <h1 className="text-3xl font-bold text-gray-900 uppercase">Blackstone Interior Studio</h1>
             <p>Professional Interior Design Services</p>
           </div>
         </div>
@@ -41,11 +41,11 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       <div className="flex justify-between mb-8">
         <div className="w-1/2">
           <p className="font-bold text-xs uppercase text-gray-700">From:</p>
-          <p className="font-bold text-base">Mona Interior Studio</p>
+          <p className="font-bold text-base">Blackstone Interior Studio</p>
           <p>Professional Interior Design & Services</p>
           <p>Phone: +91 91 76093 482</p>
           <p className="whitespace-normal w-64 leading-tight mt-0.5">Address: No 378, Kagidhapuram, 4th Cross St, Shakti Nagar, S.Kolathur, Madipakkam, Chennai, Tamil Nadu 600117</p>
-          <p className="mt-0.5">Email: contact@monastudio.com</p>
+          <p className="mt-0.5">Email: contact@blackstonestudio.com</p>
         </div>
         <div className="w-1/2 text-right">
           <p className="font-bold text-xs uppercase text-gray-700">To:</p>

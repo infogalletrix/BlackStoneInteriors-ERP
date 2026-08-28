@@ -1,9 +1,0 @@
-● interior.service - Mona Interior Backend
-     Loaded: loaded (]8;;file://srv1243339/etc/systemd/system/interior.service/etc/systemd/system/interior.service]8;;; [0;1;32menabled[0m; preset: [0;1;32menabled[0m)
-     Active: activating (auto-restart) (Result: core-dump) since Sat 2026-05-23 04:59:23 UTC; 4s ago
-    Process: 526645 ExecStart=/usr/bin/dotnet /var/www/mona-interior/server/Mona_Interior/bin/Release/net8.0/publish/Mona_Interior.dll [0;1;31m(code=dumped, signal=ABRT)[0m
-   Main PID: 526645 (code=dumped, signal=ABRT)
-        CPU: 1.424s
-
-May 23 04:59:23 srv1243339 systemd[1]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185minterior.service: Failed with result 'core-dump'.[0m
-May 23 04:59:23 srv1243339 systemd[1]: interior.service: Consumed 1.424s CPU time, 47.7M memory peak, 0B memory swap peak.

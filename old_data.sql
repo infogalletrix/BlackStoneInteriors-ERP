@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 8.0.46, for Linux (aarch64)
 --
--- Host: localhost    Database: mona_interior_db
+-- Host: localhost    Database: blackstone_interior_db
 -- ------------------------------------------------------
 -- Server version	8.0.46
 

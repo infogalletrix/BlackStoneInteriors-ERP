@@ -14,7 +14,7 @@ const PrintableInvoice = forwardRef(({ data, docType }, ref) => {
         <div className="flex items-center gap-4">
           <img src="/logo.png" alt="Logo" className="w-20 h-20 object-contain rounded-lg" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} />
           <div>
-            <h1 className="text-3xl font-bold">Mona Interior Studio</h1>
+            <h1 className="text-3xl font-bold">Blackstone Interior Studio</h1>
             <p>Professional Interior Design Services</p>
             <p className="text-xs text-gray-600 mt-1">Phone: +91 91 76093 482</p>
             <p className="text-xs text-gray-600 leading-tight mt-0.5 max-w-xs">Address: No 378, Kagidhapuram, 4th Cross St, Shakti Nagar,<br/>S.Kolathur, Madipakkam, Chennai, Tamil Nadu 600117</p>
