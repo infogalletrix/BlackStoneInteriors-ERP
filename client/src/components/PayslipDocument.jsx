@@ -26,7 +26,7 @@ const PayslipDocument = forwardRef(({ data }, ref) => {
           <div className="flex items-center gap-4">
             <img src="/logo.png" alt="Logo" className="w-16 h-16 object-contain rounded-lg" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} />
             <div>
-              <h1 className="text-2xl font-black uppercase tracking-tighter text-gray-900">Blackstone Interior Studio</h1>
+              <h1 className="text-2xl font-black uppercase tracking-tighter text-gray-900">Black Stone Interiorss</h1>
               <p className="font-bold text-gray-600 text-[10px] mt-1">Phone: +91 9599174996, +91 9315157200</p>
               <p className="font-bold text-gray-600 text-[9px] mt-0.5 max-w-[280px]">Email: Nakul.blackstoneinteriors@gmail.com | GSTIN: 06ABFFB6382G1ZF</p>
               <p className="font-bold text-gray-600 text-[9px] leading-tight mt-0.5 max-w-[280px]">Address: Plot No 72 sector 6 IMT Manesar, Gurgaon Haryana 122050</p>

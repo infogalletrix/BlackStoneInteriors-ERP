@@ -430,7 +430,7 @@ export default function SalaryPage() {
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
-    doc.text("BLACKSTONE INTERIOR STUDIO", W / 2, 28, { align: "center" });
+    doc.text("BLACK STONE INTERIORS", W / 2, 28, { align: "center" });
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.text("PAYSLIP", W / 2, 44, { align: "center" });
@@ -494,7 +494,7 @@ export default function SalaryPage() {
     doc.setTextColor(180, 180, 180);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
-    doc.text("This is a system-generated payslip. Blackstone Interior Studio.", W / 2, netY + 58, { align: "center" });
+    doc.text("This is a system-generated payslip. Black Stone Interiorss.", W / 2, netY + 58, { align: "center" });
 
     const filename = `Payslip_${h.employeeName.replace(/\s+/g, "_")}_${h.month}_${h.year}.pdf`;
     doc.save(filename);
@@ -506,7 +506,7 @@ export default function SalaryPage() {
     const cleaned = (phone || "").replace(/\D/g, "");
     const num = cleaned.startsWith("91") ? cleaned : `91${cleaned}`;
     const msg =
-      `Hi ${h.employeeName},\n\nPlease find your payslip for *${h.month} ${h.year}* attached.\n\n*Net Pay: Rs. ${h.netPay.toLocaleString()}*\n\n_Blackstone Interior Studio_`;
+      `Hi ${h.employeeName},\n\nPlease find your payslip for *${h.month} ${h.year}* attached.\n\n*Net Pay: Rs. ${h.netPay.toLocaleString()}*\n\n_Black Stone Interiorss_`;
     setTimeout(() => {
       window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, "_blank");
     }, 600);

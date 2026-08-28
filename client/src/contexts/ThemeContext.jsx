@@ -4,7 +4,7 @@ const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    // Always start in dark mode for Blackstone Interior Studio
+    // Always start in dark mode for Black Stone Interiorss
     const savedTheme = localStorage.getItem("theme");
     if (!savedTheme) localStorage.setItem("theme", "dark");
     return savedTheme !== "light";

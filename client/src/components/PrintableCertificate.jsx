@@ -19,7 +19,7 @@ const PrintableCertificate = forwardRef(({ site }, ref) => {
             onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} 
           />
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Blackstone Interior Studio</h1>
+            <h1 className="text-3xl font-bold text-slate-900">Black Stone Interiorss</h1>
             <p className="text-slate-600">Professional Interior Design Services</p>
             <p className="text-xs text-slate-500 mt-1">Phone: +91 9599174996, +91 9315157200</p>
             <p className="text-[10px] text-slate-500 mt-0.5 max-w-xs">Email: Nakul.blackstoneinteriors@gmail.com | GSTIN: 06ABFFB6382G1ZF</p>

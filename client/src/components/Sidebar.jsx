@@ -93,10 +93,10 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           </div>
           {isOpen && (
             <div className="flex items-center gap-2">
-              <img src="/logo.png" alt="Blackstone Interior Studio" className="w-10 h-10 rounded-md object-cover shadow-sm" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} />
+              <img src="/logo.png" alt="Black Stone Interiorss" className="w-10 h-10 rounded-md object-cover shadow-sm" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} />
               <div>
                 <h2 className={`text-base font-black whitespace-nowrap leading-tight ${ t.isDark ? "bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent" : "text-white"}`}>
-                  Blackstone Interior
+                  Black Stone Interiors
                 </h2>
                 <p className={`text-[10px] font-bold uppercase tracking-widest ${ t.isDark ? "text-slate-500" : "text-slate-300"}`}>
                   Studio
@@ -165,7 +165,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         {isOpen && (
           <div className="flex flex-col items-center mt-2 gap-1 opacity-80 hover:opacity-100 transition-opacity">
             <p className={`text-[10px] text-center font-bold uppercase tracking-widest ${ t.isDark ? "text-slate-500" : "text-slate-400"}`}>
-              © 2026 Blackstone Interior
+              © 2026 Black Stone Interiors
             </p>
             <p className={`text-[8px] text-center font-bold uppercase tracking-[0.15em] ${ t.isDark ? "text-slate-600" : "text-slate-500"}`}>
               Developed by <span className="text-[#D4AF37] font-black tracking-widest">Galletrix Innovations</span>
