@@ -16,5 +16,7 @@ namespace Blackstone_Interior.models
 
         // Pending | Scheduled | Completed
         public string Status { get; set; } = "Pending";
+        
+        public string Notes { get; set; } = string.Empty;
     }
 }

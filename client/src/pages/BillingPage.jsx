@@ -1,435 +1,190 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useReactToPrint } from "react-to-print";
 import { useNavigate, useLocation } from "react-router-dom";
 import PrintableInvoice from "../components/PrintableInvoice";
-import NotificationWidget from "../components/NotificationWidget";
 import {
   Trash2,
   Printer,
   Save,
   RotateCcw,
-  Search,
   History,
-  X,
-  Eye,
-  Edit3,
-  ArrowLeft,
+  ArrowRight,
   FileText,
   Plus,
-  Edit,
+  X,
+  Edit3,
+  Settings,
 } from "lucide-react";
 import { useDialog } from "../contexts/DialogContext";
+import NotificationWidget from "../components/NotificationWidget";
 
 export default function BillingPage() {
   const { showDialog } = useDialog();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editBadge, setEditBadge] = useState("");
-  const [billType, setBillType] = useState("GST"); // 'GST' | 'Non-GST'
+
   const [items, setItems] = useState([]);
   const [clientName, setClientName] = useState("");
+  const [organizationName, setOrganizationName] = useState("");
   const [clientAddress, setClientAddress] = useState("");
   const [projectTitle, setProjectTitle] = useState("");
   const [workDescription, setWorkDescription] = useState("");
-  const [invoiceNo, setInvoiceNo] = useState("");
-  const [organizationName, setOrganizationName] = useState("");
-  const [gstNumber, setGstNumber] = useState("");
+  const [billType, setBillType] = useState("GST"); // 'GST' | 'Non-GST'
+  const [isInterState, setIsInterState] = useState(false);
   const [workOrderId, setWorkOrderId] = useState("");
-  const [invoiceDate, setInvoiceDate] = useState(
-    new Date().toLocaleDateString("en-GB"),
-  );
-  const [invoiceId, setInvoiceId] = useState("");
+  const [sourceQuoteId, setSourceQuoteId] = useState("");
 
-  // Footer fields
-  const [discount, setDiscount] = useState(0);
-  const [lessAmount, setLessAmount] = useState(0);
-  const [advanceAmount, setAdvanceAmount] = useState(0);
-  const [receivedAmount, setReceivedAmount] = useState(0);
+  const [invoiceId, setInvoiceId] = useState(null);
+  const [invoiceNo, setInvoiceNo] = useState("");
+  const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
 
-  // Modal States
-  const [showQuoteSearch, setShowQuoteSearch] = useState(false);
-  const [showWorkOrderSearch, setShowWorkOrderSearch] = useState(false);
-  const [workOrders, setWorkOrders] = useState([]);
-  const [totalReceipts, setTotalReceipts] = useState(0);
-  const [savedQuotations, setSavedQuotations] = useState([]);
-  const [savedInvoices, setSavedInvoices] = useState([]);
+  // New advanced fields
+  const [emailId, setEmailId] = useState("");
+  const [mobileNo, setMobileNo] = useState("");
+  const [customerGst, setCustomerGst] = useState("");
+  const [deliveryTimeline, setDeliveryTimeline] = useState("3 to 4 Weeks");
+  const [installationMaterial, setInstallationMaterial] = useState(0);
+  const [deliveryLoading, setDeliveryLoading] = useState(0);
+  const [additionalDiscount, setAdditionalDiscount] = useState(0);
+
+  const [crmClients, setCrmClients] = useState([]);
+  const [quotations, setQuotations] = useState([]);
+  const [sites, setSites] = useState([]);
+
+  // Section / Category Management
+  const [sectionsList, setSectionsList] = useState(() => {
+    const saved = localStorage.getItem("quote_sections");
+    return saved ? JSON.parse(saved) : ["General", "M.B.R Dresser Wardrobe", "Kitchen", "Living Room"];
+  });
+  
+  useEffect(() => {
+    localStorage.setItem("quote_sections", JSON.stringify(sectionsList));
+  }, [sectionsList]);
+
+  const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
+  const [editingSectionIdx, setEditingSectionIdx] = useState(null);
+  const [newSectionName, setNewSectionName] = useState("");
+
+  // Fetch CRM clients, quotations, sites on mount
+  useEffect(() => {
+    fetch('/api/crm')
+      .then(res => res.json())
+      .then(data => setCrmClients(data))
+      .catch(err => console.error("Failed to load CRM clients", err));
+      
+    fetch('/api/quotations')
+      .then(res => res.json())
+      .then(data => setQuotations(data))
+      .catch(err => console.error(err));
+      
+    fetch('/api/sites')
+      .then(res => res.json())
+      .then(data => setSites(data))
+      .catch(err => console.error(err));
+  }, []);
 
   // ── MULTI-SESSION LOGIC ──────────────────────────────────────
   const [sessions, setSessions] = useState(() => {
-    const saved = localStorage.getItem("billing_sessions");
-    return saved
-      ? JSON.parse(saved)
-      : [{ id: "default", title: "New Invoice", data: null }];
+    const saved = localStorage.getItem("invoice_sessions");
+    return saved ? JSON.parse(saved) : [{ id: 'default', title: 'New Invoice', data: null }];
   });
   const [activeSessionId, setActiveSessionId] = useState(() => {
-    return localStorage.getItem("active_billing_session") || "default";
+    return localStorage.getItem("active_invoice_session") || 'default';
   });
 
   // Load session data when active session changes
   useEffect(() => {
-    const session = sessions.find((s) => s.id === activeSessionId);
+    const session = sessions.find(s => s.id === activeSessionId);
     if (session && session.data) {
       const d = session.data;
       setItems(d.items || []);
       setClientName(d.clientName || "");
+      setOrganizationName(d.organizationName || "");
       setClientAddress(d.clientAddress || "");
       setProjectTitle(d.projectTitle || "");
       setWorkDescription(d.workDescription || "");
       setBillType(d.billType || "GST");
-      setDiscount(d.discount || 0);
-      setLessAmount(d.lessAmount || 0);
-      setAdvanceAmount(d.advanceAmount || 0);
-      setReceivedAmount(d.receivedAmount || 0);
-      setEditBadge(d.editBadge || "");
-      if (d.invoiceNo) setInvoiceNo(d.invoiceNo);
-      setOrganizationName(d.organizationName || "");
-      setGstNumber(d.gstNumber || "");
+      setIsInterState(d.isInterState || false);
       setWorkOrderId(d.workOrderId || "");
-      setInvoiceId(d.invoiceId || "");
+      setSourceQuoteId(d.sourceQuoteId || "");
+      setInvoiceId(d.invoiceId || null);
+      setEmailId(d.emailId || "");
+      setMobileNo(d.mobileNo || "");
+      setCustomerGst(d.customerGst || "");
+      setDeliveryTimeline(d.deliveryTimeline || "3 to 4 Weeks");
+      setInstallationMaterial(d.installationMaterial || 0);
+      setDeliveryLoading(d.deliveryLoading || 0);
+      setAdditionalDiscount(d.additionalDiscount || 0);
+      if (d.invoiceDate) setInvoiceDate(d.invoiceDate);
+      if (d.invoiceNo) setInvoiceNo(d.invoiceNo);
     } else {
       // Clear for a new session if no data
-      setItems([{ id: Date.now(), work: "", unit: "Sq.Ft", area: "", price: "", gstPerc: 18, taxableAmount: 0, gstAmount: 0, amount: 0 }]);
+      setItems([{ id: Date.now(), section: "General", product: "", specification: "", qty: "", unit: "Sq.Ft", rate: "", discountPrice: "", amount: 0 }]);
       setClientName("");
-      setClientAddress("");
-      setBillType("GST");
-      setDiscount(0);
-      setLessAmount(0);
-      setAdvanceAmount(0);
-      setReceivedAmount(0);
-      setIsEditMode(false);
-      setEditBadge("");
-      setInvoiceNo(""); // Number assigned by backend at save time — no pre-fetch
       setOrganizationName("");
-      setGstNumber("");
+      setClientAddress("");
+      setProjectTitle("");
+      setWorkDescription("");
+      setBillType("GST");
+      setIsInterState(false);
       setWorkOrderId("");
-      setInvoiceId("");
+      setSourceQuoteId("");
+      setInvoiceId(null);
+      setEmailId("");
+      setMobileNo("");
+      setCustomerGst("");
+      setDeliveryTimeline("3 to 4 Weeks");
+      setInstallationMaterial(0);
+      setDeliveryLoading(0);
+      setAdditionalDiscount(0);
+      
+      // Fetch the next invoice number from the backend
+      fetch(`/api/finance/invoices/next-number`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.nextNumber) {
+            setInvoiceNo(data.nextNumber);
+          }
+        })
+        .catch(err => console.error("Failed to fetch next quote number:", err));
     }
-    localStorage.setItem("active_billing_session", activeSessionId);
+    localStorage.setItem("active_invoice_session", activeSessionId);
   }, [activeSessionId]);
 
   // Persist current state to sessions array
   useEffect(() => {
     const timer = setTimeout(() => {
-      setSessions((prev) =>
-        prev.map((s) =>
-          s.id === activeSessionId
-            ? {
-              ...s,
-              title: clientName || "New Invoice",
-              data: {
-                items,
-                clientName,
-                clientAddress,
-                projectTitle,
-                workDescription,
-                billType,
-                discount,
-                lessAmount,
-                advanceAmount,
-                receivedAmount,
-                isEditMode,
-                editBadge,
-                invoiceNo,
-                organizationName,
-                gstNumber,
-                invoiceId,
-                workOrderId,
-              },
-            }
-            : s,
-        ),
-      );
+      setSessions(prev => prev.map(s => s.id === activeSessionId ? {
+        ...s,
+        title: clientName || "New Invoice",
+        data: { items, clientName, organizationName, clientAddress, projectTitle, workDescription, billType, isInterState, workOrderId, sourceQuoteId, invoiceNo, invoiceId, invoiceDate, emailId, mobileNo, customerGst, deliveryTimeline, installationMaterial, deliveryLoading, additionalDiscount }
+      } : s));
     }, 500);
     return () => clearTimeout(timer);
-  }, [
-    items,
-    clientName,
-    clientAddress,
-    projectTitle,
-    workDescription,
-    billType,
-    discount,
-    lessAmount,
-    advanceAmount,
-    receivedAmount,
-    isEditMode,
-    editBadge,
-    invoiceNo,
-    activeSessionId,
-    organizationName,
-    gstNumber,
-    invoiceId,
-    workOrderId,
-  ]);
+  }, [items, clientName, organizationName, clientAddress, projectTitle, workDescription, billType, isInterState, workOrderId, sourceQuoteId, invoiceNo, invoiceId, invoiceDate, activeSessionId, emailId, mobileNo, customerGst, deliveryTimeline, installationMaterial, deliveryLoading, additionalDiscount]);
 
   useEffect(() => {
-    localStorage.setItem("billing_sessions", JSON.stringify(sessions));
+    localStorage.setItem("invoice_sessions", JSON.stringify(sessions));
   }, [sessions]);
 
   const createNewSession = () => {
     const newId = `session-${Date.now()}`;
-    const newSession = { id: newId, title: "New Invoice", data: null };
-    setSessions((prev) => [...prev, newSession]);
+    const newSession = { id: newId, title: 'New Invoice', data: null };
+    setSessions(prev => [...prev, newSession]);
     setActiveSessionId(newId);
   };
 
   const closeSession = (id, e) => {
     e.stopPropagation();
     if (sessions.length === 1) {
-      // Don't close the last session, just clear it
-      setSessions([{ id: "default", title: "New Invoice", data: null }]);
-      setActiveSessionId("default");
-      setItems([{ id: Date.now(), work: "", unit: "Sq.Ft", area: "", price: "", gstPerc: 18, taxableAmount: 0, gstAmount: 0, amount: 0 }]);
-      setClientName("");
-      setClientAddress("");
-      setBillType("GST");
-      setDiscount(0);
-      setLessAmount(0);
-      setAdvanceAmount(0);
-      setReceivedAmount(0);
-      setIsEditMode(false);
-      setEditBadge("");
-      setInvoiceId("");
-      setWorkOrderId("");
+      setSessions([{ id: 'default', title: 'New Invoice', data: null }]);
+      setActiveSessionId('default');
       return;
     }
-    const newSessions = sessions.filter((s) => s.id !== id);
+    const newSessions = sessions.filter(s => s.id !== id);
     setSessions(newSessions);
     if (activeSessionId === id) {
       setActiveSessionId(newSessions[newSessions.length - 1].id);
-    }
-  };
-
-  // Keyboard Shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "F2") {
-        e.preventDefault();
-        saveInvoice();
-      }
-      if (e.key === "F5") {
-        e.preventDefault();
-        handlePrint();
-      }
-      if (e.key === "F8") {
-        e.preventDefault();
-        clearForm();
-      }
-      if (e.key === "F9") {
-        e.preventDefault();
-        navigate("/invoices");
-      }
-      if (e.key === "F1") {
-        e.preventDefault();
-        deleteInvoice();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [items, clientName, isEditMode]); // Add dependencies as needed
-
-  // Load Data + handle incoming navigation state
-  useEffect(() => {
-    // ── Handle: Auto-fill from Work Order ────────────────────────
-    if (location.state?.autoFill) {
-      const { clientName, projectTitle, address, desc, organizationName, workOrderId } =
-        location.state.autoFill;
-      if (clientName) setClientName(clientName);
-      if (address) setClientAddress(address);
-      if (projectTitle) setProjectTitle(projectTitle);
-      if (desc !== undefined) setWorkDescription(desc || "");
-      if (organizationName) setOrganizationName(organizationName);
-      if (workOrderId) setWorkOrderId(workOrderId);
-    }
-
-    // Fetch Quotations for 'FROM QUOTE' functionality
-    const fetchQuotes = async () => {
-      try {
-        const res = await fetch("/api/quotations");
-        const data = await res.json();
-        setSavedQuotations(data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchQuotes();
-
-    // Fetch Work Orders
-    const fetchWorkOrders = async () => {
-      try {
-        const res = await fetch("/api/sites");
-        const data = await res.json();
-        setWorkOrders(data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchWorkOrders();
-
-    const fetchNextInvoiceNo = async () => {
-      if (invoiceNo) return; 
-      try {
-        const res = await fetch("/api/finance/invoices/next-number");
-        const data = await res.json();
-        setInvoiceNo(data.nextNumber);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchNextInvoiceNo();
-
-    // ── Handle: Convert from Quotation ───────────────────────────
-    if (location.state?.convertQuote) {
-      const q = location.state.convertQuote;
-      const isNonGST = q.billType === "Non-GST";
-      if (isNonGST) setBillType("Non-GST");
-      const mapped = q.items.map((i) => {
-        const areaVal = parseFloat(i.area) || 0;
-        const rateVal = parseFloat(i.rate) || parseFloat(i.price) || 0;
-        const taxable = areaVal * rateVal;
-        const gst = isNonGST ? 0 : (taxable * 18) / 100;
-        return {
-          work: i.description,
-          unit: i.unit || "Sq.Ft",
-          area: i.area,
-          price: i.rate,
-          gstPerc: isNonGST ? 0 : 18,
-          taxableAmount: taxable,
-          gstAmount: gst,
-          amount: taxable + gst,
-          id: Date.now() + Math.random(),
-        };
-      });
-      setItems(mapped);
-      setEditBadge(
-        `Converted from Quotation (${isNonGST ? "Non-GST" : "GST"}) — Review & save as Invoice`,
-      );
-      
-      showDialog({
-        title: "Work Order Required",
-        message: "Quotation items imported. Please select a Work Order to attach to this invoice.",
-        type: "alert"
-      });
-      
-      // Clear the state so it doesn't trigger again on re-renders
-      window.history.replaceState({}, document.title);
-      return;
-    }
-
-    // ── Handle: Edit existing Invoice ─────────────────────────────
-    if (location.state?.editInvoice) {
-      const inv = location.state.editInvoice;
-      setInvoiceNo(inv.invoiceNo);
-      setClientName(inv.clientName);
-      setClientAddress(inv.clientAddress || "");
-      setProjectTitle(inv.projectTitle || "");
-      setWorkDescription(inv.workDescription || "");
-      setItems(inv.items || []);
-      setDiscount(inv.discount || 0);
-      setLessAmount(inv.lessAmount || 0);
-      setAdvanceAmount(inv.advanceAmount || 0);
-      setReceivedAmount(inv.receivedAmount || 0);
-      setInvoiceDate(inv.invoiceDate || new Date().toLocaleDateString("en-GB"));
-      setIsEditMode(true);
-      setEditBadge(`Editing Invoice: ${inv.invoiceNo}`);
-      setOrganizationName(inv.organizationName || inv.items?.organizationName || "");
-      setGstNumber(inv.gstNumber || inv.items?.gstNumber || "");
-      setWorkOrderId(inv.workOrderId || inv.items?.workOrderId || "");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Fetch receipts when workOrderId or clientName changes
-  useEffect(() => {
-    if (!workOrderId && !clientName) {
-      setTotalReceipts(0);
-      return;
-    }
-    const fetchTotalReceipts = async () => {
-      try {
-        const res = await fetch("/api/finance/receipts");
-        if (res.ok) {
-          const data = await res.json();
-          let siteReceipts = [];
-          if (workOrderId) {
-            siteReceipts = data.filter(r => String(r.siteId) === String(workOrderId));
-          } else {
-            siteReceipts = data.filter(r => r.clientName === clientName || r.clientName === organizationName);
-          }
-          const sum = siteReceipts.reduce((acc, curr) => acc + parseFloat(curr.amountPaid || 0), 0);
-          setTotalReceipts(sum);
-          if (!isEditMode) {
-            setReceivedAmount(sum);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to fetch receipts:", err);
-      }
-    };
-    fetchTotalReceipts();
-  }, [workOrderId, clientName, organizationName, isEditMode]);
-
-  const fetchFromQuote = (quote) => {
-    if (!clientName) {
-      showDialog({
-        title: "Work Order Required",
-        message: "Please select a Work Order first before importing quotation items.",
-        type: "alert"
-      });
-      return;
-    }
-
-    const isNonGST = quote.billType === "Non-GST";
-    const type = isNonGST ? "Non-GST" : "GST";
-    setBillType(type);
-    
-    const mappedItems = quote.items.map((i) => {
-      const areaVal = parseFloat(i.area) || 1;
-      const rateVal = parseFloat(i.rate) || parseFloat(i.price) || 0;
-      const taxable = areaVal * rateVal;
-      const gst = isNonGST ? 0 : (taxable * 18) / 100;
-      return {
-        work: i.description,
-        unit: i.unit || "Sq.Ft",
-        area: i.area,
-        price: i.rate,
-        gstPerc: isNonGST ? 0 : 18,
-        taxableAmount: taxable,
-        gstAmount: gst,
-        amount: taxable + gst,
-        id: Date.now() + Math.random(),
-      };
-    });
-    setItems(mappedItems);
-    setShowQuoteSearch(false);
-    
-    // Fetch invoice number if blank
-    if (!invoiceNo) {
-      try {
-        fetch("/api/finance/invoices/next-number")
-          .then(res => res.json())
-          .then(data => setInvoiceNo(data.nextNumber));
-      } catch(e) {}
-    }
-  };
-
-  const fetchFromWorkOrder = (wo) => {
-    setClientName(wo.clientName);
-    setClientAddress(wo.address || "");
-    setProjectTitle(wo.name || "");
-    setWorkDescription(wo.description || "");
-    setOrganizationName(wo.organizationName || "");
-    setWorkOrderId(wo.id || "");
-    setShowWorkOrderSearch(false);
-
-    // Fetch invoice number if blank
-    if (!invoiceNo) {
-      try {
-        fetch("/api/finance/invoices/next-number")
-          .then(res => res.json())
-          .then(data => setInvoiceNo(data.nextNumber));
-      } catch(e) {}
     }
   };
 
@@ -437,18 +192,89 @@ export default function BillingPage() {
   const descRef = useRef();
   const handlePrint = useReactToPrint({ contentRef: componentRef });
 
+  useEffect(() => {
+    if (location.state?.newSession) {
+      createNewSession();
+      navigate(location.pathname, { replace: true, state: {} });
+      return;
+    }
+    if (location.state?.editInvoice) {
+      const q = location.state.editInvoice;
+      const newId = `session-${Date.now()}`;
+      const newSession = {
+        id: newId,
+        title: q.clientName || 'Edit Invoice',
+        data: {
+          items: q.items || [],
+          clientName: q.clientName || "",
+          organizationName: q.organizationName || "",
+          clientAddress: q.clientAddress || "",
+          projectTitle: q.projectTitle || "",
+          workDescription: q.workDescription || "",
+          billType: q.billType || "GST",
+          isInterState: q.isInterState || false,
+          workOrderId: q.workOrderId || "",
+          sourceQuoteId: q.sourceQuoteId || "",
+          invoiceNo: q.invoiceNo || "",
+          invoiceId: q.id || null,
+          invoiceDate: q.date || new Date().toISOString().split('T')[0],
+          emailId: q.emailId || "",
+          mobileNo: q.mobileNo || "",
+          customerGst: q.customerGst || "",
+          deliveryTimeline: q.deliveryTimeline || "3 to 4 Weeks",
+          installationMaterial: q.installationMaterial || 0,
+          deliveryLoading: q.deliveryLoading || 0,
+          additionalDiscount: q.additionalDiscount || 0
+        }
+      };
+      setSessions(prev => [...prev, newSession]);
+      setActiveSessionId(newId);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+    if (location.state?.convertQuote) {
+      const q = location.state.convertQuote;
+      const newId = `session-${Date.now()}`;
+      const newSession = {
+        id: newId,
+        title: q.clientName || 'New Invoice',
+        data: {
+          items: q.items || [],
+          clientName: q.clientName || "",
+          organizationName: q.organizationName || "",
+          clientAddress: q.clientAddress || "",
+          projectTitle: q.projectTitle || "",
+          workDescription: q.workDescription || "",
+          billType: q.billType || "GST",
+          isInterState: q.isInterState || false,
+          workOrderId: "",
+          sourceQuoteId: q.id || "",
+          invoiceNo: "",
+          invoiceId: null,
+          invoiceDate: new Date().toISOString().split('T')[0],
+          emailId: q.emailId || "",
+          mobileNo: q.mobileNo || "",
+          customerGst: q.customerGst || "",
+          deliveryTimeline: q.deliveryTimeline || "3 to 4 Weeks",
+          installationMaterial: q.installationMaterial || 0,
+          deliveryLoading: q.deliveryLoading || 0,
+          additionalDiscount: q.additionalDiscount || 0
+        }
+      };
+      setSessions(prev => [...prev, newSession]);
+      setActiveSessionId(newId);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, []);
+
   const handleItemChange = (id, field, value) => {
     setItems((prevItems) => {
       return prevItems.map((item) => {
         if (item.id === id) {
           const updatedItem = { ...item, [field]: value };
-          const area = parseFloat(updatedItem.area) || 1;
-          const price = parseFloat(updatedItem.price) || 0;
-          const taxableAmount = area * price;
-          const effectiveGST = billType === "Non-GST" ? 0 : (parseFloat(updatedItem.gstPerc) || 0);
-          const gstAmount = (taxableAmount * effectiveGST) / 100;
-          const amount = taxableAmount + gstAmount;
-          return { ...updatedItem, taxableAmount, gstAmount, amount };
+          const qty = parseFloat(updatedItem.qty || 0);
+          const rateToUse = updatedItem.discountPrice ? parseFloat(updatedItem.discountPrice) : parseFloat(updatedItem.rate || 0);
+          const amount = qty * rateToUse;
+          return { ...updatedItem, amount };
         }
         return item;
       });
@@ -456,14 +282,14 @@ export default function BillingPage() {
   };
 
   const handleKeyDown = (e, idx, field) => {
-    const fields = billType === "GST" ? ["work", "area", "price", "gstPerc"] : ["work", "area", "price"];
-    
+    const fields = ["section", "product", "specification", "qty", "rate", "discountPrice"];
+
     if (e.key === "Enter") {
       e.preventDefault();
       if (idx === items.length - 1) {
         addNewRow();
         setTimeout(() => {
-          const nextInput = document.getElementById(`input-${idx + 1}-work`);
+          const nextInput = document.getElementById(`input-${idx + 1}-description`);
           if (nextInput) nextInput.focus();
         }, 50);
       } else {
@@ -504,13 +330,14 @@ export default function BillingPage() {
       ...prev,
       {
         id: Date.now() + Math.random(),
-        work: "",
+        description: "",
+        section: "General",
+        product: "",
+        specification: "",
+        qty: "",
         unit: "Sq.Ft",
-        area: "",
-        price: "",
-        gstPerc: billType === "Non-GST" ? 0 : 18,
-        taxableAmount: 0,
-        gstAmount: 0,
+        rate: "",
+        discountPrice: "",
         amount: 0,
       },
     ]);
@@ -519,273 +346,188 @@ export default function BillingPage() {
   const removeItem = (id) => {
     const idx = items.findIndex(i => i.id === id);
     if (idx === 0) {
-      setItems(prev => prev.map(item => item.id === id ? { ...item, work: "", area: "", price: "", taxableAmount: 0, gstAmount: 0, amount: 0 } : item));
+      setItems(prev => prev.map(item => item.id === id ? { ...item, section: "General", product: "", specification: "", qty: "", rate: "", discountPrice: "", amount: 0 } : item));
     } else {
-      setItems(items.filter((item) => item.id !== id));
+      setItems(items.filter((i) => i.id !== id));
     }
   };
 
-  const subTotal = items.reduce((sum, item) => sum + (parseFloat(item.taxableAmount) || 0), 0);
-  const totalGst = items.reduce((sum, item) => sum + (parseFloat(item.gstAmount) || 0), 0);
+  const subTotal = items.reduce((s, i) => s + i.amount, 0);
   const totalArea = items.reduce(
-    (sum, item) => sum + (parseFloat(item.area) || 0),
-    0,
+    (s, i) => s + parseFloat(i.area || 0),
+    0
   );
 
-  const discountAmt = (subTotal * (parseFloat(discount) || 0)) / 100;
-  const grandTotal =
-    subTotal - discountAmt - (parseFloat(lessAmount) || 0) + totalGst;
-  const balanceAmount =
-    grandTotal -
-    (parseFloat(advanceAmount) || 0) -
-    (parseFloat(receivedAmount) || 0);
-
-
-
-  const isAmountMatched = grandTotal === totalReceipts;
-
-  const triggerPrint = async () => {
-    if (!isAmountMatched && grandTotal > 0) {
-      showDialog({
-        title: "Amount Mismatch Warning",
-        message: `Payment receipts total (₹${totalReceipts}) does not match the final invoice amount (₹${grandTotal}). Are you sure you want to generate this invoice anyway?`,
-        type: "confirm",
-        onConfirm: async () => {
-          await saveInvoice(true);
-          handlePrint();
-        }
-      });
-      return;
-    }
-    await saveInvoice(true);
-    handlePrint();
-  };
-
-  const saveInvoice = async (forceFinal = false) => {
-    const isForceFinal = forceFinal === true;
+  const saveInvoice = async () => {
     if (!clientName || items.length === 0) {
-      showDialog({ title: "Missing Information", message: "Please select a client and add at least one item.", type: "alert" });
+      showDialog({ title: "Missing Information", message: "Add client name and at least one item.", type: "alert" });
       return;
     }
-
-    // The backend handles the sequence number, but we can still save with the currently generated invoiceNo
-    // (If duplicate occurs due to concurrency, backend can be updated to reject or auto-assign)
-
-    const newInvoice = {
-      id: invoiceId || (isEditMode ? location.state?.editInvoice?.id : `INV-${Date.now()}`),
-      invoiceNo,
-      invoiceDate,
+    const newQuote = {
+      invoiceNo: invoiceNo || null, // Let backend assign the YY-MM-XXXX number atomically if empty
       clientName,
+      organizationName,
       clientAddress,
       projectTitle,
       workDescription,
-      organizationName,
-      gstNumber,
-      items: {
-        itemsList: items,
-        discount,
-        lessAmount,
-        advanceAmount,
-        receivedAmount,
-        balanceAmount,
-        subTotal,
-        totalGst,
-        grandTotal,
-        organizationName,
-        gstNumber,
-        workOrderId,
-      },
-      date: new Date().toISOString().split("T")[0], // For database
-      total: grandTotal,
+      items,
+      invoiceDate: invoiceDate,
+      total: subTotal,
       billType,
-      status: (isAmountMatched || grandTotal === 0 || isForceFinal) ? "Paid" : "Draft",
+      isInterState,
+      workOrderId,
+      sourceQuoteId,
+      status: "Draft",
+      emailId,
+      mobileNo,
+      customerGst,
+      deliveryTimeline,
+      installationMaterial,
+      deliveryLoading,
+      additionalDiscount
     };
-
     try {
-      if (isEditMode || invoiceId) {
-        await fetch(
-          `/api/finance/invoices/${newInvoice.id}`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(newInvoice),
-          },
-        );
-      } else {
-        // Do NOT pass invoiceNo — backend generates it atomically at save time
-        const payload = { ...newInvoice, invoiceNo: null };
-        const res = await fetch("/api/finance/invoices", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+      let res;
+      if (invoiceId) {
+        res = await fetch(`/api/finance/invoices/${invoiceId}`, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(newQuote)
         });
-        const saved = await res.json();
-        // Update displayed invoice number with backend-assigned value
-        if (saved.invoiceNo) {
-          setInvoiceNo(saved.invoiceNo);
-          if (saved.id) {
-            setInvoiceId(saved.id);
-          }
-          // Also patch the current session so the tab title / cached data stays correct
-          setSessions(prev => prev.map(s => s.id === activeSessionId
-            ? { ...s, data: s.data ? { ...s.data, invoiceNo: saved.invoiceNo, invoiceId: saved.id || invoiceId } : s.data }
-            : s
-          ));
-        }
+      } else {
+        res = await fetch('/api/finance/invoices', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(newQuote)
+        });
       }
-      showDialog({
-        title: "Success",
-        message: (isEditMode || invoiceId) ? "Invoice Updated Successfully!" : "Invoice Saved Successfully!",
-        type: "success"
-      });
+      
+      const saved = await res.json();
+      // Update displayed quote number with backend-assigned value
+      if (!invoiceId && saved.id) {
+        setInvoiceId(saved.id);
+      }
+      if (saved.invoiceNo) {
+        setInvoiceNo(saved.invoiceNo);
+        setSessions(prev => prev.map(s => s.id === activeSessionId
+          ? { ...s, data: s.data ? { ...s.data, invoiceNo: saved.invoiceNo, invoiceId: saved.id || invoiceId } : s.data }
+          : s
+        ));
+      }
+      showDialog({ title: "Success", message: "Invoice Saved Successfully!", type: "success" });
       setTimeout(() => {
-        if (location.state?.returnToSites) {
-          navigate("/sites");
-          return;
-        }
-        if (!isEditMode) {
-          // Properly refresh the billing page for the next invoice
-          setItems([{ id: Date.now(), work: "", unit: "Sq.Ft", area: "", price: "", gstPerc: 18, taxableAmount: 0, gstAmount: 0, amount: 0 }]);
+        if (!invoiceId) {
+          // Reset the form for the next invoice
+          setItems([{ id: Date.now(), section: "General", product: "", specification: "", qty: "", unit: "Sq.Ft", rate: "", discountPrice: "", amount: 0 }]);
           setClientName("");
+          setOrganizationName("");
           setClientAddress("");
           setProjectTitle("");
           setWorkDescription("");
-          setDiscount(0);
-          setLessAmount(0);
-          setAdvanceAmount(0);
-          setReceivedAmount(0);
-          setIsEditMode(false);
-          setEditBadge("");
-          setOrganizationName("");
-          setGstNumber("");
+          setBillType("GST");
+          setIsInterState(false);
           setWorkOrderId("");
-          setInvoiceId("");
-          
-          fetch("/api/finance/invoices/next-number")
-            .then((res) => res.json())
-            .then((data) => setInvoiceNo(data.nextNumber))
+          setSourceQuoteId("");
+          setEmailId("");
+          setMobileNo("");
+          setCustomerGst("");
+          setDeliveryTimeline("3 to 4 Weeks");
+          setInstallationMaterial(0);
+          setDeliveryLoading(0);
+          setAdditionalDiscount(0);
+          setInvoiceId(null);
+          fetch(`/api/finance/invoices/next-number`)
+            .then(res => res.json())
+            .then(data => { if (data && data.nextNumber) setInvoiceNo(data.nextNumber); })
             .catch(() => setInvoiceNo(""));
         }
       }, 1500);
-    } catch (err) {
-      console.error(err);
-      showDialog({ title: "Error", message: "An error occurred while saving.", type: "error" });
-    }
+    } catch(err) { console.error(err); }
   };
 
-  const loadOldInvoice = (inv) => {
-    // This function is kept for potential future use within the page, though it's typically loaded via router state.
-    setInvoiceNo(inv.invoiceNo);
-    setClientName(inv.clientName);
-    setClientAddress(inv.clientAddress);
-    setItems(inv.items?.itemsList || inv.items);
-    setDiscount(inv.items?.discount || 0);
-    setLessAmount(inv.items?.lessAmount || 0);
-    setAdvanceAmount(inv.items?.advanceAmount || 0);
-    setReceivedAmount(inv.items?.receivedAmount || 0);
-    setIsEditMode(true);
-    setEditBadge(`Editing Invoice: ${inv.invoiceNo}`);
-    setOrganizationName(inv.organizationName || inv.items?.organizationName || "");
-    setGstNumber(inv.gstNumber || inv.items?.gstNumber || "");
-    setInvoiceId(inv.id);
-  };
-
-  const deleteInvoice = async () => {
-    if (!isEditMode || !location.state?.editInvoice?.id) {
-      showDialog({ title: "No Invoice Selected", message: "No saved invoice selected to delete. Please select an invoice from the history.", type: "alert" });
+  // ── CONVERT TO INVOICE ──────────────────────────────────────────
+  const convertToInvoice = () => {
+    if (!clientName || items.length === 0) {
+      showDialog({ title: "Missing Information", message: "Add client name and at least one item before converting.", type: "alert" });
       return;
     }
-
-    showDialog({
-      title: "Delete Invoice",
-      message: "Are you sure you want to delete this invoice? This action cannot be undone.",
-      type: "confirm",
-      onConfirm: async () => {
-        try {
-          const res = await fetch(
-            `/api/finance/invoices/${location.state.editInvoice.id}`,
-            {
-              method: "DELETE",
-            },
-          );
-          if (res.ok) {
-            showDialog({ title: "Deleted", message: "Invoice deleted successfully", type: "success" });
-            setTimeout(() => navigate("/invoices"), 1500);
-          } else {
-            showDialog({ title: "Error", message: "Error deleting invoice", type: "error" });
-          }
-        } catch (err) {
-          console.error(err);
-          showDialog({ title: "Error", message: "Error connecting to server", type: "error" });
-        }
-      }
+    
+    // Navigate to billing with quote data + billType in state
+    navigate("/billing", {
+      state: {
+        convertQuote: {
+          clientName,
+          organizationName,
+          clientAddress,
+          projectTitle,
+          workDescription,
+          items,
+          billType,
+        },
+      },
     });
   };
 
-  const toggleBillType = (type) => {
-    setBillType(type);
-    const newGst = type === "Non-GST" ? 0 : 18;
-
-    setItems((prevItems) =>
-      prevItems.map((item) => {
-        const taxable = (parseFloat(item.area) || 1) * (parseFloat(item.price) || 0);
-        const gst = type === "Non-GST" ? 0 : (taxable * 18) / 100;
-        return {
-          ...item,
-          gstPerc: type === "Non-GST" ? 0 : 18,
-          gstAmount: gst,
-          amount: taxable + gst,
-        };
-      }),
-    );
+  const convertToWorkOrder = () => {
+    if (!clientName || items.length === 0) {
+      showDialog({ title: "Missing Information", message: "Add client name and at least one item before converting.", type: "alert" });
+      return;
+    }
+    
+    navigate("/sites", {
+      state: {
+        convertQuote: {
+          id: invoiceId,
+          clientName,
+          organizationName,
+          clientAddress,
+          projectTitle,
+          workDescription,
+          totalAmount: subTotal,
+        },
+      },
+    });
   };
 
   const clearForm = () => {
     showDialog({
       title: "Clear Form",
-      message: "Are you sure you want to clear all data in this invoice? This cannot be undone.",
+      message: "Clear all data?",
       type: "confirm",
       onConfirm: () => {
-        setItems([{ id: Date.now(), work: "", unit: "Sq.Ft", area: "", price: "", gstPerc: 18, taxableAmount: 0, gstAmount: 0, amount: 0 }]);
+        setItems([{ id: Date.now(), section: "General", product: "", specification: "", qty: "", unit: "Sq.Ft", rate: "", discountPrice: "", amount: 0 }]);
         setClientName("");
-        setClientAddress("");
-        setProjectTitle("");
-        setWorkDescription("");
-        setDiscount(0);
-        setLessAmount(0);
-        setAdvanceAmount(0);
-        setReceivedAmount(0);
-        setIsEditMode(false);
-        setEditBadge("");
         setOrganizationName("");
-        setGstNumber("");
-        setWorkOrderId("");
+        setClientAddress("");
+        setEmailId("");
+        setMobileNo("");
+        setCustomerGst("");
+        setDeliveryTimeline("3 to 4 Weeks");
+        setInstallationMaterial(0);
+        setDeliveryLoading(0);
+        setAdditionalDiscount(0);
       }
     });
   };
 
   return (
-    <div className="bg-slate-950 text-slate-200 min-h-screen font-sans flex flex-col">
+    <div className="page-wrapper min-h-screen font-sans flex flex-col">
       {/* Sessions Tab Bar */}
-      <div className="bg-slate-800 px-2 pt-2 flex items-center justify-between border-b border-slate-700 relative z-50">
+      <div className="bg-[var(--bg-surface)] px-2 pt-2 flex items-center justify-between border-b border-[var(--border-color)] relative z-50">
         <div className="flex items-center gap-1 overflow-x-auto no-scrollbar flex-1">
-          {sessions.map((s) => (
+          {sessions.map(s => (
             <div
               key={s.id}
               onClick={() => setActiveSessionId(s.id)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-t-lg text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-all ${activeSessionId === s.id
-                  ? "bg-gray-200 text-slate-800 shadow-[0_-2px_10px_rgba(0,0,0,0.2)]"
-                  : "bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-white"
-                }`}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-t-lg text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-all ${
+                activeSessionId === s.id 
+                ? "bg-[var(--bg-card)] text-[var(--text-primary)] border border-b-0 border-[var(--border-color)] shadow-sm" 
+                : "bg-[var(--bg-surface)] text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-primary)]"
+              }`}
             >
-              <FileText
-                size={12}
-                className={
-                  activeSessionId === s.id ? "text-blue-600" : "text-slate-500"
-                }
-              />
+              <FileText size={12} className={activeSessionId === s.id ? "text-[var(--accent)]" : "opacity-40"} />
               <span className="max-w-[100px] truncate">{s.title}</span>
-              <button
+              <button 
                 onClick={(e) => closeSession(s.id, e)}
                 className={`p-0.5 rounded-full hover:bg-black/10 transition ${activeSessionId === s.id ? "text-slate-400 hover:text-red-500" : "text-slate-500 hover:text-white"}`}
               >
@@ -793,9 +535,9 @@ export default function BillingPage() {
               </button>
             </div>
           ))}
-          <button
+          <button 
             onClick={createNewSession}
-            className="p-1.5 text-blue-400 hover:text-blue-300 transition hover:bg-white/5 rounded-full mb-1"
+            className="p-1.5 text-[var(--accent)] hover:opacity-70 transition hover:bg-[var(--accent-soft)] rounded-full mb-1"
             title="New Invoice Session"
           >
             <Plus size={16} strokeWidth={3} />
@@ -805,194 +547,255 @@ export default function BillingPage() {
           <NotificationWidget compact={true} />
         </div>
       </div>
-
-      {/* Edit / Conversion Mode Banner */}
-      {editBadge && (
-        <div
-          className={`px-4 py-2 flex items-center justify-between text-xs font-bold ${isEditMode
-              ? "bg-violet-600 text-white"
-              : "bg-emerald-600 text-white"
-            }`}
-        >
-          <div className="flex items-center gap-2">
-            <Edit3 size={13} />
-            {editBadge}
-          </div>
-          <button
-            onClick={() => {
-              setEditBadge("");
-              setIsEditMode(false);
-            }}
-            className="opacity-70 hover:opacity-100 transition"
-          >
-            <X size={14} />
-          </button>
-        </div>
-      )}
-
-      {!isAmountMatched && clientName && grandTotal > 0 && (
-        <div className="px-4 py-2 flex items-center justify-between text-xs font-bold bg-rose-600 text-white">
-          <div className="flex items-center gap-2">
-            <RotateCcw size={13} />
-            Discrepancy: Received Receipts (₹{totalReceipts.toFixed(2)}) ≠ Invoice Total (₹{grandTotal.toFixed(2)}). Printing disabled.
-          </div>
-        </div>
-      )}
-
-      {/* Invoice Info Bar */}
+      {/* ── TOP INFO BAR ── */}
       <div className="themed-card p-2 grid grid-cols-12 gap-2 border-b border-[var(--border-color)] items-end">
         <div className="col-span-2">
-          <label className="block text-[10px] font-bold text-slate-500 uppercase">
-            Invoice Number
-          </label>
-          <div className="flex">
-            <input
-              disabled
-              value={invoiceNo}
-              className="w-full bg-[var(--accent)]/10 border border-[var(--accent)]/20 text-[var(--accent)] px-2 py-1 text-sm font-bold outline-none"
-            />
-            <button
-              onClick={() => navigate("/invoices")}
-              className="btn-accent px-2 hover:opacity-90 transition"
-              title="View Invoice History"
-            >
-              <History size={14} />
-            </button>
-          </div>
+          <label className="block text-[10px] font-bold text-muted uppercase">Invoice Number</label>
+          <input disabled value={invoiceNo}
+            className="w-full bg-[var(--accent-soft)] border border-[var(--accent)]/30 text-amber-800 dark:text-[var(--accent)] px-2 py-1 text-sm font-bold outline-none rounded" />
         </div>
+
         <div className="col-span-2">
-          <label className="block text-[10px] font-bold text-slate-500 uppercase">
-            Invoice Date
-          </label>
-          <input
-            disabled
+          <label className="block text-[10px] font-bold text-muted uppercase">Date</label>
+          <input 
+            type="date" 
             value={invoiceDate}
-            className="w-full bg-[var(--accent)]/10 border border-[var(--accent)]/20 text-[var(--accent)] px-2 py-1 text-sm font-bold outline-none"
-          />
+            onChange={(e) => {
+              const newDate = e.target.value;
+              setInvoiceDate(newDate);
+              if (!invoiceId) {
+                 fetch(`/api/finance/invoices/next-number?date=${newDate}`)
+                  .then(res => res.json())
+                  .then(data => { if (data && data.nextNumber) setInvoiceNo(data.nextNumber); })
+                  .catch(() => setInvoiceNo(""));
+              }
+            }}
+            className="w-full bg-[var(--accent-soft)] border border-[var(--accent)]/30 text-amber-800 dark:text-[var(--accent)] px-2 py-1 text-sm font-bold rounded" />
         </div>
-        {/* Bill Type Toggle */}
+
+        {/* Bill Type + GST Mode Toggle */}
         <div className="col-span-2">
-          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
-            Bill Type
-          </label>
+          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Bill Type</label>
           <div className="flex bg-white/10 rounded p-0.5 gap-0.5">
             <button
-              onClick={() => toggleBillType("GST")}
-              className={`flex-1 py-1 text-[10px] font-black uppercase rounded transition ${billType === "GST" ? "btn-accent" : "text-slate-500 hover:text-slate-700"}`}
-            >
-              GST
-            </button>
+              onClick={() => setBillType("GST")}
+              className={`flex-1 py-1 text-[10px] font-black uppercase rounded transition ${billType === "GST" ? "bg-amber-600 text-white" : "text-slate-500 hover:text-slate-700"}`}
+            >GST</button>
             <button
-              onClick={() => toggleBillType("Non-GST")}
+              onClick={() => setBillType("Non-GST")}
               className={`flex-1 py-1 text-[10px] font-black uppercase rounded transition ${billType === "Non-GST" ? "bg-rose-600 text-white" : "text-slate-500 hover:text-slate-700"}`}
-            >
-              Non-GST
-            </button>
+            >Non-GST</button>
           </div>
+          {billType === "GST" && (
+            <button
+              onClick={() => setIsInterState(v => !v)}
+              className={`mt-1 w-full py-0.5 text-[9px] font-black uppercase rounded border transition ${
+                isInterState
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-transparent text-slate-500 border-slate-300 hover:border-blue-400 hover:text-blue-500"
+              }`}
+            >
+              {isInterState ? "✓ IGST (Inter-State)" : "IGST Inter-State?"}
+            </button>
+          )}
         </div>
+
         <div className="col-span-3">
           <label className="block text-[10px] font-bold text-slate-500 uppercase">
             Client Name
           </label>
-          <div className="flex">
-            <input
-              placeholder="Select Work Order..."
-              readOnly
-              value={clientName}
-              className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none focus:border-blue-400 cursor-not-allowed opacity-60"
-            />
-            <button
-              onClick={() => setShowWorkOrderSearch(true)}
-              className="btn-accent px-2 text-[10px] font-bold whitespace-nowrap"
-            >
-              SELECT WO
-            </button>
-            <button
-              onClick={() => setShowQuoteSearch(true)}
-              className="bg-amber-600 text-white px-2 text-[10px] font-bold hover:bg-amber-700 whitespace-nowrap"
-            >
-              FROM QUOTE
-            </button>
-          </div>
+          <input
+            list="crm-clients-list-invoice"
+            placeholder="Enter client name..."
+            value={clientName}
+            onChange={(e) => {
+              const val = e.target.value;
+              setClientName(val);
+              const matchedClient = crmClients.find(c => c.name.toLowerCase() === val.toLowerCase());
+              if (matchedClient) {
+                if (!organizationName && matchedClient.organizationName) {
+                  setOrganizationName(matchedClient.organizationName);
+                }
+              }
+            }}
+            className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none focus:border-amber-400"
+          />
+          <datalist id="crm-clients-list-invoice">
+            {crmClients.map(c => (
+              <option key={c.id} value={c.name}>{c.organizationName ? `${c.organizationName}` : ""}</option>
+            ))}
+          </datalist>
         </div>
-        <div className="col-span-2">
+
+        <div className="col-span-3">
           <label className="block text-[10px] font-bold text-slate-500 uppercase">
-            Site Address
+            Email ID
           </label>
           <input
-            readOnly
-            placeholder="Work site address..."
-            value={clientAddress}
-            className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none focus:border-blue-400 cursor-not-allowed opacity-60"
+            placeholder="client@example.com"
+            value={emailId}
+            onChange={(e) => setEmailId(e.target.value)}
+            className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none focus:border-amber-400"
           />
         </div>
-        <div className="col-span-1 flex flex-col items-end justify-end text-[10px] font-bold pb-0.5">
-          {billType === "GST" ? (
-            <>
-              <div className="text-slate-500 font-bold tracking-wide">
-                CGST:{" "}
-                <span className="text-[var(--accent)] text-xs ml-1">
-                  ₹{(totalGst / 2).toFixed(0)}
-                </span>
-              </div>
-              <div className="text-slate-500 font-bold tracking-wide">
-                SGST:{" "}
-                <span className="text-[var(--accent)] text-xs ml-1">
-                  ₹{(totalGst / 2).toFixed(0)}
-                </span>
-              </div>
-            </>
-          ) : (
-            <div className="text-rose-600 font-black uppercase tracking-wider">
-              Non-GST Bill
-            </div>
+      </div>
+
+      <div className="themed-card p-2 grid grid-cols-12 gap-2 border-b border-[var(--border-color)] items-end">
+        <div className="col-span-3">
+          <label className="block text-[10px] font-bold text-slate-500 uppercase">
+            Mobile No
+          </label>
+          <input
+            placeholder="+91..."
+            value={mobileNo}
+            onChange={(e) => setMobileNo(e.target.value)}
+            className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none focus:border-amber-400"
+          />
+        </div>
+        
+        <div className="col-span-3">
+          <label className="block text-[10px] font-bold text-slate-500 uppercase">
+            Customer GST
+          </label>
+          <input
+            placeholder="GSTIN..."
+            value={customerGst}
+            onChange={(e) => setCustomerGst(e.target.value)}
+            className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none focus:border-amber-400"
+          />
+        </div>
+        
+        <div className="col-span-3">
+          <label className="block text-[10px] font-bold text-slate-500 uppercase">
+            Delivery Timeline
+          </label>
+          <input
+            placeholder="3 to 4 Weeks"
+            value={deliveryTimeline}
+            onChange={(e) => setDeliveryTimeline(e.target.value)}
+            className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none focus:border-amber-400"
+          />
+        </div>
+
+        <div className="col-span-3">
+          <label className="block text-[10px] font-bold text-slate-500 uppercase">
+            Organization Name (Optional)
+          </label>
+          <input
+            placeholder="e.g. Acme Corporation"
+            value={organizationName}
+            onChange={(e) => setOrganizationName(e.target.value)}
+            className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none focus:border-amber-400"
+          />
+        </div>
+      </div>
+
+      {/* ── WORK ORDER + LOAD FROM QUOTE BAR ── */}
+      <div className="themed-card p-2 grid grid-cols-12 gap-2 border-b border-[var(--border-color)] items-end bg-blue-500/5">
+        <div className="col-span-5">
+          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Link Work Order (Site)</label>
+          <select
+            value={workOrderId}
+            onChange={(e) => {
+              const siteId = e.target.value;
+              setWorkOrderId(siteId);
+              const site = sites.find(s => s.id?.toString() === siteId);
+              if (site) {
+                if (!clientName && site.clientName) setClientName(site.clientName);
+                if (!clientAddress && site.address) setClientAddress(site.address);
+                if (!projectTitle && site.name) setProjectTitle(site.name);
+              }
+            }}
+            className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none focus:border-amber-400 bg-[var(--bg-card)]"
+          >
+            <option value="">— Select Work Order / Site —</option>
+            {sites.map(s => (
+              <option key={s.id} value={s.id}>
+                {s.name || "Unnamed"} {s.clientName ? `| ${s.clientName}` : ""} {s.status ? `(${s.status})` : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="col-span-5">
+          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Load Items from Quote</label>
+          <select
+            value={sourceQuoteId}
+            onChange={(e) => {
+              const qId = e.target.value;
+              setSourceQuoteId(qId);
+              if (!qId) return;
+              const q = quotations.find(qt => qt.id?.toString() === qId);
+              if (q) {
+                if (q.items && q.items.length > 0) setItems(q.items.map(i => ({ ...i, id: Date.now() + Math.random() })));
+                if (!clientName && q.clientName) setClientName(q.clientName);
+                if (!organizationName && q.organizationName) setOrganizationName(q.organizationName);
+                if (!clientAddress && q.clientAddress) setClientAddress(q.clientAddress);
+                if (!projectTitle && q.projectTitle) setProjectTitle(q.projectTitle);
+                if (q.installationMaterial) setInstallationMaterial(q.installationMaterial);
+                if (q.deliveryLoading) setDeliveryLoading(q.deliveryLoading);
+                if (q.additionalDiscount) setAdditionalDiscount(q.additionalDiscount);
+                if (q.billType) setBillType(q.billType);
+              }
+            }}
+            className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none focus:border-amber-400 bg-[var(--bg-card)]"
+          >
+            <option value="">— Select Quotation to Import —</option>
+            {quotations.map(q => (
+              <option key={q.id} value={q.id}>
+                {q.quoteNo || `#${q.id}`} | {q.clientName || "No Client"} {q.projectTitle ? `— ${q.projectTitle}` : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="col-span-2 flex flex-col items-end justify-end gap-1 pb-0.5">
+          {workOrderId && (
+            <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+              Work Order Linked
+            </span>
+          )}
+          {sourceQuoteId && (
+            <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
+              Quote Loaded
+            </span>
           )}
         </div>
       </div>
 
-
-      {/* Customer Organization & GST Number & Ref WO */}
       <div className="themed-card p-2 grid grid-cols-12 gap-2 border-b border-[var(--border-color)] items-end">
-        <div className={billType === "GST" ? "col-span-5" : "col-span-10"}>
+        <div className="col-span-5">
           <label className="block text-[10px] font-bold text-slate-500 uppercase">
-            Customer Organization Name {billType === "Non-GST" && "(Optional)"}
+            Site Address
           </label>
           <input
-            placeholder="e.g. Acme Corporation Ltd"
-            value={organizationName}
-            onChange={(e) => setOrganizationName(e.target.value)}
-            className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none focus:border-blue-400"
+            placeholder="Work site / project address..."
+            value={clientAddress}
+            onChange={(e) => setClientAddress(e.target.value)}
+            className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none focus:border-amber-400"
           />
         </div>
-        {billType === "GST" && (
-          <div className="col-span-5">
-            <label className="block text-[10px] font-bold text-slate-500 uppercase">
-              Organization GST Number
-            </label>
-            <input
-              placeholder="e.g. 27AAAAA1111A1Z1"
-              value={gstNumber}
-              onChange={(e) => setGstNumber(e.target.value)}
-            className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none focus:border-blue-400 font-mono"
-            />
-          </div>
-        )}
-        <div className="col-span-2">
-          <label className="block text-[10px] font-bold text-slate-500 uppercase">
-            Work Order ID
-          </label>
-          <input
-            readOnly
-            placeholder="None"
-            value={workOrderId}
-            className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none font-bold cursor-not-allowed opacity-60"
+
+        <div className="col-span-5">
+          <label className="block text-[10px] font-bold text-slate-500 uppercase">Project Title</label>
+          <input 
+            placeholder="e.g. 3BHK Apartment Interior" 
+            value={projectTitle}
+            onChange={(e) => setProjectTitle(e.target.value)}
+            className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none focus:border-amber-500 font-bold" 
           />
+        </div>
+
+        <div className="col-span-2 flex flex-col items-end justify-end pb-0.5">
+          <span className="text-[9px] font-bold text-amber-700 dark:text-[var(--accent)] uppercase tracking-widest">Sub Total</span>
+          <span className="text-sm font-black text-amber-700 dark:text-[var(--accent)]">₹{subTotal.toLocaleString()}</span>
         </div>
       </div>
 
 
-
-      {/* Main Table Area */}
+      {/* ── MAIN TABLE ── */}
       <div className="flex-grow bg-[var(--bg-surface)] overflow-y-auto">
         <table className="w-full text-[11px]">
           <thead className="themed-thead border-b border-[var(--border-color)] sticky top-0">
@@ -1003,42 +806,38 @@ export default function BillingPage() {
               <th className="px-2 py-1 border-r border-gray-300 text-center w-10">
                 S#
               </th>
+              <th className="px-2 py-1 border-r border-gray-300 text-left w-24">
+                Section
+              </th>
+              <th className="px-2 py-1 border-r border-gray-300 text-left w-32">
+                Product
+              </th>
               <th className="px-2 py-1 border-r border-gray-300 text-left">
-                Work Description
+                Specification
+              </th>
+              <th className="px-2 py-1 border-r border-gray-300 text-center w-16">
+                Qty
               </th>
               <th className="px-2 py-1 border-r border-gray-300 text-center w-16">
                 Unit
               </th>
-              <th className="px-2 py-1 border-r border-gray-300 text-center w-16">
-                Area
+              <th className="px-2 py-1 border-r border-gray-300 text-right w-24">
+                Unit Price
               </th>
               <th className="px-2 py-1 border-r border-gray-300 text-right w-24">
-                Price
+                Disc. Price
               </th>
-              <th className="px-2 py-1 border-r border-gray-300 text-right w-24">
-                Amount
-              </th>
-              {billType === "GST" && (
-                <>
-                  <th className="px-2 py-1 border-r border-gray-300 text-center w-12">
-                    GST%
-                  </th>
-                  <th className="px-2 py-1 border-r border-gray-300 text-right w-20">
-                    GST ₹
-                  </th>
-                </>
-              )}
-              <th className="px-2 py-1 text-right w-24">Net Amt</th>
+              <th className="px-2 py-1 text-right w-28">Amount (₹)</th>
             </tr>
           </thead>
-          <tbody className="divide-y themed-divider">
+          <tbody className="divide-y divide-gray-200">
             {items.map((item, idx) => (
               <tr key={item.id} className="themed-row">
-                <td className="px-2 py-1 border-r border-[var(--border-color)] text-center">
+                <td className="px-2 py-1 border-r border-white/10 text-center">
                   <div className="flex justify-center gap-2">
                     <button
                       onClick={() => removeItem(item.id)}
-                      className="text-red-500 hover:text-red-700 p-1"
+                      className="text-red-400 hover:text-red-600 p-1"
                       title={idx === 0 ? "Clear Row" : "Remove Row"}
                     >
                       <Trash2 size={14} />
@@ -1049,77 +848,37 @@ export default function BillingPage() {
                   {idx + 1}
                 </td>
                 <td className="px-1 py-1 border-r border-white/10">
-                  <input
-                    id={`input-${idx}-work`}
-                    type="text"
-                    placeholder={idx === 0 ? "Work description..." : ""}
-                    value={item.work || ""}
-                    onChange={(e) => handleItemChange(item.id, "work", e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(e, idx, "work")}
-                    className="w-full bg-transparent border-none outline-none text-themed font-medium px-1 placeholder-slate-600"
-                  />
-                </td>
-                <td className="px-1 py-1 border-r border-white/10">
-                  <select
-                    id={`input-${idx}-unit`}
-                    tabIndex="-1"
-                    value={item.unit || "Sq.Ft"}
-                    onChange={(e) => handleItemChange(item.id, "unit", e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(e, idx, "unit")}
-                    className="w-full bg-transparent border-none outline-none text-slate-400 text-center appearance-none cursor-pointer"
+                  <select 
+                    value={item.section || "General"} 
+                    onChange={e => handleItemChange(item.id, "section", e.target.value)} 
+                    className="w-full bg-transparent border-none outline-none text-themed text-xs px-1 appearance-none cursor-pointer"
                   >
-                    <option className="bg-slate-800 text-white">Sq.Ft</option>
-                    <option className="bg-slate-800 text-white">L.Ft</option>
-                    <option className="bg-slate-800 text-white">Nos</option>
-                    <option className="bg-slate-800 text-white">LS</option>
+                    {sectionsList.map((sec, i) => (
+                      <option key={i} className="bg-[var(--bg-surface)] text-[var(--text-primary)]" value={sec}>{sec}</option>
+                    ))}
                   </select>
                 </td>
-                <td className="px-1 py-1 border-r border-[var(--border-color)]">
-                  <input
-                    id={`input-${idx}-area`}
-                    type="text"
-                    inputMode="decimal"
-                    placeholder="0"
-                    value={item.area || ""}
-                    onChange={(e) => handleItemChange(item.id, "area", e.target.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1'))}
-                    onKeyDown={(e) => handleKeyDown(e, idx, "area")}
-                    className="w-full bg-transparent border-none outline-none text-center text-themed px-1"
-                  />
+                <td className="px-1 py-1 border-r border-white/10">
+                  <input value={item.product || ""} onChange={e => handleItemChange(item.id, "product", e.target.value)} placeholder="Product" className="w-full bg-transparent border-none outline-none text-themed font-bold text-xs px-1" />
                 </td>
                 <td className="px-1 py-1 border-r border-white/10">
-                  <input
-                    id={`input-${idx}-price`}
-                    type="text"
-                    inputMode="decimal"
-                    placeholder="0.00"
-                    value={item.price || ""}
-                    onChange={(e) => handleItemChange(item.id, "price", e.target.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1'))}
-                    onKeyDown={(e) => handleKeyDown(e, idx, "price")}
-                    className="w-full bg-transparent border-none outline-none text-right text-themed px-1"
-                  />
+                  <textarea value={item.specification || ""} onChange={e => handleItemChange(item.id, "specification", e.target.value)} placeholder="Specification" className="w-full bg-transparent border-none outline-none text-themed text-xs px-1 h-8 resize-none" />
                 </td>
-                <td className="px-2 py-2 border-r border-white/10 text-right font-semibold text-slate-400">
-                  {(item.taxableAmount || 0).toFixed(2)}
+                <td className="px-1 py-1 border-r border-white/10">
+                  <input value={item.qty || ""} onChange={e => handleItemChange(item.id, "qty", e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0" className="w-full bg-transparent border-none outline-none text-center text-themed px-1" />
                 </td>
-                {billType === "GST" && (
-                  <>
-                    <td className="px-1 py-1 border-r border-white/10 text-center text-blue-600">
-                      <input
-                        id={`input-${idx}-gstPerc`}
-                        type="text"
-                        inputMode="decimal"
-                        value={item.gstPerc !== undefined ? item.gstPerc : 18}
-                        onChange={(e) => handleItemChange(item.id, "gstPerc", e.target.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1'))}
-                        onKeyDown={(e) => handleKeyDown(e, idx, "gstPerc")}
-                        className="w-full bg-transparent border-none outline-none text-center text-blue-500 px-1"
-                      />
-                    </td>
-                    <td className="px-2 py-2 border-r border-white/10 text-right text-blue-700 font-medium">
-                      {(item.gstAmount || 0).toFixed(2)}
-                    </td>
-                  </>
-                )}
-                <td className="px-2 py-2 text-right font-black text-themed">
+                <td className="px-1 py-1 border-r border-white/10">
+                  <select value={item.unit || "Sq.Ft"} onChange={e => handleItemChange(item.id, "unit", e.target.value)} className="w-full bg-transparent border-none outline-none text-slate-400 text-center appearance-none">
+                    <option className="bg-slate-800 text-white">Sq.Ft</option><option className="bg-slate-800 text-white">L.Ft</option><option className="bg-slate-800 text-white">Nos</option><option className="bg-slate-800 text-white">Pcs</option><option className="bg-slate-800 text-white">Set</option><option className="bg-slate-800 text-white">LS</option><option className="bg-slate-800 text-white">Rmt</option>
+                  </select>
+                </td>
+                <td className="px-1 py-1 border-r border-white/10">
+                  <input value={item.rate || ""} onChange={e => handleItemChange(item.id, "rate", e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0.00" className="w-full bg-transparent border-none outline-none text-right text-themed px-1" />
+                </td>
+                <td className="px-1 py-1 border-r border-white/10">
+                  <input value={item.discountPrice || ""} onChange={e => handleItemChange(item.id, "discountPrice", e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0.00" className="w-full bg-transparent border-none outline-none text-right text-themed px-1" />
+                </td>
+                <td className="px-2 py-2 text-right font-black text-amber-700 dark:text-[var(--accent)]">
                   {(item.amount || 0).toFixed(2)}
                 </td>
               </tr>
@@ -1127,237 +886,189 @@ export default function BillingPage() {
             {items.length === 0 && (
               <tr>
                 <td
-                  colSpan="9"
+                  colSpan="7"
                   className="py-20 text-center text-muted font-bold uppercase tracking-widest italic"
                 >
-                  No work details added to invoice
+                  No work items added to invoice
                 </td>
               </tr>
             )}
           </tbody>
         </table>
-        <div className="p-2 border-b border-[var(--border-color)] flex justify-center">
+        <div className="p-2 border-b border-[var(--border-color)] flex justify-center gap-4">
           <button 
             onClick={addNewRow}
-            className="flex items-center gap-2 px-4 py-1.5 bg-[var(--accent)]/10 text-[var(--accent)] rounded-lg font-bold text-xs hover:bg-[var(--accent)]/20 transition-all border border-[var(--accent)]/20"
+            className="flex items-center gap-2 px-4 py-1.5 bg-[var(--accent-soft)] text-amber-800 dark:text-[var(--accent)] rounded-lg font-bold text-xs hover:opacity-80 transition-all border border-[var(--accent)]/30"
           >
             <Plus size={14} strokeWidth={3} /> Add Row
+          </button>
+          <button 
+            onClick={() => setIsSectionModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg font-bold text-xs hover:opacity-80 transition-all border border-[var(--border-color)]"
+          >
+            <Settings size={14} /> Manage Sections
           </button>
         </div>
       </div>
 
-      {/* Footer Section */}
-      <div className="themed-card p-2 border-t border-[var(--border-color)] flex justify-between items-end gap-4">
-        {/* Left: Stats */}
-        <div className="flex gap-4 mb-2">
-          <div className="bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 flex gap-2 items-center">
-            <span className="text-[10px] font-bold text-indigo-400 uppercase">Tot Amount:</span>
-            <span className="text-sm font-bold text-indigo-300">₹{subTotal.toFixed(2)}</span>
+      {/* ── FOOTER ── */}
+      <div className="bg-[var(--bg-surface)] p-2 border-t border-[var(--border-color)] flex justify-between items-center gap-4">
+        {/* Stats */}
+        <div className="flex gap-4 items-center">
+          <div className="bg-[var(--accent-soft)] border border-[var(--accent)]/30 px-3 py-1 flex gap-2 items-center rounded">
+            <span className="text-[10px] font-bold text-amber-800 dark:text-[var(--accent)] uppercase">Total Qty:</span>
+            <span className="text-sm font-bold text-[var(--text-primary)]">{items.reduce((s, i) => s + parseFloat(i.qty || 0), 0)}</span>
           </div>
-          {billType === "GST" && (
-              <div className="bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 flex gap-2 items-center">
-                <span className="text-[10px] font-bold text-indigo-400 uppercase">Tot GST:</span>
-                <span className="text-sm font-bold text-indigo-300">₹{totalGst.toFixed(2)}</span>
-              </div>
-          )}
-          {billType === "Non-GST" && (
-              <div className="bg-rose-500/10 border border-rose-500/20 px-3 py-1 flex gap-2 items-center">
-                <span className="text-[10px] font-black text-rose-400 uppercase">Non-GST Bill — No Tax</span>
-              </div>
-          )}
-          {clientName && (
-              <div className={`border px-3 py-1 flex gap-2 items-center ${isAmountMatched && grandTotal > 0 ? "bg-emerald-500/10 border-emerald-500/20" : "bg-rose-500/10 border-rose-500/20"}`}>
-                <span className={`text-[10px] font-bold uppercase ${isAmountMatched && grandTotal > 0 ? "text-emerald-400" : "text-rose-400"}`}>Total Receipts:</span>
-                <span className={`text-sm font-black ${isAmountMatched && grandTotal > 0 ? "text-emerald-300" : "text-rose-300"}`}>₹{totalReceipts.toFixed(2)}</span>
-              </div>
-          )}
-        </div>
-
-        {/* Center: Adjustments */}
-        <div className="grid grid-cols-2 gap-x-4 gap-y-1 bg-white/5 border border-white/10 p-2 rounded-lg">
-          <div className="flex items-center justify-between gap-2">
-            <label className="text-[10px] font-bold text-muted uppercase">Invoice Disc %</label>
-            <input type="text" inputMode="decimal" pattern="^\d*\.?\d*$" value={discount} onChange={(e) => setDiscount(e.target.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1'))}
-              className="w-20 themed-input border border-[var(--border-color)] px-1 py-0.5 text-xs text-right outline-none focus:border-orange-400 rounded" />
+          
+          <div className="flex flex-col gap-1 ml-4">
+             <label className="text-[9px] font-bold text-slate-500 uppercase">Instal. Mat. (₹)</label>
+             <input value={installationMaterial} onChange={e=>setInstallationMaterial(e.target.value)} className="w-24 themed-input px-1 py-0.5 text-xs text-right border border-[var(--border-color)]" />
           </div>
-          <div className="flex items-center justify-between gap-2">
-            <label className="text-[10px] font-bold text-muted uppercase">Invoice Less ₹</label>
-            <input type="text" inputMode="decimal" pattern="^\d*\.?\d*$" value={lessAmount} onChange={(e) => setLessAmount(e.target.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1'))}
-              className="w-20 themed-input border border-[var(--border-color)] px-1 py-0.5 text-xs text-right outline-none focus:border-orange-400 rounded" />
+          <div className="flex flex-col gap-1">
+             <label className="text-[9px] font-bold text-slate-500 uppercase">Delivery (₹)</label>
+             <input value={deliveryLoading} onChange={e=>setDeliveryLoading(e.target.value)} className="w-24 themed-input px-1 py-0.5 text-xs text-right border border-[var(--border-color)]" />
           </div>
-          <div className="flex items-center justify-between gap-2">
-            <label className="text-[10px] font-bold text-muted uppercase">Amount Received</label>
-            <input type="text" inputMode="decimal" pattern="^\d*\.?\d*$" value={receivedAmount} onChange={(e) => setReceivedAmount(e.target.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1'))}
-              className="w-20 themed-input border border-[var(--border-color)] px-1 py-0.5 text-xs text-right outline-none focus:border-orange-400 rounded" />
+          <div className="flex flex-col gap-1">
+             <label className="text-[9px] font-bold text-slate-500 uppercase">Discount (₹)</label>
+             <input value={additionalDiscount} onChange={e=>setAdditionalDiscount(e.target.value)} className="w-24 themed-input px-1 py-0.5 text-xs text-right border border-[var(--border-color)]" />
           </div>
         </div>
 
-        {/* Right: Big Total */}
+        {/* Grand Total */}
         <div className="flex items-center gap-4">
-          <div className="text-4xl text-slate-400 font-light">₹</div>
+          <div className="text-4xl text-amber-700 dark:text-[var(--accent)] font-light">₹</div>
           <div className="themed-card border border-[var(--border-color)] px-10 py-2 rounded shadow-inner text-right min-w-[200px]">
-            <div className="text-[10px] font-bold text-amber-400 uppercase -mb-1">Net Payable</div>
-            <div className="text-5xl font-black text-emerald-400 tracking-tighter">{grandTotal.toFixed(2)}</div>
-            <div className="text-[10px] font-bold text-muted uppercase mt-1">Bal: ₹{balanceAmount.toFixed(2)}</div>
+            <div className="text-[10px] font-bold text-amber-700 dark:text-[var(--accent)] uppercase -mb-1">Estimated Total</div>
+            <div className="text-5xl font-black text-amber-700 dark:text-[var(--accent)] tracking-tighter">{(subTotal + parseFloat(installationMaterial || 0) + parseFloat(deliveryLoading || 0) - parseFloat(additionalDiscount || 0)).toFixed(2)}</div>
+            {billType === 'GST' && (<div className="text-[9px] font-black uppercase mt-0.5 text-muted">+ 18% GST Applicable</div>)}
           </div>
         </div>
       </div>
 
-      {/* Bottom Action Bar */}
-      <div className="bg-slate-800 p-1 flex justify-center gap-1">
+      {/* ── BOTTOM ACTION BAR ── */}
+      <div className="bg-[var(--bg-surface)] p-1 flex justify-center gap-1 border-t border-[var(--border-color)]">
         <button
           onClick={clearForm}
-          className="bg-[#D4AF37] hover:bg-[#c4a133] text-white px-4 py-1.5 rounded flex items-center gap-2 text-xs font-bold transition shadow-sm"
+          className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-1.5 rounded flex items-center gap-2 text-xs font-bold transition shadow-sm"
         >
-          <RotateCcw size={14} /> Clear - F8
+          <RotateCcw size={14} /> Clear
         </button>
         <button
           onClick={() => navigate("/invoices")}
-          className="btn-accent px-4 py-1.5 rounded flex items-center gap-2 text-xs font-bold transition shadow-sm"
+          className="bg-slate-600 hover:bg-slate-700 text-white px-4 py-1.5 rounded flex items-center gap-2 text-xs font-bold transition shadow-sm"
         >
-          <History size={14} /> Invoices - F9
+          <History size={14} /> Invoices
         </button>
         <button
-          onClick={deleteInvoice}
-          className="bg-red-500 hover:bg-red-600 text-white px-4 py-1.5 rounded flex items-center gap-2 text-xs font-bold transition shadow-sm"
+          onClick={async () => { await saveInvoice(); handlePrint(); }}
+          disabled={items.length === 0}
+          className="bg-teal-500 hover:bg-teal-600 disabled:opacity-50 text-white px-4 py-1.5 rounded flex items-center gap-2 text-xs font-bold transition shadow-sm"
         >
-          <Trash2 size={14} /> Delete - F1
-        </button>
-        <button
-          onClick={triggerPrint}
-          className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-1.5 rounded flex items-center gap-2 text-xs font-bold transition shadow-sm"
-        >
-          <Printer size={14} /> Generate & Print - F5
+          <Printer size={14} /> Generate & Print
         </button>
         <button
           onClick={saveInvoice}
-          className={`${!isAmountMatched && grandTotal > 0 ? "bg-slate-600 hover:bg-slate-700" : isEditMode ? "bg-violet-600 hover:bg-violet-700" : "bg-emerald-600 hover:bg-emerald-700"} text-white px-8 py-1.5 rounded flex items-center gap-2 text-xs font-bold transition shadow-sm`}
+          className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-1.5 rounded flex items-center gap-2 text-xs font-bold transition shadow-sm"
         >
-          {isEditMode ? <Edit3 size={14} /> : <Save size={14} />}
-          {!isAmountMatched && grandTotal > 0 ? "Save as Draft" : isEditMode ? "Update Invoice" : "Generate - F2"}
+          <Save size={14} /> Generate
         </button>
+        
+        
       </div>
-
-      {/* MODALS */}
-      {showQuoteSearch && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="themed-modal border border-[var(--border-color)] rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl">
-            <div className="bg-amber-600 p-4 text-white flex justify-between items-center">
-              <h3 className="font-bold flex items-center gap-2">
-                <Search size={20} /> Fetch from Saved Quotations
-              </h3>
-              <button onClick={() => setShowQuoteSearch(false)}>
-                <X size={24} />
-              </button>
-            </div>
-            <div className="p-4 max-h-[400px] overflow-y-auto">
-              {savedQuotations.length === 0 && (
-                <p className="text-center text-slate-400 dark:text-slate-500 py-10">
-                  No saved quotations found.
-                </p>
-              )}
-              <div className="grid gap-2">
-                {savedQuotations.map((q) => (
-                  <div
-                    key={q.id}
-                    className="border border-[var(--border-color)] p-3 rounded-xl hover:bg-amber-500/10 flex justify-between items-center transition"
-                  >
-                    <div>
-                      <p className="font-bold text-themed">{q.clientName}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {q.date} | {q.items.length} Items
-                      </p>
-                      <p className="text-[10px] text-slate-400 dark:text-slate-500">
-                        {q.clientAddress}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => fetchFromQuote(q)}
-                      className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-4 py-2 rounded-lg font-bold text-xs hover:bg-amber-500/20 transition"
-                    >
-                      SELECT
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showWorkOrderSearch && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="themed-modal border border-[var(--border-color)] rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl">
-            <div className="bg-[var(--accent)] p-4 text-white flex justify-between items-center">
-              <h3 className="font-bold flex items-center gap-2">
-                <Search size={20} /> Select Work Order
-              </h3>
-              <button onClick={() => setShowWorkOrderSearch(false)}>
-                <X size={24} />
-              </button>
-            </div>
-            <div className="p-4 max-h-[400px] overflow-y-auto">
-              {workOrders.length === 0 && (
-                <p className="text-center text-slate-400 dark:text-slate-500 py-10">
-                  No work orders found.
-                </p>
-              )}
-              <div className="grid gap-2">
-                {workOrders.map((wo) => (
-                  <div
-                    key={wo.id}
-                    className="border border-[var(--border-color)] p-3 rounded-xl hover:bg-[var(--accent)]/10 flex justify-between items-center transition"
-                  >
-                    <div>
-                      <p className="font-bold text-themed">{wo.name}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {wo.clientName} | {wo.status}
-                      </p>
-                      <p className="text-[10px] text-slate-400 dark:text-slate-500">
-                        {wo.address}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => fetchFromWorkOrder(wo)}
-                      className="bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20 px-4 py-2 rounded-lg font-bold text-xs hover:bg-[var(--accent)]/20 transition"
-                    >
-                      SELECT
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="opacity-0 fixed top-0 left-0 pointer-events-none">
         <PrintableInvoice
           ref={componentRef}
-          data={{
-            customer: clientName,
-            address: clientAddress,
-            projectTitle,
-            workDescription,
-            items,
-            invoiceNo,
-            invoiceDate,
-            discount,
-            lessAmount,
-            advanceAmount,
-            receivedAmount,
-            subTotal,
-            totalGst,
-            grandTotal,
-            balanceAmount,
-            billType,
-            organizationName,
-            gstNumber,
-            workOrderId,
-          }}
-          docType="Invoice"
+          data={{ customer: clientName, address: clientAddress, projectTitle, workDescription, items, invoiceNo, date: invoiceDate, billType, isInterState, emailId, mobileNo, customerGst, deliveryTimeline, installationMaterial, deliveryLoading, additionalDiscount }}
         />
       </div>
+      {/* ── MANAGE SECTIONS MODAL ── */}
+      {isSectionModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] backdrop-blur-sm">
+          <div className="bg-[var(--bg-surface)] border border-[var(--border-color)] p-4 rounded-lg w-96 shadow-2xl">
+            <div className="flex justify-between items-center mb-4 border-b border-[var(--border-color)] pb-2">
+              <h3 className="font-bold text-lg text-[var(--text-primary)]">Manage Sections</h3>
+              <button onClick={() => setIsSectionModalOpen(false)} className="text-slate-500 hover:text-[var(--text-primary)]"><X size={18} /></button>
+            </div>
+            
+            <div className="flex gap-2 mb-4">
+              <input 
+                type="text" 
+                placeholder="New Section Name..." 
+                value={newSectionName}
+                onChange={e => setNewSectionName(e.target.value)}
+                onKeyDown={e => {
+                   if (e.key === "Enter" && newSectionName.trim()) {
+                      if (!sectionsList.includes(newSectionName.trim())) {
+                        setSectionsList([...sectionsList, newSectionName.trim()]);
+                        setNewSectionName("");
+                      }
+                   }
+                }}
+                className="flex-1 themed-input border border-[var(--border-color)] px-2 py-1.5 text-sm outline-none rounded focus:border-[var(--accent)]"
+              />
+              <button 
+                onClick={() => {
+                  if (newSectionName.trim() && !sectionsList.includes(newSectionName.trim())) {
+                    setSectionsList([...sectionsList, newSectionName.trim()]);
+                    setNewSectionName("");
+                  }
+                }}
+                className="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded text-sm font-bold shadow transition-all"
+              >Add</button>
+            </div>
+
+            <div className="max-h-60 overflow-y-auto pr-1 flex flex-col gap-2 no-scrollbar">
+              {sectionsList.map((sec, i) => (
+                <div key={i} className="flex justify-between items-center p-2.5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded shadow-sm">
+                  {editingSectionIdx === i ? (
+                     <input 
+                       autoFocus
+                       defaultValue={sec} 
+                       onBlur={(e) => {
+                          const val = e.target.value.trim();
+                          if (val && val !== sec && !sectionsList.includes(val)) {
+                            const newList = [...sectionsList];
+                            newList[i] = val;
+                            setSectionsList(newList);
+                            setItems(prev => prev.map(item => item.section === sec ? { ...item, section: val } : item));
+                          }
+                          setEditingSectionIdx(null);
+                       }}
+                       onKeyDown={(e) => {
+                          if (e.key === "Enter") e.target.blur();
+                       }}
+                       className="flex-1 themed-input px-1 py-0.5 text-sm outline-none font-bold rounded" 
+                     />
+                  ) : (
+                     <span className="text-sm font-bold text-[var(--text-primary)] truncate flex-1">{sec}</span>
+                  )}
+                  
+                  <div className="flex gap-2 ml-2">
+                    <button onClick={() => setEditingSectionIdx(i)} className="text-blue-500 hover:text-blue-400 p-1 bg-blue-500/10 rounded transition-colors" title="Edit">
+                      <Edit3 size={14} />
+                    </button>
+                    {sectionsList.length > 1 && (
+                      <button onClick={() => {
+                         const newList = sectionsList.filter((_, idx) => idx !== i);
+                         setSectionsList(newList);
+                         setItems(prev => prev.map(item => item.section === sec ? { ...item, section: newList[0] } : item));
+                      }} className="text-red-500 hover:text-red-400 p-1 bg-red-500/10 rounded transition-colors" title="Delete">
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-4 pt-3 flex justify-end border-t border-[var(--border-color)]">
+              <button onClick={() => setIsSectionModalOpen(false)} className="bg-slate-600 hover:bg-slate-700 text-white px-5 py-2 rounded text-sm font-bold shadow-sm transition-all">Done</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

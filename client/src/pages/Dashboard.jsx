@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  TrendingUp, TrendingDown, Wallet, Users, Clock,
-  FileText, Building, Activity, ChevronDown, ArrowRight,
+  TrendingUp, TrendingDown, Wallet,
+  FileText, Building, ChevronDown, ArrowRight,
   HardHat, ClipboardCheck, Banknote, CalendarCheck, IndianRupee
 } from "lucide-react";
 import {
@@ -18,7 +18,7 @@ import KpiCard from "../components/KpiCard";
 
 // Light: gold / navy palette  |  Dark: violet palette
 // Light: gold / navy palette  |  Dark: violet palette
-const CHART_COLORS_LIGHT = ['#C9A227', '#1C2B4B', '#3D5A8A', '#E5C558', '#8F7A33', '#0F1A30'];
+const CHART_COLORS_LIGHT = ['#9E8B6E', '#1C2B4B', '#3D5A8A', '#E5C558', '#8F7A33', '#0F1A30'];
 const CHART_COLORS_DARK  = ['#8b5cf6', '#6366f1', '#a855f7', '#3b82f6', '#ec4899', '#c084fc'];
 
 const Dashboard = () => {
@@ -28,7 +28,7 @@ const Dashboard = () => {
   const COLORS = d ? CHART_COLORS_DARK : CHART_COLORS_LIGHT;
 
   // accent colours derived from theme
-  const accentMain   = d ? '#8b5cf6' : '#C9A227';
+  const accentMain   = d ? '#8b5cf6' : '#9E8B6E';
   const accentSecond = d ? '#38bdf8' : '#3D5A8A';
   const incomeColor  = '#10b981';
   const expenseColor = d ? '#f43f5e' : '#ef4444';
@@ -266,7 +266,7 @@ const Dashboard = () => {
 
         {/* ── Row 2: Operations KPIs ── */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          <KpiCard label="Pending Quotations" value={pendingQuotes} icon={FileText} color={d?"#fb923c":"#C9A227"} hideLeftStroke/>
+          <KpiCard label="Pending Quotations" value={pendingQuotes} icon={FileText} color={d?"#fb923c":"#9E8B6E"} hideLeftStroke/>
           <KpiCard label="In-Process Sites" value={inProcessSites} icon={HardHat} color={d?"#8b5cf6":"#3D5A8A"} hideLeftStroke/>
           <KpiCard label="Pending Work Orders" value={pendingWO} icon={ClipboardCheck} color={d?"#38bdf8":"#0ea5e9"} hideLeftStroke/>
           <KpiCard label="Total Payroll" value={fmt(totalPayroll)} icon={Banknote} color={d?"#a78bfa":"#6366f1"} hideLeftStroke/>
@@ -389,7 +389,7 @@ const Dashboard = () => {
           <motion.div variants={fade} className="xl:col-span-4 flex flex-col gap-3">
             <h3 className={`font-black text-base ${d?"text-white":"text-[#1C2B4B]"}`}>Quick Actions</h3>
             {[
-              { label:"New Quotation",  sub:"Create & send",       path:"/quotations", color: d?"#8b5cf6":"#C9A227" },
+              { label:"New Quotation",  sub:"Create & send",       path:"/quotations", color: d?"#8b5cf6":"#9E8B6E" },
               { label:"New Receipt",    sub:"Log a payment",       path:"/receipts",   color: incomeColor },
               { label:"Log Expense",    sub:"Record a spend",      path:"/expenses",   color: expenseColor },
               { label:"Add Staff",      sub:"HR management",       path:"/employees",  color: accentSecond },

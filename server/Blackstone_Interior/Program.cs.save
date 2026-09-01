@@ -8,7 +8,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 2. CORS — allow the Vite dev server
+// 2. CORS Ã¢â‚¬â€ allow the Vite dev server
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Bell, Activity, Clock, Wrench, X, CheckCircle2, Info } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Bell, Clock, Wrench, X, CheckCircle2, Info } from "lucide-react";
 import { useThemeClasses } from "../hooks/useThemeClasses";
 
 const defaultNotifications = {
@@ -16,25 +16,41 @@ export default function NotificationWidget({ compact = false }) {
 
   const fetchActivitiesAndSites = async () => {
     try {
-      const [crmRes, sitesRes] = await Promise.all([
+      const [crmRes, sitesRes, contactsRes] = await Promise.all([
         fetch('/api/crm/activities/all'),
-        fetch('/api/sites')
+        fetch('/api/sites'),
+        fetch('/api/crm')
       ]);
       
       let reminders = [];
       let maintenance = [];
+      let contacts = [];
+
+      if (contactsRes.ok) {
+        contacts = await contactsRes.json();
+      }
 
       if (crmRes.ok) {
         const data = await crmRes.json();
-        reminders = data.map(act => {
+        // Only show pending or overdue activities
+        const activeActivities = data.filter(act => act.status === 'Pending' || act.status === 'Overdue');
+        
+        reminders = activeActivities.map(act => {
           const actDate = new Date(act.date || new Date());
-          const isPast = actDate < new Date() && act.status !== 'Completed';
+          const checkDate = new Date(actDate);
+          if (!act.date || !act.date.includes('T') || act.date.endsWith('00:00:00.000Z')) {
+            checkDate.setHours(23, 59, 59, 999);
+          }
+          const isPast = checkDate < new Date();
+          const client = contacts.find(c => c.id == act.client);
+          const clientName = client ? client.name : "Unknown Client";
+          
           return {
             id: act.id,
-            title: act.type || "CRM Activity",
+            title: `${act.type} - ${clientName}`,
             time: actDate.toLocaleString('default', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
             type: isPast ? "warning" : "info",
-            isRead: act.status === 'Completed',
+            isRead: false,
           };
         });
       }
@@ -44,7 +60,9 @@ export default function NotificationWidget({ compact = false }) {
         data.forEach(site => {
           if (site.maintenance && site.maintenance.required && site.maintenance.nextDue) {
             const dueDate = new Date(site.maintenance.nextDue);
-            const isPast = dueDate < new Date();
+            const checkDueDate = new Date(dueDate);
+            checkDueDate.setHours(23, 59, 59, 999);
+            const isPast = checkDueDate < new Date();
             maintenance.push({
               id: `maint-${site.id}`,
               title: `${site.name} - ${site.maintenance.frequency} Maintenance`,

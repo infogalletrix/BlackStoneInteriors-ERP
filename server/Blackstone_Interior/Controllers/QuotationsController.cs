@@ -36,7 +36,7 @@ namespace Blackstone_Interior.Controllers
             return maxSerial >= 9999 ? 1 : maxSerial + 1;
         }
 
-        // GET /api/quotations/next-number  (preview only — does NOT reserve a number)
+        // GET /api/quotations/next-number  (preview only Ã¢â‚¬â€ does NOT reserve a number)
         [HttpGet("next-number")]
         public IActionResult GetNextQuoteNumber([FromQuery] string date = null)
         {
@@ -71,7 +71,14 @@ namespace Blackstone_Interior.Controllers
                 items = JsonSerializer.Deserialize<JsonElement>(q.Items ?? "[]"),
                 total = q.Total,
                 status = q.Status,
-                dealId = q.DealId
+                dealId = q.DealId,
+                emailId = q.EmailId,
+                mobileNo = q.MobileNo,
+                customerGst = q.CustomerGst,
+                deliveryTimeline = q.DeliveryTimeline,
+                installationMaterial = q.InstallationMaterial,
+                deliveryLoading = q.DeliveryLoading,
+                additionalDiscount = q.AdditionalDiscount
             });
             return Ok(result);
         }
@@ -131,7 +138,14 @@ namespace Blackstone_Interior.Controllers
                 Items = dto.Items.HasValue ? dto.Items.Value.GetRawText() : "[]",
                 Total = dto.Total,
                 Status = "Pending",
-                DealId = deal.Id
+                DealId = deal.Id,
+                EmailId = dto.EmailId ?? "",
+                MobileNo = dto.MobileNo ?? "",
+                CustomerGst = dto.CustomerGst ?? "",
+                DeliveryTimeline = dto.DeliveryTimeline ?? "",
+                InstallationMaterial = dto.InstallationMaterial ?? 0,
+                DeliveryLoading = dto.DeliveryLoading ?? 0,
+                AdditionalDiscount = dto.AdditionalDiscount ?? 0
             };
             _db.Quotations.Add(q);
             await _db.SaveChangesAsync();
@@ -158,6 +172,13 @@ namespace Blackstone_Interior.Controllers
             if (dto.Status != null) {
                 q.Status = dto.Status;
             }
+            if (dto.EmailId != null) q.EmailId = dto.EmailId;
+            if (dto.MobileNo != null) q.MobileNo = dto.MobileNo;
+            if (dto.CustomerGst != null) q.CustomerGst = dto.CustomerGst;
+            if (dto.DeliveryTimeline != null) q.DeliveryTimeline = dto.DeliveryTimeline;
+            if (dto.InstallationMaterial.HasValue) q.InstallationMaterial = dto.InstallationMaterial.Value;
+            if (dto.DeliveryLoading.HasValue) q.DeliveryLoading = dto.DeliveryLoading.Value;
+            if (dto.AdditionalDiscount.HasValue) q.AdditionalDiscount = dto.AdditionalDiscount.Value;
 
             // Sync with Deal
             if (q.DealId.HasValue)

@@ -1,4 +1,4 @@
-import React, { forwardRef } from "react";
+import { forwardRef } from "react";
 
 const PayslipDocument = forwardRef(({ data }, ref) => {
   // Calculations based on the template

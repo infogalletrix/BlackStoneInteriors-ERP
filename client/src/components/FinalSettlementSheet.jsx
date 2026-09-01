@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import { forwardRef } from 'react';
 
 const FinalSettlementSheet = forwardRef(({ site, receipts }, ref) => {
   if (!site) return null;

@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useReactToPrint } from "react-to-print";
 import PayslipDocument from "../components/PayslipDocument";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Users, Wallet, X, ChevronRight, CheckCircle2, Clock,
-  Search, Printer, CalendarDays, User, CreditCard, Banknote,
-  MessageCircle, Eye, Send, Pencil, Trash2
+  Users, Wallet, X, ChevronRight, CheckCircle2,
+  Search, Printer, CalendarDays, CreditCard, Banknote,
+  MessageCircle, Eye, Pencil, Trash2
 } from "lucide-react";
 import { useDialog } from "../contexts/DialogContext";
 import NotificationWidget from "../components/NotificationWidget";

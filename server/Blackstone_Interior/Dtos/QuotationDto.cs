@@ -18,5 +18,12 @@ namespace Blackstone_Interior.Dtos
         public decimal Total { get; set; }
         public string? Status { get; set; }
         public int? DealId { get; set; }
+        public string? EmailId { get; set; }
+        public string? MobileNo { get; set; }
+        public string? CustomerGst { get; set; }
+        public string? DeliveryTimeline { get; set; }
+        public decimal? InstallationMaterial { get; set; }
+        public decimal? DeliveryLoading { get; set; }
+        public decimal? AdditionalDiscount { get; set; }
     }
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Search,
   ChevronDown,
@@ -366,7 +366,7 @@ export default function AttendancePage() {
       <div className="flex flex-col md:flex-row justify-between items-center mb-3 gap-2 relative z-50">
         <div>
           <h1 className="text-xl font-black text-themed tracking-tight flex items-center gap-2">
-            <Users className="text-[#C9A227]" size={18} />
+            <Users className="text-[#9E8B6E]" size={18} />
             Attendance Management
           </h1>
           <p className="text-muted font-medium text-xs mt-0.5">
@@ -404,7 +404,7 @@ export default function AttendancePage() {
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-t-xl text-sm font-bold transition-all ${
               activeTab === tab.id
-                ? "bg-[var(--bg-card)] text-[#C9A227] border-t-2 border-l border-r border-[var(--border-color)] shadow-sm translate-y-[1px]"
+                ? "bg-[var(--bg-card)] text-[#9E8B6E] border-t-2 border-l border-r border-[var(--border-color)] shadow-sm translate-y-[1px]"
                 : "text-muted hover:text-themed hover:bg-white/5"
             }`}
           >
@@ -424,14 +424,14 @@ export default function AttendancePage() {
                 Selected Date
               </div>
               <div className="relative flex items-center gap-2">
-                <CalendarDays className="text-[#C9A227]" size={20} />
+                <CalendarDays className="text-[#9E8B6E]" size={20} />
                 <input
                   type="date"
                   value={selectedDate}
                   max={activeTab === "history" ? today : undefined}
                   readOnly={activeTab === "daily"}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className={`w-full text-lg font-black bg-transparent outline-none ${activeTab === "history" ? "cursor-pointer focus:text-[#C9A227]" : "text-slate-400 cursor-not-allowed"}`}
+                  className={`w-full text-lg font-black bg-transparent outline-none ${activeTab === "history" ? "cursor-pointer focus:text-[#9E8B6E]" : "text-slate-400 cursor-not-allowed"}`}
                 />
               </div>
             </div>
@@ -445,7 +445,7 @@ export default function AttendancePage() {
               <button
                 onClick={markAllPresent}
                 disabled={isLocked}
-                className="text-xs font-bold text-[#C9A227] hover:underline disabled:opacity-50 disabled:hover:no-underline px-2"
+                className="text-xs font-bold text-[#9E8B6E] hover:underline disabled:opacity-50 disabled:hover:no-underline px-2"
               >
                 Mark All Present
               </button>
@@ -467,13 +467,13 @@ export default function AttendancePage() {
                 <>
                   <button
                     onClick={() => saveAttendance(false)}
-                    className="bg-[#C9A227]/10 text-[#C9A227] px-4 py-2 text-sm rounded-xl font-bold flex items-center gap-1.5 transition hover:bg-[#C9A227]/20"
+                    className="bg-[#9E8B6E]/10 text-[#9E8B6E] px-4 py-2 text-sm rounded-xl font-bold flex items-center gap-1.5 transition hover:bg-[#9E8B6E]/20"
                   >
                     <Save size={16} /> Save Draft
                   </button>
                   <button
                     onClick={() => saveAttendance(true)}
-                    className="bg-[#C9A227] text-white px-4 py-2 text-sm rounded-xl font-bold shadow-md flex items-center gap-1.5 transition hover:bg-[#B8911F]"
+                    className="bg-[#9E8B6E] text-white px-4 py-2 text-sm rounded-xl font-bold shadow-md flex items-center gap-1.5 transition hover:bg-[#7D6C54]"
                   >
                     <Lock size={16} /> Save & Lock
                   </button>
@@ -486,7 +486,7 @@ export default function AttendancePage() {
 
       {activeTab === "weekly" && (
         <div className="themed-card p-4 rounded-2xl shadow-sm mb-4 flex items-center gap-3 max-w-sm">
-          <Calendar className="text-[#C9A227]" size={20} />
+          <Calendar className="text-[#9E8B6E]" size={20} />
           <div className="flex-1">
             <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
               Select Week (Starts Monday)
@@ -495,7 +495,7 @@ export default function AttendancePage() {
               type="date"
               value={selectedWeekStart}
               onChange={(e) => setSelectedWeekStart(e.target.value)}
-              className="w-full text-base font-black bg-transparent outline-none cursor-pointer focus:text-[#C9A227]"
+              className="w-full text-base font-black bg-transparent outline-none cursor-pointer focus:text-[#9E8B6E]"
             />
           </div>
         </div>
@@ -503,7 +503,7 @@ export default function AttendancePage() {
 
       {activeTab === "monthly" && (
         <div className="themed-card p-4 rounded-2xl shadow-sm mb-4 flex items-center gap-3 max-w-sm">
-          <BarChart3 className="text-[#C9A227]" size={20} />
+          <BarChart3 className="text-[#9E8B6E]" size={20} />
           <div className="flex-1">
             <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
               Select Month
@@ -512,7 +512,7 @@ export default function AttendancePage() {
               type="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="w-full text-base font-black bg-transparent outline-none cursor-pointer focus:text-[#C9A227]"
+              className="w-full text-base font-black bg-transparent outline-none cursor-pointer focus:text-[#9E8B6E]"
             />
           </div>
         </div>
@@ -629,7 +629,7 @@ export default function AttendancePage() {
                             onChange={(e) => handleOvertimeChange(emp.id, e.target.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1'))}
                             disabled={isLocked}
                             placeholder="0"
-                            className="w-full p-1.5 border border-[var(--border-color)] rounded-lg themed-input font-bold text-xs outline-none focus:border-[#C9A227] transition-colors disabled:opacity-50"
+                            className="w-full p-1.5 border border-[var(--border-color)] rounded-lg themed-input font-bold text-xs outline-none focus:border-[#9E8B6E] transition-colors disabled:opacity-50"
                           />
                           <span className="text-[10px] font-bold text-slate-400">hrs</span>
                         </div>

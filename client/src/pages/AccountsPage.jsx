@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -10,14 +10,12 @@ import {
   Download,
   FileSpreadsheet,
   TrendingUp,
-  TrendingDown,
   Clock,
   Calendar,
   Filter,
   FileText,
   Wallet,
   Receipt,
-  IndianRupee,
 } from "lucide-react";
 import NotificationWidget from "../components/NotificationWidget";
 

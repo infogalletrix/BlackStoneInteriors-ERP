@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -7,26 +7,37 @@ import {
   ClipboardList,
   Briefcase,
   BarChart2,
-  Menu,
   ChevronLeft,
   Wallet,
   MapPin,
   Receipt,
   Landmark,
-  CheckSquare,
   FileStack,
-  IndianRupee,
-  Plus,
   Moon,
   Sun,
+  ChevronDown,
+  ChevronRight,
+  LogOut,
+  Settings,
 } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useThemeClasses } from "../hooks/useThemeClasses";
+import SettingsModal from "./SettingsModal";
 
-const Sidebar = ({ isOpen, toggleSidebar }) => {
+const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
   const location = useLocation();
   const { isDarkMode, toggleTheme } = useTheme();
   const t = useThemeClasses();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  
+  const [expandedMenus, setExpandedMenus] = useState({
+    CRM: false,
+    HR: false,
+  });
+
+  const toggleMenu = (name) => {
+    setExpandedMenus((prev) => ({ ...prev, [name]: !prev[name] }));
+  };
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -38,7 +49,19 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
   const menuItems = [
     { path: "/", name: "Dashboard", icon: <LayoutDashboard size={20} /> },
-    { path: "/crm", name: "CRM", icon: <Users size={20} /> },
+    {
+      name: "CRM",
+      icon: <Users size={20} />,
+      subItems: [
+        { path: "/crm/leads", name: "Leads" },
+        { path: "/crm/customers", name: "Customers" },
+        { path: "/crm/pipeline", name: "Sales Pipeline" },
+        { path: "/crm", name: "Site Surveys" },
+        { path: "/crm/schedule", name: "Schedule" },
+        { path: "/crm/telecalling", name: "Telecalling" },
+        { path: "/crm/marketing", name: "Marketing Campaigns" }
+      ],
+    },
     {
       path: "/quotations",
       name: "Quotations",
@@ -46,10 +69,17 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       canAdd: true,
     },
 
-    { type: "header", name: "PROJECTS" },
-    { path: "/sites", name: "Work Orders", icon: <MapPin size={20} /> },
 
-    { type: "header", name: "FINANCE" },
+    {
+      name: "Projects",
+      icon: <MapPin size={20} />,
+      subItems: [
+        { path: "/sites", name: "Work Orders" },
+        { path: "/sites/waiting-floor", name: "Waiting Floor" }
+      ]
+    },
+
+
     {
       path: "/billing",
       name: "Billing",
@@ -65,10 +95,15 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     { path: "/expenses", name: "Expenses & credits", icon: <Receipt size={20} /> },
     { path: "/accounts", name: "Accounts", icon: <Landmark size={20} /> },
 
-    { type: "header", name: "HUMAN RESOURCES" },
-    { path: "/employees", name: "Employees", icon: <Briefcase size={20} /> },
-    { path: "/attendance", name: "Attendance", icon: <MapPin size={20} /> },
-    { path: "/salary", name: "Payroll", icon: <Wallet size={20} /> },
+    {
+      name: "HR",
+      icon: <Briefcase size={20} />,
+      subItems: [
+        { path: "/employees", name: "Employees" },
+        { path: "/attendance", name: "Attendance" },
+        { path: "/salary", name: "Payroll" }
+      ],
+    },
     { path: "/reports", name: "Reports", icon: <BarChart2 size={20} /> },
   ];
 
@@ -95,12 +130,9 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             <div className="flex items-center gap-2">
               <img src="/logo.png" alt="Black Stone Interiorss" className="w-10 h-10 rounded-md object-cover shadow-sm" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} />
               <div>
-                <h2 className={`text-base font-black whitespace-nowrap leading-tight ${ t.isDark ? "bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent" : "text-white"}`}>
-                  Black Stone Interiors
+                <h2 className={`text-base font-black leading-tight ${ t.isDark ? "bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent" : "text-white"}`}>
+                  Black Stone <br /> Interiors
                 </h2>
-                <p className={`text-[10px] font-bold uppercase tracking-widest ${ t.isDark ? "text-slate-500" : "text-slate-300"}`}>
-                  Studio
-                </p>
               </div>
             </div>
           )}
@@ -122,9 +154,66 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             );
           }
 
+          if (item.subItems) {
+            const isExpanded = expandedMenus[item.name];
+            const isChildActive = item.subItems.some(sub => location.pathname === sub.path);
+            
+            return (
+              <li key={item.name} className="relative group/nav-item">
+                <button
+                  onClick={() => toggleMenu(item.name)}
+                  title={!isOpen ? item.name : ""}
+                  className={`w-full flex items-center justify-between px-2 py-2.5 rounded-xl transition-all duration-200 ${
+                    t.isDark
+                      ? "text-slate-300 hover:text-white hover:bg-white/5"
+                      : "text-slate-200 hover:text-white hover:bg-white/10"
+                  } ${isOpen ? "px-3" : "justify-center"}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="flex-shrink-0">{item.icon}</span>
+                    {isOpen && (
+                      <span className="whitespace-nowrap text-[15px]" style={{ fontFamily: "'Inter', sans-serif", fontWeight: 400, letterSpacing: '0.01em' }}>
+                        {item.name}
+                      </span>
+                    )}
+                  </div>
+                  {isOpen && (
+                    isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />
+                  )}
+                </button>
+                
+                {isOpen && isExpanded && (
+                  <ul className="mt-1 mb-2 space-y-0.5">
+                    {item.subItems.map(sub => {
+                      const isActive = location.pathname === sub.path;
+                      return (
+                        <li key={sub.path}>
+                          <Link
+                            to={sub.path}
+                            className={`block pl-[44px] pr-3 py-2 rounded-lg transition-all duration-200 text-[13px] font-medium ${
+                              isActive
+                                ? t.isDark
+                                  ? "bg-white/10 text-[#D4AF37]"
+                                  : "bg-white/20 text-[#D4AF37]"
+                                : t.isDark
+                                  ? "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                                  : "text-slate-300 hover:text-white hover:bg-white/5"
+                            }`}
+                          >
+                            {sub.name}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </li>
+            );
+          }
+
           const isActive = location.pathname === item.path;
           return (
-            <li key={item.path} className="relative group/nav-item">
+            <li key={item.path || item.name} className="relative group/nav-item">
               <Link
                 to={item.path}
                 title={!isOpen ? item.name : ""}
@@ -155,12 +244,12 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       {/* Footer */}
       <div className={`p-4 flex flex-col items-center gap-2 border-t ${ t.isDark ? "border-white/10" : "border-slate-800"}`}>
         <button
-          onClick={toggleTheme}
+          onClick={() => setIsSettingsOpen(true)}
           className={`flex items-center justify-center p-2 rounded-xl transition-all duration-200 ${ t.isDark ? "text-slate-400 hover:text-white hover:bg-white/5" : "text-slate-300 hover:text-white hover:bg-white/10"} ${isOpen ? "w-full gap-3" : "w-10 h-10"}`}
-          title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          title="Settings"
         >
-          {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-          {isOpen && <span className="font-semibold text-sm">{isDarkMode ? "Light Mode" : "Dark Mode"}</span>}
+          <Settings size={20} />
+          {isOpen && <span className="font-semibold text-sm">Settings</span>}
         </button>
         {isOpen && (
           <div className="flex flex-col items-center mt-2 gap-1 opacity-80 hover:opacity-100 transition-opacity">
@@ -173,6 +262,12 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           </div>
         )}
       </div>
+
+      <SettingsModal 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)} 
+        onLogout={onLogout} 
+      />
     </nav>
   );
 };

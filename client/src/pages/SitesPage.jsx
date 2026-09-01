@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   MapPin,
@@ -14,7 +14,6 @@ import {
   AlertTriangle,
   X,
   PlaySquare,
-  Users,
   Image as ImageIcon,
   FileText,
   Receipt,
@@ -23,9 +22,6 @@ import {
   Briefcase,
   User,
   Calendar,
-  Upload,
-  ArrowRight,
-  TrendingUp,
   Trash2,
   Printer,
   Award
@@ -50,6 +46,7 @@ export default function SitesPage() {
   const [receipts, setReceipts] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [selectedSiteId, setSelectedSiteId] = useState(null);
+  const [mainTab, setMainTab] = useState("overview"); // "overview" or "waiting"
   const [statusFilter, setStatusFilter] = useState("All");
   const [activeTab, setActiveTab] = useState("media"); // media, history, maintenance, financials
   const [searchTerm, setSearchTerm] = useState("");
@@ -169,6 +166,14 @@ export default function SitesPage() {
   };
 
   useEffect(() => {
+    if (location.pathname.includes('waiting-floor')) {
+      setMainTab('waiting');
+    } else {
+      setMainTab('overview');
+    }
+  }, [location.pathname]);
+
+  useEffect(() => {
     loadSites();
     loadClients();
     loadQuotations();
@@ -230,6 +235,9 @@ export default function SitesPage() {
   const selectedSite = sites.find((s) => s.id === selectedSiteId) || null;
 
   const filteredSites = sites.filter((s) => {
+    if (mainTab === "waiting" && s.status !== "Waiting Floor") return false;
+    if (mainTab === "overview" && s.status === "Waiting Floor") return false;
+
     const matchStatus = statusFilter === "All" || s.status === statusFilter;
     const term = searchTerm.toLowerCase();
     const matchSearch =
@@ -244,7 +252,8 @@ export default function SitesPage() {
   const getStatusColor = (status) => {
     if (status === "Completed") return "bg-emerald-500/15 text-emerald-400 border-emerald-500/30";
     if (status === "Currently working" || status === "In Progress") return "bg-amber-100 text-amber-700 border-amber-200";
-    if (status === "Pre-Construction" || status === "Yet to work") return "bg-amber-500/15 text-amber-400 border-amber-500/30";
+    if (status === "Pre-Construction" || status === "Yet to work") return "bg-blue-500/15 text-blue-400 border-blue-500/30";
+    if (status === "Waiting Floor") return "bg-purple-500/15 text-purple-400 border-purple-500/30";
     if (status === "Maintenance") return "bg-rose-500/15 text-rose-400 border-rose-500/30";
     return "bg-slate-700/30 text-slate-300 border-slate-600/30";
   };
@@ -522,17 +531,31 @@ export default function SitesPage() {
         <div className="flex justify-between items-center mb-5 relative z-50">
           <div>
             <h1 className="text-xl font-black text-themed flex items-center gap-2">
-              <Building className="text-[#C9A227]" size={18} />
+              <Building className="text-[#9E8B6E]" size={18} />
               Work Orders
             </h1>
-            <p className="text-muted mt-0.5 text-xs font-medium">
+            <p className="text-muted mt-0.5 text-xs font-medium mb-4">
               Manage site operations, financial links, and project progress.
             </p>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => setMainTab("overview")} 
+                className={`px-5 py-2 rounded-full font-bold text-xs transition-colors shadow-sm ${mainTab === "overview" ? "bg-[#9E8B6E] text-white" : "bg-[var(--bg-surface)] text-muted hover:bg-white/5 border border-[var(--border-color)]"}`}
+              >
+                Projects Overview
+              </button>
+              <button 
+                onClick={() => setMainTab("waiting")} 
+                className={`px-5 py-2 rounded-full font-bold text-xs transition-colors shadow-sm ${mainTab === "waiting" ? "bg-[#9E8B6E] text-white" : "bg-[var(--bg-surface)] text-muted hover:bg-white/5 border border-[var(--border-color)]"}`}
+              >
+                Waiting Floor
+              </button>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsSiteModalOpen(true)}
-              className="bg-[#C9A227] hover:bg-[#B8911F] text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 shadow-md transition text-sm"
+              className="bg-[#9E8B6E] hover:bg-[#7D6C54] text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 shadow-md transition text-sm"
             >
               <Plus size={16} /> Create New Work Order
             </button>
@@ -556,12 +579,12 @@ export default function SitesPage() {
                 />
               </div>
               <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-hide">
-                {["All", "Pre-Construction", "In Progress", "Completed", "Maintenance"].map((status) => (
+                {["All", "Pre-Construction", "In Progress", "Waiting Floor", "Completed", "Maintenance"].map((status) => (
                   <button
                     key={status}
                     onClick={() => setStatusFilter(status)}
                     className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition ${statusFilter === status
-                        ? "bg-[#C9A227]/10 text-[#C9A227]"
+                        ? "bg-[#9E8B6E]/10 text-[#9E8B6E]"
                         : "bg-white/5 text-muted hover:bg-white/10"
                       }`}
                   >
@@ -581,7 +604,7 @@ export default function SitesPage() {
                     <button
                       key={site.id}
                       onClick={() => setSelectedSiteId(site.id)}
-                      className={`w-full text-left p-3 transition-all ${selectedSiteId === site.id ? "bg-[#C9A227]/10" : "hover:bg-white/5"}`}
+                      className={`w-full text-left p-3 transition-all ${selectedSiteId === site.id ? "bg-[#9E8B6E]/10" : "hover:bg-white/5"}`}
                     >
                       <div className="flex justify-between items-start mb-1">
                         <h3 className="font-black text-themed text-sm">{String(site.id).padStart(4, "0")} - {site.name}</h3>
@@ -668,7 +691,7 @@ export default function SitesPage() {
                             setEditFormData(selectedSite);
                             setIsEditModalOpen(true);
                           }}
-                          className="p-1.5 bg-[var(--accent-soft)] hover:bg-[#C9A227]/20 rounded-lg text-[#C9A227] transition-colors"
+                          className="p-1.5 bg-[var(--accent-soft)] hover:bg-[#9E8B6E]/20 rounded-lg text-[#9E8B6E] transition-colors"
                           title="Edit Project Details"
                         >
                           <Edit size={16} />
@@ -705,6 +728,7 @@ export default function SitesPage() {
                       >
                         <option className="bg-[var(--modal-bg)]">Pre-Construction</option>
                         <option className="bg-[var(--modal-bg)]">In Progress</option>
+                        <option className="bg-[var(--modal-bg)]">Waiting Floor</option>
                         <option className="bg-[var(--modal-bg)]">Completed</option>
                         <option className="bg-[var(--modal-bg)]">Maintenance</option>
                       </select>
@@ -824,7 +848,7 @@ export default function SitesPage() {
                         <h3 className="font-black text-themed uppercase tracking-tight">Photos & Videos</h3>
                         <button
                           onClick={() => setIsMediaModalOpen(true)}
-                          className="bg-[#C9A227]/10 text-[#C9A227] border border-[#C9A227]/20 hover:bg-[#C9A227]/20 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2"
+                          className="bg-[#9E8B6E]/10 text-[#9E8B6E] border border-[#9E8B6E]/20 hover:bg-[#9E8B6E]/20 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2"
                         >
                           <Plus size={14} /> Add Media
                         </button>
@@ -864,7 +888,7 @@ export default function SitesPage() {
                         <h3 className="font-black text-themed uppercase tracking-tight">Activity Log</h3>
                         <button
                           onClick={() => setIsHistoryModalOpen(true)}
-                          className="bg-[#C9A227]/10 text-[#C9A227] border border-[#C9A227]/20 hover:bg-[#C9A227]/20 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2"
+                          className="bg-[#9E8B6E]/10 text-[#9E8B6E] border border-[#9E8B6E]/20 hover:bg-[#9E8B6E]/20 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2"
                         >
                           <Plus size={14} /> Log Update
                         </button>
@@ -879,7 +903,7 @@ export default function SitesPage() {
                         <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-indigo-100 before:to-transparent">
                           {(selectedSite.history || []).sort((a, b) => new Date(b.date) - new Date(a.date)).map((entry, idx) => (
                             <div key={entry.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                              <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-[#C9A227] text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
+                              <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-[#9E8B6E] text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
                                 <CheckCircle2 size={16} />
                               </div>
                               <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] themed-card p-4 rounded-xl shadow-sm">
@@ -914,14 +938,14 @@ export default function SitesPage() {
                       <div className="flex flex-col gap-3">
                         {/* Billing Action */}
                         <div className="themed-card p-3 rounded-2xl flex items-center gap-4 hover:border-indigo-500/30 transition-all shadow-sm group">
-                          <div className="w-10 h-10 bg-[#C9A227]/10 text-[#C9A227] border border-[#C9A227]/20 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                          <div className="w-10 h-10 bg-[#9E8B6E]/10 text-[#9E8B6E] border border-[#9E8B6E]/20 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                             <FileText size={20} />
                           </div>
                           <div className="flex-1">
                             <h4 className="font-black text-sm text-themed mb-0.5">Billing & Invoices</h4>
                             <p className="text-[10px] text-muted font-medium">Generate GST/Non-GST invoices for this client.</p>
                           </div>
-                          <button onClick={handleGoToBilling} className="bg-[#C9A227] text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow hover:bg-[#B8911F] transition shrink-0">
+                          <button onClick={handleGoToBilling} className="bg-[#9E8B6E] text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow hover:bg-[#7D6C54] transition shrink-0">
                             Create Invoice
                           </button>
                         </div>
@@ -1113,6 +1137,7 @@ export default function SitesPage() {
                   <select name="status" className="themed-input w-full border border-[var(--border-color)] p-2.5 rounded-xl outline-none focus:border-[var(--accent)] font-bold text-sm transition-all shadow-sm">
                     <option>Pre-Construction</option>
                     <option>In Progress</option>
+                    <option>Waiting Floor</option>
                     <option>Completed</option>
                   </select>
                 </div>
@@ -1169,10 +1194,10 @@ export default function SitesPage() {
       {isEditModalOpen && editFormData && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <form onSubmit={handleEditSubmit} className="themed-modal rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in zoom-in duration-200">
-            <div className="bg-[#C9A227] p-6 flex justify-between items-center text-white">
+            <div className="bg-[#9E8B6E] p-6 flex justify-between items-center text-white">
               <div>
                 <h2 className="text-xl font-black">Edit Project Details</h2>
-                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Ref: #{editFormData.id}</p>
+                <p className="text-white/80 text-xs font-bold uppercase tracking-widest">Ref: #{editFormData.id}</p>
               </div>
               <button type="button" onClick={() => setIsEditModalOpen(false)} className="hover:text-slate-300"><X /></button>
             </div>
@@ -1194,6 +1219,7 @@ export default function SitesPage() {
                 <select name="status" defaultValue={editFormData.status} className="w-full border py-1.5 px-3 rounded-lg outline-none focus:border-indigo-500 font-bold text-sm">
                   <option>Pre-Construction</option>
                   <option>In Progress</option>
+                  <option>Waiting Floor</option>
                   <option>Completed</option>
                   <option>Maintenance</option>
                 </select>
@@ -1221,7 +1247,7 @@ export default function SitesPage() {
             </div>
             <div className="p-4 border-t border-[var(--border-color)] flex gap-2">
               <button type="button" onClick={() => setIsEditModalOpen(false)} className="flex-1 themed-card text-muted py-2 rounded-lg font-bold hover:bg-[var(--bg-card-hover)] transition text-sm">Cancel</button>
-              <button type="submit" className="flex-[2] bg-[#C9A227] text-white py-2 rounded-lg font-bold shadow-lg shadow-[#C9A227]/20 hover:bg-[#B8911F] transition text-sm">Update Project Information</button>
+              <button type="submit" className="flex-[2] bg-[#9E8B6E] text-white py-2 rounded-lg font-bold shadow-lg shadow-[#9E8B6E]/20 hover:bg-[#7D6C54] transition text-sm">Update Project Information</button>
             </div>
           </form>
         </div>
@@ -1253,7 +1279,7 @@ export default function SitesPage() {
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Or provide Media URL</label>
                 <input name="url" placeholder="https://..." className="w-full border themed-input p-3 rounded-xl outline-none" disabled={!!mediaFileBase64} />
               </div>
-              <button type="submit" className="w-full bg-[#C9A227] text-white py-3 rounded-xl font-bold mt-2">Add to Gallery</button>
+              <button type="submit" className="w-full bg-[#9E8B6E] text-white py-3 rounded-xl font-bold mt-2">Add to Gallery</button>
             </div>
           </form>
         </div>
@@ -1276,7 +1302,7 @@ export default function SitesPage() {
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Work Description</label>
                 <textarea required name="desc" rows={3} placeholder="What was done?" className="w-full border themed-input p-3 rounded-xl outline-none" />
               </div>
-              <button type="submit" className="w-full bg-[#C9A227] text-white py-3 rounded-xl font-bold mt-2">Post to Timeline</button>
+              <button type="submit" className="w-full bg-[#9E8B6E] text-white py-3 rounded-xl font-bold mt-2">Post to Timeline</button>
             </div>
           </form>
         </div>

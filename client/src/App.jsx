@@ -19,11 +19,33 @@ import AttendancePage from "./pages/AttendancePage";
 import SalaryPage from "./pages/SalaryPage";
 import ReportsPage from "./pages/ReportsPage";
 import ReceiptPage from "./pages/ReceiptPage";
+import LoginPage from "./pages/LoginPage";
 import { DialogProvider } from "./contexts/DialogContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    localStorage.getItem("isAuthenticated") === "true"
+  );
+
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+    localStorage.setItem("isAuthenticated", "true");
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem("isAuthenticated");
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <ThemeProvider>
+        <LoginPage onLogin={handleLogin} />
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider>
@@ -33,12 +55,14 @@ function App() {
             <Sidebar
               isOpen={isSidebarOpen}
               toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+              onLogout={handleLogout}
             />
             <main className="flex-1 overflow-y-auto relative flex flex-col items-center">
               <div className="w-full max-w-[1600px] 2xl:max-w-[1920px] mx-auto">
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/crm" element={<CRMPage />} />
+                  <Route path="/crm/*" element={<CRMPage />} />
                   <Route path="/quotations" element={<QuotationPage />} />
 
                   {/* Finance */}
@@ -50,6 +74,7 @@ function App() {
 
                   {/* Projects */}
                   <Route path="/sites" element={<SitesPage />} />
+                  <Route path="/sites/*" element={<SitesPage />} />
 
                   {/* HR */}
                   <Route path="/employees" element={<EmployeesPage />} />

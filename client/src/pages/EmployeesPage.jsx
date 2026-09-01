@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
-  Edit2, Trash2, Phone, Mail, MapPin, Plus, X, ArrowLeft,
-  Calendar, CreditCard, User, Users, Search, ChevronDown,
+  Edit2, Trash2, Phone, Mail, MapPin, Plus, X, ArrowLeft, CreditCard, User, Users, Search, ChevronDown,
   LayoutGrid, List, FileText, FileSpreadsheet, Building,
   Briefcase
 } from "lucide-react";
@@ -254,7 +253,7 @@ const EmployeesPage = () => {
         <div className="flex justify-between items-center mb-6">
           <button
             onClick={() => setSelectedEmployee(null)}
-            className="flex items-center gap-2 text-muted hover:text-[#C9A227] font-bold text-sm transition"
+            className="flex items-center gap-2 text-muted hover:text-[#9E8B6E] font-bold text-sm transition"
           >
             <ArrowLeft size={16} /> Back to Staff List
           </button>
@@ -266,7 +265,7 @@ const EmployeesPage = () => {
                 setSelectedEmployee(null); 
                 handleEdit(emp); 
               }} 
-              className="px-4 py-2 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl text-sm font-bold text-themed hover:border-[#C9A227] hover:text-[#C9A227] transition flex items-center gap-2 shadow-sm"
+              className="px-4 py-2 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl text-sm font-bold text-themed hover:border-[#9E8B6E] hover:text-[#9E8B6E] transition flex items-center gap-2 shadow-sm"
             >
               <Edit2 size={16} /> Edit Profile
             </button>
@@ -294,11 +293,11 @@ const EmployeesPage = () => {
           {/* Left Column */}
           <div className="lg:col-span-4 space-y-6">
             <div className="themed-card rounded-[32px] p-8 text-center shadow-sm">
-              <div className="w-24 h-24 bg-[#C9A227]/10 text-[#C9A227] rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-[#C9A227]/20 shadow-md">
+              <div className="w-24 h-24 bg-[#9E8B6E]/10 text-[#9E8B6E] rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-[#9E8B6E]/20 shadow-md">
                 <User size={40} />
               </div>
               <h2 className="text-2xl font-black text-themed mb-1">{selectedEmployee.name}</h2>
-              <p className="text-[#C9A227] font-bold text-xs tracking-widest uppercase mb-4">
+              <p className="text-[#9E8B6E] font-bold text-xs tracking-widest uppercase mb-4">
                 {selectedEmployee.role}
               </p>
               <div className="inline-block px-3 py-1 bg-[var(--accent-soft)] border border-[var(--border-color)] rounded-lg text-[10px] font-bold text-muted mb-4">
@@ -318,7 +317,7 @@ const EmployeesPage = () => {
 
             <div className="themed-card rounded-[32px] p-6 shadow-sm">
               <h3 className="font-black text-themed text-sm mb-4 flex items-center gap-2">
-                <Phone size={16} className="text-[#C9A227]" /> Contact &amp; Details
+                <Phone size={16} className="text-[#9E8B6E]" /> Contact &amp; Details
               </h3>
               <div className="space-y-3">
                 <div className="flex items-start gap-3 text-muted text-sm font-medium">
@@ -364,7 +363,7 @@ const EmployeesPage = () => {
 
             <div className="themed-card rounded-[32px] overflow-hidden shadow-sm">
               <div className="p-6 px-8 border-b border-[var(--border-color)] flex items-center gap-3 font-black text-themed">
-                <CreditCard size={18} className="text-[#C9A227]" /> Payment History
+                <CreditCard size={18} className="text-[#9E8B6E]" /> Payment History
               </div>
               <div className="overflow-x-auto max-h-[300px]">
                 <table className="w-full text-left border-collapse">
@@ -416,7 +415,7 @@ const EmployeesPage = () => {
       <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-3 relative z-50">
         <div>
           <h1 className="text-xl font-black text-themed tracking-tight flex items-center gap-2">
-            <Users className="text-[#C9A227]" size={18} />
+            <Users className="text-[#9E8B6E]" size={18} />
             Staff Directory
           </h1>
           <p className="text-muted font-medium text-xs mt-0.5">
@@ -439,7 +438,7 @@ const EmployeesPage = () => {
           </button>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-[#C9A227] text-white px-4 py-1.5 rounded-xl font-bold hover:bg-[#B8911F] shadow-md flex items-center gap-2 transition ml-2"
+            className="bg-[#9E8B6E] text-white px-4 py-1.5 rounded-xl font-bold hover:bg-[#7D6C54] shadow-md flex items-center gap-2 transition ml-2"
           >
             <Plus size={18} /> Add Staff
           </button>
@@ -452,7 +451,7 @@ const EmployeesPage = () => {
         <StatCard title="Total Staff" value={totalEmployees} color="text-themed" icon={Users} />
         <StatCard title="Active" value={activeCount} color="text-emerald-500" />
         <StatCard title="Inactive" value={inactiveCount} color="text-rose-500" />
-        <StatCard title="Monthly Payroll" value={`₹${totalMonthlyPayroll.toLocaleString()}`} color="text-[#C9A227]" icon={Briefcase} />
+        <StatCard title="Monthly Payroll" value={`₹${totalMonthlyPayroll.toLocaleString()}`} color="text-[#9E8B6E]" icon={Briefcase} />
       </div>
 
       {/* CONTROLS */}
@@ -499,13 +498,13 @@ const EmployeesPage = () => {
           <div className="flex bg-white/10 p-1 rounded-xl">
             <button
               onClick={() => setViewMode("list")}
-              className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-[var(--bg-card)] shadow-sm text-[#C9A227]' : 'text-muted hover:text-themed'}`}
+              className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-[var(--bg-card)] shadow-sm text-[#9E8B6E]' : 'text-muted hover:text-themed'}`}
             >
               <List size={16} />
             </button>
             <button
               onClick={() => setViewMode("grid")}
-              className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-[var(--bg-card)] shadow-sm text-[#C9A227]' : 'text-muted hover:text-themed'}`}
+              className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-[var(--bg-card)] shadow-sm text-[#9E8B6E]' : 'text-muted hover:text-themed'}`}
             >
               <LayoutGrid size={16} />
             </button>
@@ -531,7 +530,7 @@ const EmployeesPage = () => {
                 {filteredEmployees.map((emp) => (
                   <tr key={emp.id} className="group themed-row">
                     <td className="px-6 py-4">
-                      <button onClick={() => setSelectedEmployee(emp)} className="block font-black text-themed text-sm hover:text-[#C9A227] transition text-left">
+                      <button onClick={() => setSelectedEmployee(emp)} className="block font-black text-themed text-sm hover:text-[#9E8B6E] transition text-left">
                         {emp.name}
                       </button>
                       <div className="flex items-center gap-1 text-muted text-[10px] font-bold mt-0.5">
@@ -558,7 +557,7 @@ const EmployeesPage = () => {
                       <div className="flex justify-end gap-3 opacity-50 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => handleEdit(emp)}
-                          className="text-muted hover:text-[#C9A227] transition"
+                          className="text-muted hover:text-[#9E8B6E] transition"
                         >
                           <Edit2 size={16} />
                         </button>
@@ -594,7 +593,7 @@ const EmployeesPage = () => {
           {filteredEmployees.map((emp) => (
             <div key={emp.id} className="themed-card rounded-[24px] p-5 shadow-sm hover:shadow-md transition flex flex-col h-full relative group">
               <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-[var(--bg-card)] p-1 rounded-lg shadow-sm border border-[var(--border-color)]">
-                <button onClick={() => handleEdit(emp)} className="text-muted hover:text-[#C9A227] p-1">
+                <button onClick={() => handleEdit(emp)} className="text-muted hover:text-[#9E8B6E] p-1">
                   <Edit2 size={14} />
                 </button>
                 <button
@@ -612,10 +611,10 @@ const EmployeesPage = () => {
                 </button>
               </div>
               
-              <div className="w-16 h-16 bg-[#C9A227]/10 text-[#C9A227] rounded-full flex items-center justify-center mb-4 cursor-pointer" onClick={() => setSelectedEmployee(emp)}>
+              <div className="w-16 h-16 bg-[#9E8B6E]/10 text-[#9E8B6E] rounded-full flex items-center justify-center mb-4 cursor-pointer" onClick={() => setSelectedEmployee(emp)}>
                 <User size={24} />
               </div>
-              <h3 className="font-black text-themed text-lg cursor-pointer hover:text-[#C9A227] transition" onClick={() => setSelectedEmployee(emp)}>
+              <h3 className="font-black text-themed text-lg cursor-pointer hover:text-[#9E8B6E] transition" onClick={() => setSelectedEmployee(emp)}>
                 {emp.name}
               </h3>
               <p className="text-muted text-xs font-bold mb-3">{emp.role}</p>
@@ -793,7 +792,7 @@ const EmployeesPage = () => {
             
             <button
               type="submit"
-              className="w-full bg-[#C9A227] text-white py-4 rounded-xl font-black text-base mt-8 hover:bg-[#B8911F] shadow-md transition"
+              className="w-full bg-[#9E8B6E] text-white py-4 rounded-xl font-black text-base mt-8 hover:bg-[#7D6C54] shadow-md transition"
             >
               {editingId ? "Save Changes" : "Create Profile"}
             </button>

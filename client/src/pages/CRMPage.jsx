@@ -1,11 +1,9 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import {
-  User, Briefcase, Calendar, Plus, Phone, MapPin, Search, DollarSign,
-  TrendingUp, Activity, Star, CheckCircle, Clock, Mail, Tag, Percent,
-  CheckSquare, BarChart2, Download, Filter, PieChart, Trash2, FileText,
-  AlertCircle, List, Grid, Edit3
+  User, Briefcase, Calendar, Plus, Phone, MapPin, Search, DollarSign, Activity, CheckCircle, Clock, Mail, Tag, Percent, BarChart2, Download, Filter, PieChart, Trash2, List, Grid, Edit3, Settings, FileText, ChevronDown, Play, Pause, XCircle
 } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -29,7 +27,21 @@ function Modal({ open, onClose, children, size = "max-w-lg" }) {
 
 const CRMPage = () => {
   const { showDialog } = useDialog();
-  const [activeTab, setActiveTab] = useState("contacts");
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState("leads");
+  
+  useEffect(() => {
+    const p = location.pathname.split('/').pop();
+    if (p === 'leads') setActiveTab('leads');
+    else if (p === 'customers') setActiveTab('customers');
+    else if (p === 'pipeline') setActiveTab('pipeline');
+    else if (p === 'schedule') setActiveTab('schedule');
+    else if (p === 'telecalling') setActiveTab('telecalling'); 
+    else if (p === 'marketing') setActiveTab('campaigns'); 
+    else if (p === 'document-vault') setActiveTab('document_vault');
+    else if (p === 'crm') setActiveTab('site_surveys');
+  }, [location.pathname]);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [monthFilter, setMonthFilter] = useState("All");
   const [customDateRange, setCustomDateRange] = useState({ start: '', end: '' });
@@ -45,28 +57,39 @@ const CRMPage = () => {
     LOST: { id: "LOST", title: "CLOSED LOST", deals: [] },
   });
   const [activities, setActivities] = useState([]);
+  const [sites, setSites] = useState([]);
+  
+  const [campaigns, setCampaigns] = useState([]);
 
+  const [editCampaign, setEditCampaign] = useState(null);
   const [editContact, setEditContact] = useState(null);
   const [editDeal, setEditDeal] = useState(null);
   const [editActivity, setEditActivity] = useState(null);
+  const [editSiteSurvey, setEditSiteSurvey] = useState(null);
+  const [editSiteMode, setEditSiteMode] = useState('full');
   const [feedback, setFeedback] = useState("");
+
+  const [telecalls, setTelecalls] = useState([]);
+  const [selectedCallNote, setSelectedCallNote] = useState(null);
+  const [isLogCallOpen, setIsLogCallOpen] = useState(false);
 
   const loadData = async () => {
     try {
-      const [cRes, dRes, aRes] = await Promise.all([
+      const [cRes, dRes, aRes, sRes] = await Promise.all([
         fetch('/api/crm').then(res => res.json()),
         fetch('/api/crm/deals/all').then(res => res.json()),
         fetch('/api/crm/activities/all').then(res => res.json()),
+        fetch('/api/sites').then(res => res.json()),
       ]);
       setContacts(cRes);
+      setSites(sRes);
       
       const newPipe = {
         LEAD: { id: "LEAD", title: "LEADS", deals: [] },
         CONTACTED: { id: "CONTACTED", title: "CONTACTED", deals: [] },
         PROPOSAL: { id: "PROPOSAL", title: "PROPOSALS", deals: [] },
         NEGOTIATION: { id: "NEGOTIATION", title: "NEGOTIATING", deals: [] },
-        WON: { id: "WON", title: "CLOSED WON", deals: [] },
-        LOST: { id: "LOST", title: "CLOSED LOST", deals: [] },
+        WON: { id: "WON", title: "CLOSED WON", deals: [] }
       };
       dRes.forEach(d => {
         const stage = d.stage || "LEAD";
@@ -75,7 +98,7 @@ const CRMPage = () => {
         }
       });
       setPipeline(newPipe);
-      setActivities(aRes.map(a => ({ id: a.id, type: a.type, date: a.date ? a.date.split('T')[0] : '', client: a.client, status: a.status })));
+      setActivities(aRes.map(a => ({ id: a.id, type: a.type, date: a.date ? a.date.split('T')[0] : '', client: a.client, status: a.status, notes: a.notes || '' })));
     } catch(err) {
       console.error(err);
     }
@@ -88,13 +111,31 @@ const CRMPage = () => {
   const handleContactSave = async (updated) => {
     try {
       if (!updated.id) {
-        updated.id = `c${Date.now()}`;
         updated.date = new Date().toISOString().split('T')[0];
-        await fetch('/api/crm', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(updated) });
+        const res = await fetch('/api/crm', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(updated) });
+        if (res.ok) {
+           const data = await res.json();
+           const createdContactId = data.id;
+           
+           // Automatically create a deal for this new contact
+           if (['Lead', 'Cold', 'Warm', 'Hot', 'Customer'].includes(updated.status || 'Lead')) {
+             await fetch('/api/crm/deals', { 
+               method: 'POST', 
+               headers: {'Content-Type':'application/json'}, 
+                body: JSON.stringify({
+                 title: updated.project || `${updated.name} - Deal`,
+                 contactId: String(createdContactId),
+                 value: 0,
+                 stage: 'LEAD',
+                 closeDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0]
+               }) 
+             });
+           }
+        }
       } else {
         await fetch(`/api/crm/${updated.id}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(updated) });
       }
-      loadData();
+      await loadData();
       setEditContact(null); showFeedback("Client profile saved successfully");
     } catch(err) { showFeedback("Error saving"); }
   };
@@ -137,6 +178,99 @@ const CRMPage = () => {
     } catch(err) { showFeedback("Error completing activity"); }
   };
 
+  const handleCallNow = async (contact) => {
+    try {
+      await fetch('/api/crm/activities', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ type: 'Outbound Call', date: new Date().toISOString(), client: contact.id, status: 'Pending', notes: 'Call attempted from dashboard' }) });
+      loadData();
+      showFeedback(`Dialing ${contact.name}... (Activity logged)`);
+    } catch(err) {}
+  };
+
+  const handleNoAnswer = async (contact) => {
+    try {
+      await fetch('/api/crm/activities', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ type: 'Outbound Call', date: new Date().toISOString(), client: contact.id, status: 'Completed', notes: 'No Answer' }) });
+      if (contact.status === 'Cold' || !contact.status) {
+         await fetch(`/api/crm/${contact.id}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({...contact, status: 'Lead'}) });
+      }
+      loadData();
+      showFeedback("Logged as No Answer.");
+    } catch(err) {}
+  };
+
+  const handleMarkNotInterested = (contactOrDealId, isDeal = false) => {
+    showDialog({
+      title: "Mark Not Interested",
+      message: "Are you sure you want to mark this lead as Not Interested? This will remove them from the active sales pipeline.",
+      type: "confirm",
+      onConfirm: async () => {
+        try {
+          let contactId = contactOrDealId;
+          if (isDeal) {
+             const pipelineDeals = Object.values(pipeline).flatMap(col => col.deals);
+             const deal = pipelineDeals.find(d => d.id === contactOrDealId);
+             if (deal) contactId = deal.contactId;
+          }
+          
+          const contact = contacts.find(c => c.id == contactId);
+          if (contact) {
+            await fetch(`/api/crm/${contact.id}`, { 
+              method: 'PUT', 
+              headers: {'Content-Type':'application/json'}, 
+              body: JSON.stringify({...contact, status: 'Not Interested'}) 
+            });
+          }
+
+          const pipelineDeals = Object.values(pipeline).flatMap(col => col.deals);
+          const dealsToUpdate = pipelineDeals.filter(d => d.contactId == contactId);
+          for (const deal of dealsToUpdate) {
+            await fetch(`/api/crm/deals/${deal.id}`, { 
+              method: 'PUT', 
+              headers: {'Content-Type':'application/json'}, 
+              body: JSON.stringify({...deal, stage: 'LOST'}) 
+            });
+          }
+
+          await loadData();
+          showFeedback("Marked as Not Interested!");
+        } catch(err) {
+          showFeedback("Error updating status.");
+        }
+      }
+    });
+  };
+
+  const handleCampaignSave = (savedCampaign) => {
+    if (!savedCampaign.id) {
+       setCampaigns([...campaigns, { ...savedCampaign, id: `C${Date.now()}`, reach: 0, engaged: 0, conversions: 0 }]);
+    } else {
+       setCampaigns(campaigns.map(c => c.id === savedCampaign.id ? savedCampaign : c));
+    }
+    setEditCampaign(null);
+    showFeedback("Campaign saved successfully!");
+  };
+
+  const handleSiteSurveySave = async (updated) => {
+    try {
+      const payload = {
+        ...updated,
+        id: updated.id ? String(updated.id) : undefined,
+        budget: Number(updated.budget) || 0
+      };
+      
+      let res;
+      if (!updated.id) {
+        res = await fetch('/api/sites', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      } else {
+        res = await fetch(`/api/sites/${updated.id}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      }
+      
+      if (!res.ok) throw new Error("Failed to save site data");
+      
+      loadData();
+      setEditSiteSurvey(null); showFeedback("Site & Survey Notes saved successfully");
+    } catch(err) { showFeedback("Error saving site survey notes"); }
+  };
+
   const deleteActivity = (id) => {
     showDialog({
       title: "Delete Activity",
@@ -165,6 +299,21 @@ const CRMPage = () => {
     });
   };
 
+  const handleConvertToCustomer = async (contact) => {
+    try {
+      const updatedContact = { ...contact, status: 'Customer' };
+      await fetch(`/api/crm/${contact.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedContact)
+      });
+      loadData();
+      showFeedback(`${contact.name} is now a Customer!`);
+    } catch (err) {
+      showFeedback("Error converting to customer");
+    }
+  };
+
   const deleteDeal = (id) => {
     showDialog({
       title: "Delete Deal",
@@ -175,6 +324,20 @@ const CRMPage = () => {
           await fetch(`/api/crm/deals/${id}`, { method: 'DELETE' });
           loadData(); showFeedback("Deal deleted successfully");
         } catch(err) { showFeedback("Error deleting deal"); }
+      }
+    });
+  };
+
+  const deleteSite = (id) => {
+    showDialog({
+      title: "Delete Site Survey",
+      message: "Are you sure you want to delete this site survey? This action cannot be undone.",
+      type: "confirm",
+      onConfirm: async () => {
+        try {
+          await fetch(`/api/sites/${id}`, { method: 'DELETE' });
+          loadData(); showFeedback("Site survey deleted successfully");
+        } catch(err) { showFeedback("Error deleting site survey"); }
       }
     });
   };
@@ -241,14 +404,26 @@ const CRMPage = () => {
   };
 
   const filteredContacts = contacts.filter((c) => {
+    let tabMatch = true;
+    if (activeTab === 'leads') {
+      tabMatch = ['Lead', 'Cold', 'Not Interested'].includes(c.status) || !c.status;
+    } else if (activeTab === 'customers') {
+      tabMatch = c.status === 'Customer';
+    }
+
     const searchMatch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) || (c.project || "").toLowerCase().includes(searchTerm.toLowerCase()) || (c.tags && c.tags.join(" ").toLowerCase().includes(searchTerm.toLowerCase()));
-    return searchMatch && checkMonth(c.date);
+    return searchMatch && checkMonth(c.date) && tabMatch;
   });
 
   const filteredActivities = activities.filter((a) => {
     const clientName = contacts.find(c => c.id === a.client)?.name || "";
     const searchMatch = clientName.toLowerCase().includes(searchTerm.toLowerCase()) || a.type.toLowerCase().includes(searchTerm.toLowerCase());
     return searchMatch && checkMonth(a.date);
+  });
+
+  const filteredSites = sites.filter((s) => {
+    const searchMatch = s.name.toLowerCase().includes(searchTerm.toLowerCase()) || s.clientName.toLowerCase().includes(searchTerm.toLowerCase());
+    return searchMatch && checkMonth(s.startDate);
   });
 
   const onDragEnd = async (result) => {
@@ -295,10 +470,13 @@ const CRMPage = () => {
           {/* TABS (Left) */}
           <div className="flex w-full md:w-auto gap-1 p-1 rounded-xl border border-[var(--border-color)] themed-card shadow-sm overflow-x-auto order-2 lg:order-1">
             {[
-              { id: "contacts", label: "Clients", icon: <User size={14} /> },
-              { id: "deals", label: "Pipeline", icon: <Briefcase size={14} /> },
-              { id: "activities", label: "Schedule", icon: <Calendar size={14} /> },
-              { id: "insights", label: "Insights", icon: <BarChart2 size={14} /> },
+              { id: "leads", label: "Leads", icon: <User size={14} /> },
+              { id: "customers", label: "Customers", icon: <User size={14} /> },
+              { id: "pipeline", label: "Pipeline", icon: <Briefcase size={14} /> },
+              { id: "site_surveys", label: "Site Surveys", icon: <MapPin size={14} /> },
+              { id: "schedule", label: "Schedule", icon: <Calendar size={14} /> },
+              { id: "telecalling", label: "Telecalling", icon: <Phone size={14} /> },
+              { id: "campaigns", label: "Campaigns", icon: <BarChart2 size={14} /> },
             ].map((tab) => (
               <button key={tab.id} onClick={() => { setActiveTab(tab.id); setSearchTerm(""); }} className={`flex-shrink-0 flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300 ${activeTab === tab.id ? "dark:bg-violet-600 bg-[#D4AF37] text-white shadow-md" : "text-muted hover:text-themed hover:bg-[var(--bg-card-hover)]"}`}>
                 {tab.icon} <span className="hidden sm:inline">{tab.label}</span>
@@ -334,9 +512,11 @@ const CRMPage = () => {
 
           {/* ADD BUTTON (Right) */}
           <div className="flex w-full md:w-auto order-3 gap-3 items-center">
-            <button onClick={() => { if (activeTab === "contacts") setEditContact({ status: 'Cold', tags: [] }); else if (activeTab === "deals") setEditDeal({ value: 0, contactId: contacts[0]?.id || '' }); else setEditActivity({ type: '', date: new Date().toISOString().split('T')[0], client: contacts[0]?.id || '', status: 'Pending' }); }} className="w-full md:w-auto flex-shrink-0 flex items-center justify-center gap-1.5 px-6 py-2.5 rounded-xl text-sm font-black transition-all duration-300 dark:bg-violet-700 bg-[#D4AF37] text-white shadow-lg dark:hover:bg-slate-800 hover:bg-[#c4a133]">
-              <Plus size={16} /> <span className="hidden sm:inline">Add New</span>
-            </button>
+            {activeTab !== "campaigns" && activeTab !== "telecalling" && (
+              <button onClick={() => { if (activeTab === "leads" || activeTab === "customers") setEditContact({ status: 'Cold', tags: [] }); else if (activeTab === "pipeline") setEditDeal({ value: 0, contactId: contacts[0]?.id || '' }); else if (activeTab === "site_surveys") { setEditSiteMode('full'); setEditSiteSurvey({ name: '', clientName: '', address: '', status: 'Pre-Construction', startDate: new Date().toISOString().split('T')[0], surveyNotes: '' }); } else setEditActivity({ type: '', date: new Date().toISOString().split('T')[0], client: contacts[0]?.id || '', status: 'Pending' }); }} className="w-full md:w-auto flex-shrink-0 flex items-center justify-center gap-1.5 px-6 py-2.5 rounded-xl text-sm font-black transition-all duration-300 dark:bg-violet-700 bg-[#D4AF37] text-white shadow-lg dark:hover:bg-slate-800 hover:bg-[#c4a133]">
+                <Plus size={16} /> <span className="hidden sm:inline">Add New</span>
+              </button>
+            )}
             <NotificationWidget />
           </div>
 
@@ -347,7 +527,7 @@ const CRMPage = () => {
       <div className="themed-card rounded-[2.5rem] shadow-2xl min-h-[500px] overflow-visible">
         
         {/* SECTION: DEALS (KANBAN) */}
-        {activeTab === "deals" && (
+        {activeTab === "pipeline" && (
           <div className="p-4 sm:p-5 overflow-x-auto w-full">
             <DragDropContext onDragEnd={onDragEnd}>
               <div className="flex flex-row gap-2 sm:gap-3 w-full min-w-[1200px]">
@@ -407,6 +587,7 @@ const CRMPage = () => {
                                     <div className="pt-2 border-t border-[var(--border-color)] flex justify-between items-center">
                                       <span className="flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-slate-500 truncate"><Clock size={10} /> {new Date(deal.closeDate).toLocaleDateString('en-GB', {day:'numeric', month:'short'})}</span>
                                       <div className="flex gap-1">
+                                        <button className="text-[9px] sm:text-[10px] font-bold text-slate-500 hover:text-slate-400 px-2 py-1 themed-card rounded-md transition-colors hover:bg-slate-500/20" onClick={() => handleMarkNotInterested(deal.id, true)}>Not Interested</button>
                                         <button className="text-[9px] sm:text-[10px] font-bold text-muted hover:text-themed px-2 py-1 themed-card rounded-md transition-colors hover:bg-violet-600/30" onClick={() => setEditDeal({ ...deal })}>Edit</button>
                                         <button className="text-[9px] sm:text-[10px] font-bold text-red-400 hover:text-red-300 px-1.5 py-1 themed-card rounded-md transition-colors hover:bg-red-500/20" onClick={() => deleteDeal(deal.id)}><Trash2 size={12}/></button>
                                       </div>
@@ -428,10 +609,12 @@ const CRMPage = () => {
         )}
 
         {/* SECTION: CLIENTS */}
-        {activeTab === "contacts" && (
+        {(activeTab === "leads" || activeTab === "customers") && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="overflow-x-auto bg-transparent">
             <div className="flex justify-between items-center p-6 border-b border-[var(--border-color)]">
-              <h2 className="text-lg font-black text-themed">Client Directory</h2>
+              <h2 className="text-lg font-black text-themed">
+                {activeTab === "leads" ? "Pre-Sales Leads" : "Active Customers"}
+              </h2>
               <div className="flex items-center gap-3">
                 <div className="flex bg-[var(--bg-surface)] p-1 rounded-xl border border-[var(--border-color)]">
                   <button onClick={() => setViewMode("list")} className={`p-1.5 rounded-lg transition-colors ${viewMode === "list" ? "bg-[var(--accent)] text-white shadow-sm" : "text-muted hover:text-themed"}`} title="List View"><List size={16}/></button>
@@ -454,7 +637,7 @@ const CRMPage = () => {
               </thead>
               <tbody>
                 {filteredContacts.map((c) => (
-                  <tr key={c.id} className="border-b border-[var(--border-color)] group transition-colors" style={{background: 'transparent'}}>
+                  <tr key={c.id} className={`border-b border-[var(--border-color)] group transition-colors ${c.status === 'Not Interested' ? 'opacity-50 grayscale hover:opacity-100 hover:grayscale-0' : ''}`} style={{background: 'transparent'}}>
                     <td className="py-4 pl-8 pr-4">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black shadow-sm flex-shrink-0"
@@ -462,7 +645,10 @@ const CRMPage = () => {
                           {c.name.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <div className="font-black" style={{color: 'var(--text-primary)'}}>{c.name}</div>
+                          <div className="font-black" style={{color: 'var(--text-primary)'}}>
+                            {c.name}
+                            {c.status === 'Not Interested' && <span className="ml-2 px-2 py-0.5 rounded text-[8px] uppercase font-black tracking-widest text-slate-500 bg-slate-500/10 border border-slate-500/20 align-middle">Not Interested</span>}
+                          </div>
                           <div className="text-[10px] font-semibold uppercase tracking-wider" style={{color: 'var(--text-muted)'}}>ID: {c.id}</div>
                         </div>
                       </div>
@@ -484,9 +670,21 @@ const CRMPage = () => {
                     <td className="py-4 px-4 text-xs font-medium space-y-1" style={{color: 'var(--text-muted)'}}>
                       <div className="flex items-center gap-2"><Phone size={11} style={{color: 'var(--text-muted)'}} /> {c.phone}</div>
                       <div className="flex items-center gap-2"><Mail size={11} style={{color: 'var(--text-muted)'}} /> {c.email || 'N/A'}</div>
+                      {activities.find(a => a.client === c.id && a.status === 'Pending') && (
+                        <div className="flex items-center gap-1 text-blue-500 font-bold mt-2 pt-1.5 border-t border-[var(--border-color)]">
+                          <Clock size={10} /> {new Date(activities.find(a => a.client === c.id && a.status === 'Pending').date).toLocaleDateString('en-GB', {day:'numeric', month:'short'})}
+                        </div>
+                      )}
                     </td>
                     <td className="py-4 pr-8 pl-4 text-right">
                       <div className="flex justify-end items-center gap-2">
+                        {activeTab === "leads" && (
+                          <>
+                            {c.status !== 'Not Interested' && <button className="font-bold px-3 py-1.5 rounded-lg text-xs transition-all opacity-0 group-hover:opacity-100 border border-slate-500 text-slate-500 hover:bg-slate-500/10" onClick={() => handleMarkNotInterested(c.id, false)}>Not Interested</button>}
+                            <button className="font-bold px-3 py-1.5 rounded-lg text-xs transition-all opacity-0 group-hover:opacity-100 border border-blue-500 text-blue-500 hover:bg-blue-500/10" onClick={() => setEditActivity({ type: 'Follow-up Call', date: new Date().toISOString().split('T')[0], client: c.id, status: 'Pending' })}>Schedule Follow-up</button>
+                            <button className="font-bold px-3 py-1.5 rounded-lg text-xs transition-all opacity-0 group-hover:opacity-100 border border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37]/10" onClick={() => handleConvertToCustomer(c)}>Convert to Customer</button>
+                          </>
+                        )}
                         <button
                           className="font-bold px-3 py-1.5 rounded-lg text-xs transition-all opacity-0 group-hover:opacity-100"
                           style={{color: 'var(--text-muted)', border: '1px solid var(--border-color)', background: 'var(--bg-surface)'}}
@@ -504,7 +702,7 @@ const CRMPage = () => {
             ) : (
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" style={{background: 'transparent'}}>
               {filteredContacts.map((c) => (
-                <div key={c.id} className="group relative p-5 rounded-2xl border transition-all hover:-translate-y-0.5 hover:shadow-lg"
+                <div key={c.id} className={`group relative p-5 rounded-2xl border transition-all hover:-translate-y-0.5 hover:shadow-lg ${c.status === 'Not Interested' ? 'opacity-60 grayscale hover:opacity-100 hover:grayscale-0' : ''}`}
                   style={{background: 'var(--bg-card)', borderColor: 'var(--border-color)'}}>
                   {/* Accent top strip on hover */}
                   <div className="absolute inset-x-0 top-0 h-0.5 rounded-t-2xl opacity-0 group-hover:opacity-100 transition-opacity"
@@ -517,11 +715,21 @@ const CRMPage = () => {
                         {c.name.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <div className="font-black text-base" style={{color: 'var(--text-primary)'}}>{c.name}</div>
+                        <div className="font-black text-base flex flex-col sm:flex-row sm:items-center gap-1" style={{color: 'var(--text-primary)'}}>
+                          {c.name}
+                          {c.status === 'Not Interested' && <span className="px-2 py-0.5 rounded text-[8px] uppercase font-black tracking-widest text-slate-500 bg-slate-500/10 border border-slate-500/20 w-max">Not Interested</span>}
+                        </div>
                         <div className="text-[10px] font-semibold uppercase tracking-wider" style={{color: 'var(--text-muted)'}}>ID: {c.id}</div>
                       </div>
                     </div>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {activeTab === "leads" && (
+                        <>
+                          {c.status !== 'Not Interested' && <button className="font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-slate-500 text-slate-500 hover:bg-slate-500/10" onClick={() => handleMarkNotInterested(c.id, false)} title="Not Interested"><XCircle size={12}/></button>}
+                          <button className="font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-blue-500 text-blue-500 hover:bg-blue-500/10" onClick={() => setEditActivity({ type: 'Follow-up Call', date: new Date().toISOString().split('T')[0], client: c.id, status: 'Pending' })} title="Schedule Follow-up"><Phone size={12}/></button>
+                          <button className="font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37]/10" onClick={() => handleConvertToCustomer(c)}>Convert</button>
+                        </>
+                      )}
                       <button
                         className="p-1.5 rounded-lg transition-colors"
                         style={{color: 'var(--text-muted)'}}
@@ -565,6 +773,12 @@ const CRMPage = () => {
                       <div className="text-[10px] font-bold flex items-center gap-1.5" style={{color: 'var(--text-muted)'}}><Mail size={10}/> Email</div>
                       <div className="text-xs font-bold truncate max-w-[140px]" style={{color: 'var(--text-primary)'}}>{c.email || 'N/A'}</div>
                     </div>
+                    {activities.find(a => a.client === c.id && a.status === 'Pending') && (
+                      <div className="flex items-center justify-between pt-2 mt-1" style={{borderTop: '1px dashed var(--border-color)'}}>
+                        <div className="text-[10px] font-bold flex items-center gap-1.5 text-blue-500"><Clock size={10}/> Scheduled</div>
+                        <div className="text-xs font-bold text-blue-500">{new Date(activities.find(a => a.client === c.id && a.status === 'Pending').date).toLocaleDateString('en-GB', {day:'numeric', month:'short'})}</div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -574,7 +788,7 @@ const CRMPage = () => {
         )}
 
         {/* SECTION: ACTIVITIES */}
-        {activeTab === "activities" && (
+        {activeTab === "schedule" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 lg:p-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
               {[{ type: "Follow-up Call", icon: <Phone size={18} />, color: "blue" }, { type: "Site Visit", icon: <MapPin size={18} />, color: "orange" }, { type: "Send Quotation", icon: <DollarSign size={18} />, color: "emerald" }].map(({ type, icon, color }) => (
@@ -592,7 +806,11 @@ const CRMPage = () => {
               <div className="space-y-3">
                 {filteredActivities.sort((a,b) => new Date(a.date) - new Date(b.date)).map((act) => {
                   const contact = contacts.find(c => c.id === act.client);
-                  const isOverdue = new Date(act.date) < new Date() && act.status !== 'Completed';
+                  const checkDate = new Date(act.date);
+                  if (!act.date || !act.date.includes('T') || act.date.endsWith('00:00:00.000Z')) {
+                    checkDate.setHours(23, 59, 59, 999);
+                  }
+                  const isOverdue = checkDate < new Date() && act.status !== 'Completed';
                   const displayStatus = isOverdue ? 'Overdue' : act.status;
                   const actDate = new Date(act.date);
                   return (
@@ -632,79 +850,311 @@ const CRMPage = () => {
           </motion.div>
         )}
 
-        {/* SECTION: INSIGHTS & ANALYTICS */}
-        {activeTab === "insights" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 lg:p-8 space-y-8">
-            {/* Metrics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
-              <div className="themed-card p-6 rounded-[2rem] relative overflow-hidden group shadow-sm hover:shadow-md transition-all">
-                <h3 className="text-slate-400 font-bold text-xs mb-2 uppercase tracking-widest flex items-center gap-2"><DollarSign size={14}/> Total Pipeline</h3>
-                <div className="text-3xl font-black text-themed">₹{(totalValue / 100000).toFixed(2)}L</div>
-                <div className="mt-3 flex items-center text-xs font-bold text-slate-400">All Deals Pipeline Value</div>
+        {/* SECTION: SITE SURVEYS */}
+        {activeTab === "site_surveys" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 lg:p-8">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-black text-themed">Site Survey Notes</h2>
+              <div className="flex bg-[var(--bg-surface)] p-1 rounded-xl border border-[var(--border-color)]">
+                <button onClick={() => setViewMode("list")} className={`p-1.5 rounded-lg transition-colors ${viewMode === "list" ? "bg-[var(--accent)] text-white shadow-sm" : "text-muted hover:text-themed"}`} title="List View"><List size={16}/></button>
+                <button onClick={() => setViewMode("card")} className={`p-1.5 rounded-lg transition-colors ${viewMode === "card" ? "bg-[var(--accent)] text-white shadow-sm" : "text-muted hover:text-themed"}`} title="Card View"><Grid size={16}/></button>
               </div>
-              <div className="bg-emerald-500/10 border border-emerald-500/20 p-6 rounded-[2rem] relative overflow-hidden group shadow-sm hover:shadow-md transition-all">
-                <h3 className="text-emerald-400 font-bold text-xs mb-2 uppercase tracking-widest flex items-center gap-2"><Percent size={14}/> Closed Revenue</h3>
-                <div className="text-3xl font-black text-emerald-400">₹{(wonValue / 100000).toFixed(2)}L</div>
-                <div className="mt-3 flex items-center text-xs font-bold text-emerald-400 bg-emerald-500/10 w-max px-2 py-0.5 rounded-lg border border-emerald-500/20">Revenue successfully closed</div>
+            </div>
+            
+            {filteredSites.length === 0 ? (
+              <div className="col-span-full p-12 text-center themed-card rounded-3xl border border-[var(--border-color)] shadow-sm">
+                <MapPin size={48} className="mx-auto text-slate-400 mb-4 opacity-50" />
+                <h3 className="text-xl font-black text-themed">No Sites Found</h3>
+                <p className="text-muted text-sm mt-2 font-medium">Click Add New to create a Site and take Survey Notes.</p>
               </div>
-              <div className="dark:bg-blue-500/10 bg-amber-500/10 dark:border-blue-500/20 border-amber-500/20 border p-6 rounded-[2rem] relative overflow-hidden group shadow-sm hover:shadow-md transition-all">
-                <h3 className="dark:text-blue-400 text-amber-600 font-bold text-xs mb-2 uppercase tracking-widest flex items-center gap-2"><Activity size={14}/> Active Projects</h3>
-                <div className="text-3xl font-black dark:text-blue-400 text-amber-600">{activeCount}</div>
-                <div className="mt-3 flex items-center text-xs font-bold dark:text-blue-400 text-amber-600 dark:bg-blue-500/10 bg-amber-500/10 w-max px-2 py-0.5 rounded-lg dark:border-blue-500/20 border-amber-500/20 border">Currently in pipeline</div>
+            ) : viewMode === "list" ? (
+              <div className="overflow-x-auto bg-transparent">
+                <table className="w-full text-left border-collapse" style={{background: 'transparent'}}>
+                  <thead>
+                    <tr className="border-b border-[var(--border-color)] text-[10px] font-black uppercase tracking-widest text-slate-500">
+                      <th className="py-4 pl-6 pr-4">Site / Project</th>
+                      <th className="py-4 px-4">Client Details</th>
+                      <th className="py-4 px-4">Location</th>
+                      <th className="py-4 px-4 text-center">Status</th>
+                      <th className="py-4 pl-4 pr-6 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredSites.map(site => {
+                      const sStatus = site.surveyStatus || 'Not Taken';
+                      return (
+                        <tr key={site.id} className="border-b border-[var(--border-color)] hover:bg-black/5 dark:hover:bg-white/5 transition-colors group">
+                          <td className="py-4 pl-6 pr-4">
+                            <div className="font-black text-sm text-themed">{site.name}</div>
+                            <div className="text-[10px] text-muted font-bold mt-1">Added: {site.startDate}</div>
+                          </td>
+                          <td className="py-4 px-4">
+                            <div className="font-bold text-xs text-themed flex items-center gap-2"><User size={12}/> {site.clientName}</div>
+                            {site.phone && <div className="text-[10px] text-muted flex items-center gap-2 mt-1"><Phone size={10}/> {site.phone}</div>}
+                          </td>
+                          <td className="py-4 px-4 text-xs font-bold text-slate-400">
+                            {site.address || "Address not provided"}
+                          </td>
+                          <td className="py-4 px-4 text-center">
+                            <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border ${sStatus === 'Taken' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : sStatus === 'Scheduled' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20'}`}>
+                              {sStatus === 'Taken' ? 'Survey Taken' : sStatus === 'Scheduled' ? 'Scheduled' : 'Not Taken'}
+                            </span>
+                            {sStatus === 'Scheduled' && site.surveyDate && (
+                              <div className="text-[9px] font-bold text-blue-400 mt-2">{new Date(site.surveyDate).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</div>
+                            )}
+                          </td>
+                          <td className="py-4 pl-4 pr-6 text-right">
+                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button title="Edit Survey Notes" className="text-slate-400 hover:text-themed px-3 py-1.5 rounded-xl hover:bg-[var(--accent-soft)] transition-colors border border-[var(--border-color)] text-xs font-bold" onClick={() => { setEditSiteMode('notes'); setEditSiteSurvey(site); }}><FileText size={12} className="inline mr-1"/> Notes</button>
+                              <button title="Edit Site Details" className="text-slate-400 hover:text-themed px-3 py-1.5 rounded-xl hover:bg-[var(--accent-soft)] transition-colors border border-[var(--border-color)] text-xs font-bold" onClick={() => { setEditSiteMode('full'); setEditSiteSurvey(site); }}><Settings size={12} className="inline mr-1"/> Edit</button>
+                              <button title="Delete Site Survey" className="text-[#f87171] hover:text-red-400 px-2 py-1.5 rounded-xl hover:bg-red-500/10 transition-colors border border-[var(--border-color)] hover:border-red-500/30 text-xs font-bold" onClick={() => deleteSite(site.id)}><Trash2 size={12}/></button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                {filteredSites.map(site => {
+                  const sStatus = site.surveyStatus || 'Not Taken';
+                  return (
+                    <div key={site.id} className="p-6 themed-card rounded-[2rem] border border-[var(--border-color)] shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
+                      <div className={`absolute top-0 left-0 w-1.5 h-full transition-colors ${sStatus === 'Taken' ? 'bg-emerald-500' : sStatus === 'Scheduled' ? 'bg-blue-500' : 'bg-amber-500'}`}></div>
+                      
+                      <div className="flex justify-between items-start mb-5 pl-2">
+                        <div>
+                          <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border ${sStatus === 'Taken' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : sStatus === 'Scheduled' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20'}`}>
+                            {sStatus === 'Taken' ? 'Survey Taken' : sStatus === 'Scheduled' ? 'Survey Scheduled' : 'Survey Not Taken'}
+                          </span>
+                          <h3 className="font-black text-themed mt-3 text-lg leading-tight">{site.name}</h3>
+                        </div>
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button 
+                            title="Edit Site Details" 
+                            onClick={() => { setEditSiteMode('full'); setEditSiteSurvey(site); }}
+                            className="p-2 rounded-xl text-slate-400 hover:text-themed hover:bg-[var(--accent-soft)] transition-colors border border-transparent hover:border-[var(--border-color)]"
+                          >
+                            <Settings size={14} />
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-3 pl-2 pt-4 border-t border-[var(--border-color)]">
+                        <div className="flex items-center gap-3 text-xs font-bold text-slate-400">
+                          <div className="w-6 h-6 rounded-lg bg-[var(--bg-surface)] flex items-center justify-center border border-[var(--border-color)]"><User size={12} className="text-themed" /></div>
+                          <span className="text-themed">{site.clientName || "Unknown Client"}</span>
+                          {site.phone && (
+                            <span className="text-[10px] text-slate-500 ml-1"><Phone size={10} className="inline mr-1" />{site.phone}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 text-xs font-bold text-slate-400">
+                          <div className="w-6 h-6 rounded-lg bg-[var(--bg-surface)] flex items-center justify-center border border-[var(--border-color)] flex-shrink-0"><MapPin size={12} className="text-themed" /></div>
+                          <span className="truncate" title={site.address || "Address not provided"}>{site.address || "Address not provided"}</span>
+                        </div>
+                      </div>
+
+                      {sStatus === 'Scheduled' && site.surveyDate && (
+                        <div className="mt-4 pl-2">
+                          <div className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Scheduled For</div>
+                          <div className="flex items-center gap-2 text-xs font-bold text-blue-400 bg-blue-500/10 p-2 rounded-lg border border-blue-500/20 w-fit">
+                            <Clock size={12} />
+                            {new Date(site.surveyDate).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="mt-4 pl-2">
+                        <div className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1">Survey Notes</div>
+                        {site.surveyNotes ? (
+                          <ul className="text-xs font-medium text-slate-300 bg-white/5 p-4 rounded-lg border border-white/5 max-h-40 overflow-y-auto custom-scrollbar list-disc pl-5 space-y-1.5">
+                            {site.surveyNotes.split('\n').filter(n => n.trim() !== '').map((note, idx) => (
+                              <li key={idx} className="pl-1 marker:text-violet-500">{note}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-xs italic text-slate-500 p-2 border border-dashed border-[var(--border-color)] rounded-lg text-center">No survey notes added yet.</p>
+                        )}
+                      </div>
+                      
+                      <div className="mt-5 pt-4 border-t border-[var(--border-color)] flex justify-between items-center pl-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Added on {site.startDate}</span>
+                        </div>
+                        <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button title="Edit Survey Notes" className="text-slate-400 hover:text-themed px-3 py-1.5 rounded-xl hover:bg-[var(--accent-soft)] transition-colors border border-[var(--border-color)] flex items-center gap-2 text-xs font-bold" onClick={() => { setEditSiteMode('notes'); setEditSiteSurvey(site); }}><Edit3 size={14}/> Edit Notes</button>
+                          <button title="Delete Site Survey" className="text-[#f87171] hover:text-red-400 px-2.5 py-1.5 rounded-xl hover:bg-red-500/10 transition-colors border border-[var(--border-color)] hover:border-red-500/30 flex items-center gap-2 text-xs font-bold" onClick={() => deleteSite(site.id)}><Trash2 size={14}/></button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </motion.div>
+        )}
+
+
+        {/* SECTION: TELECALLING */}
+        {activeTab === "telecalling" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 lg:p-8 bg-transparent">
+            {/* 4 KPIs: TOTAL CALLS TODAY, CONNECTED, FOLLOW-UPS SCHEDULED, MISSED */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+              <div className="themed-card border border-[var(--border-color)] p-5 rounded-2xl shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <Phone size={14} className="text-blue-500" /> <span className="text-[10px] font-black uppercase tracking-widest text-blue-500">Total Calls Today</span>
+                </div>
+                <div className="text-3xl font-black text-themed">0</div>
+              </div>
+              <div className="themed-card border border-[var(--border-color)] p-5 rounded-2xl shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <Phone size={14} className="text-emerald-500" /> <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Connected</span>
+                </div>
+                <div className="text-3xl font-black text-themed">0</div>
+              </div>
+              <div className="themed-card border border-[var(--border-color)] p-5 rounded-2xl shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock size={14} className="text-amber-500" /> <span className="text-[10px] font-black uppercase tracking-widest text-amber-500">Follow-ups Scheduled</span>
+                </div>
+                <div className="text-3xl font-black text-themed">0</div>
+              </div>
+              <div className="themed-card border border-[var(--border-color)] p-5 rounded-2xl shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <Phone size={14} className="text-rose-500 rotate-90" /> <span className="text-[10px] font-black uppercase tracking-widest text-rose-500">Missed</span>
+                </div>
+                <div className="text-3xl font-black text-themed">0</div>
+              </div>
+            </div>
+            
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-black text-themed">Recent Calls</h2>
+              <button onClick={() => setIsLogCallOpen(true)} className="px-4 py-2 bg-[#D4AF37] hover:bg-[#c4a133] text-white rounded-xl text-xs font-bold transition-colors shadow-md flex items-center gap-2">
+                <Plus size={14}/> Log New Call
+              </button>
+            </div>
+            
+            <div className="overflow-x-auto bg-[var(--bg-card)] rounded-2xl border border-[var(--border-color)]">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-[var(--border-color)] text-[10px] font-black uppercase tracking-widest text-slate-500">
+                    <th className="py-4 pl-6 pr-4">Customer</th>
+                    <th className="py-4 px-4">Phone</th>
+                    <th className="py-4 px-4">Type</th>
+                    <th className="py-4 px-4">Date/Time</th>
+                    <th className="py-4 px-4">Duration</th>
+                    <th className="py-4 px-4">Outcome</th>
+                    <th className="py-4 pl-4 pr-6 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border-color)]">
+                  {telecalls.map((call) => (
+                    <tr key={call.id} className="hover:bg-black/5 dark:hover:bg-white/5 transition-colors group">
+                      <td className="py-4 pl-6 pr-4 font-black text-sm text-themed">{call.customer}</td>
+                      <td className="py-4 px-4 text-xs font-bold text-muted">{call.phone}</td>
+                      <td className="py-4 px-4">
+                        {call.type === 'outbound' ? <Phone size={14} className="text-blue-500" /> : call.type === 'inbound' ? <Phone size={14} className="text-emerald-500" /> : <Phone size={14} className="text-rose-500 rotate-90" />}
+                      </td>
+                      <td className="py-4 px-4 text-xs font-medium text-muted">{call.date}</td>
+                      <td className="py-4 px-4 text-xs font-bold text-muted">{call.duration}</td>
+                      <td className="py-4 px-4">
+                        <span className={`text-[10px] font-black uppercase tracking-widest ${
+                          call.outcome === 'Interested' ? 'text-blue-500' :
+                          call.outcome === 'Call Later' ? 'text-amber-500' :
+                          call.outcome === 'Missed' ? 'text-rose-500' :
+                          'text-emerald-500'
+                        }`}>
+                          {call.outcome}
+                        </span>
+                      </td>
+                      <td className="py-4 pl-4 pr-6 flex justify-end">
+                        <button onClick={() => setSelectedCallNote(call)} className="flex items-center gap-1.5 px-3 py-1.5 border border-[var(--border-color)] bg-[var(--bg-surface)] hover:bg-black/5 dark:hover:bg-white/5 rounded-lg text-[10px] font-bold text-muted transition-colors">
+                          <FileText size={12} /> View Notes
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+        )}
+
+        {/* SECTION: CAMPAIGNS */}
+        {activeTab === "campaigns" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 lg:p-8 bg-transparent">
+            {/* 4 KPIs: ACTIVE CAMPAIGNS, TOTAL LEADS GENERATED, MARKETING BUDGET, TOTAL ROI */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+              <div className="themed-card border border-[var(--border-color)] p-5 rounded-2xl shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <Activity size={14} className="text-blue-500" /> <span className="text-[10px] font-black uppercase tracking-widest text-blue-500">Active Campaigns</span>
+                </div>
+                <div className="text-3xl font-black text-themed">0</div>
+              </div>
+              <div className="themed-card border border-[var(--border-color)] p-5 rounded-2xl shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle size={14} className="text-emerald-500" /> <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Total Leads Generated</span>
+                </div>
+                <div className="text-3xl font-black text-themed">0</div>
+              </div>
+              <div className="themed-card border border-[var(--border-color)] p-5 rounded-2xl shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-amber-500 font-black">₹</span> <span className="text-[10px] font-black uppercase tracking-widest text-amber-500">Marketing Budget</span>
+                </div>
+                <div className="text-3xl font-black text-themed">₹0</div>
+              </div>
+              <div className="themed-card border border-[var(--border-color)] p-5 rounded-2xl shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <BarChart2 size={14} className="text-purple-500" /> <span className="text-[10px] font-black uppercase tracking-widest text-purple-500">Total ROI</span>
+                </div>
+                <div className="text-3xl font-black text-themed">0%</div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
-              {/* Pipeline Funnel */}
-              <div className="themed-card rounded-[2rem] p-6">
-                <h3 className="text-sm font-black text-themed mb-6 flex items-center gap-2"><Filter size={16}/> Sales Funnel</h3>
-                <div className="space-y-4">
-                  {Object.values(pipeline).filter(c => c.id !== 'LOST').map((col, i) => {
-                    const totalVal = col.deals.reduce((a, b) => a + b.value, 0);
-                    const percentage = totalValue === 0 ? 0 : Math.max(5, (totalVal / totalValue) * 100);
-                    return (
-                      <div key={col.id} className="relative">
-                        <div className="flex justify-between text-xs font-bold text-slate-400 mb-1">
-                          <span>{col.title} ({col.deals.length})</span>
-                          <span>₹{(totalVal/100000).toFixed(2)}L</span>
-                        </div>
-                        <div className="h-4 w-full bg-[var(--border-color)] rounded-full overflow-hidden">
-                          <div className="h-full dark:bg-violet-500 bg-[#D4AF37] rounded-full" style={{ width: `${percentage}%` }} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Lead Sources & Win Rate */}
-              <div className="space-y-6">
-                <div className="themed-card rounded-[2rem] p-6">
-                  <h3 className="text-sm font-black text-themed mb-4 flex items-center gap-2"><PieChart size={16}/> Lead Sources</h3>
-                  <div className="space-y-3">
-                    {Array.from(new Set(contacts.map(c => c.source || 'Other'))).map(source => {
-                      const count = contacts.filter(c => (c.source || 'Other') === source).length;
-                      if (count === 0) return null;
-                      return (
-                        <div key={source} className="flex justify-between items-center p-3 themed-card rounded-xl">
-                          <span className="text-xs font-bold text-themed">{source}</span>
-                          <span className="text-xs font-black themed-card px-2 py-1 rounded text-themed">{count} Clients</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                <div className="dark:bg-violet-700 bg-[#D4AF37] rounded-[2rem] p-6 text-white shadow-xl relative overflow-hidden">
-                  <h3 className="text-sm font-black dark:text-violet-300 text-orange-100 mb-2 uppercase tracking-widest">Win Rate</h3>
-                  <div className="text-4xl font-black text-white">
-                    {totalValue > 0 ? Math.round((wonValue / totalValue) * 100) : 0}%
-                  </div>
-                  <p className="text-xs dark:text-violet-300 text-orange-100 mt-2 font-medium">Of total pipeline value successfully closed.</p>
-                </div>
-              </div>
-
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-black text-themed">Marketing Campaigns</h2>
+              <button className="px-4 py-2 bg-[#D4AF37] hover:bg-[#c4a133] text-white rounded-xl text-xs font-bold transition-colors shadow-md flex items-center gap-2" onClick={() => setEditCampaign({ name: '', platform: 'Email', status: 'Scheduled', date: new Date().toISOString().split('T')[0] })}>
+                <Plus size={14}/> Create Campaign
+              </button>
+            </div>
+            
+            <div className="overflow-x-auto bg-[var(--bg-card)] rounded-2xl border border-[var(--border-color)]">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-[var(--border-color)] text-[10px] font-black uppercase tracking-widest text-slate-500">
+                    <th className="py-4 pl-6 pr-4">Campaign Name</th>
+                    <th className="py-4 px-4 text-center">Channel</th>
+                    <th className="py-4 px-4 text-center">Budget</th>
+                    <th className="py-4 px-4 text-center">Leads</th>
+                    <th className="py-4 px-4 text-center">Conversion</th>
+                    <th className="py-4 px-4 text-center">Revenue Generated</th>
+                    <th className="py-4 pl-4 pr-6 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border-color)]">
+                  {campaigns.map((camp) => (
+                    <tr key={camp.id} className="hover:bg-black/5 dark:hover:bg-white/5 transition-colors group cursor-pointer" onClick={() => setEditCampaign(camp)}>
+                      <td className="py-4 pl-6 pr-4 font-black text-sm text-themed">{camp.name}</td>
+                      <td className="py-4 px-4 text-center text-xs font-bold text-muted">{camp.channel}</td>
+                      <td className="py-4 px-4 text-center text-xs font-bold text-muted">{camp.budget}</td>
+                      <td className="py-4 px-4 text-center font-black text-sm text-themed">{camp.leads}</td>
+                      <td className="py-4 px-4 text-center text-xs font-bold text-emerald-500">{camp.conversion}</td>
+                      <td className="py-4 px-4 text-center text-sm font-black text-blue-500">{camp.revenue}</td>
+                      <td className="py-4 pl-4 pr-6 flex justify-end">
+                        <span className={`text-[10px] flex items-center gap-1 font-black px-3 py-1.5 rounded-lg border ${
+                          camp.status === 'Active' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
+                          camp.status === 'Ongoing' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' :
+                          'bg-slate-500/10 text-slate-500 border-slate-500/20'
+                        }`}>
+                          {camp.status}
+                          <ChevronDown size={12} className="opacity-50" />
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </motion.div>
         )}
@@ -732,9 +1182,82 @@ const CRMPage = () => {
       <Modal open={!!editActivity} onClose={() => setEditActivity(null)}>
         {editActivity && <EditActivityForm activity={editActivity} contacts={contacts} onSave={handleActivitySave} onCancel={() => setEditActivity(null)} />}
       </Modal>
+
+      <Modal open={!!editSiteSurvey} onClose={() => setEditSiteSurvey(null)} size={editSiteMode === 'notes' ? "max-w-[95vw] min-h-[90vh]" : "max-w-2xl"}>
+        {editSiteSurvey && <EditSiteSurveyForm site={editSiteSurvey} contacts={contacts} mode={editSiteMode} onSave={handleSiteSurveySave} onCancel={() => setEditSiteSurvey(null)} />}
+      </Modal>
+
+      <Modal open={!!editCampaign} onClose={() => setEditCampaign(null)}>
+        {editCampaign && <EditCampaignForm campaign={editCampaign} onSave={handleCampaignSave} onCancel={() => setEditCampaign(null)} />}
+      </Modal>
+
+      <Modal open={!!selectedCallNote} onClose={() => setSelectedCallNote(null)}>
+        {selectedCallNote && (
+          <CallNotesModalContent note={selectedCallNote} onClose={() => setSelectedCallNote(null)} />
+        )}
+      </Modal>
+
+      <Modal open={isLogCallOpen} onClose={() => setIsLogCallOpen(false)}>
+        <LogCallForm 
+          onSave={(newCall) => {
+            setTelecalls([newCall, ...telecalls]);
+            setIsLogCallOpen(false);
+            setFeedback("Call logged successfully!");
+            setTimeout(() => setFeedback(""), 3000);
+          }} 
+          onCancel={() => setIsLogCallOpen(false)} 
+        />
+      </Modal>
     </div>
   );
 };
+
+// --- CAMPAIGN FORM ---
+function EditCampaignForm({ campaign, onSave, onCancel }) {
+  const [form, setForm] = useState(campaign || { name: '', platform: 'Email', status: 'Scheduled', date: '' });
+  
+  return (
+    <form onSubmit={e => { e.preventDefault(); onSave({ ...campaign, ...form }); }} className="space-y-6">
+      <h2 className="font-black text-3xl mb-1 text-themed tracking-tight">Campaign Details</h2>
+      <p className="text-muted font-medium text-sm mb-6 pb-4 border-b border-[var(--border-color)]">Configure your marketing blast.</p>
+      
+      <div>
+        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Campaign Name</label>
+        <input className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Platform</label>
+          <select className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all [&>option]:bg-[var(--modal-bg)]" value={form.platform} onChange={e => setForm({ ...form, platform: e.target.value })}>
+            <option value="Email">Email</option>
+            <option value="WhatsApp">WhatsApp</option>
+            <option value="Facebook Ads">Facebook Ads</option>
+            <option value="Instagram Ads">Instagram Ads</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Status</label>
+          <select className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all [&>option]:bg-[var(--modal-bg)]" value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
+            <option value="Scheduled">Scheduled</option>
+            <option value="Active">Active</option>
+            <option value="Completed">Completed</option>
+          </select>
+        </div>
+      </div>
+      
+      <div>
+        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Target Date</label>
+        <input type="date" className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} required />
+      </div>
+
+      <div className="flex gap-3 justify-end pt-5 border-t border-[var(--border-color)]">
+        <button type="button" onClick={onCancel} className="px-6 py-2.5 rounded-xl text-sm font-bold text-slate-400 hover:bg-white/5 transition-colors">Cancel</button>
+        <button type="submit" className="px-6 py-2.5 rounded-xl text-sm font-bold dark:bg-violet-700 bg-[#D4AF37] text-white shadow-md dark:hover:bg-slate-800 hover:bg-[#c4a133] transition-all">Save Campaign</button>
+      </div>
+    </form>
+  );
+}
 
 // --- EXTENDED FORMS ---
 function EditContactForm({ contact, onSave, onCancel }) {
@@ -751,7 +1274,7 @@ function EditContactForm({ contact, onSave, onCancel }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Full Name</label>
-          <input className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+          <input className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" value={form.name || ''} onChange={e => setForm({ ...form, name: e.target.value })} required />
         </div>
         <div>
           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Organization Name (Optional)</label>
@@ -759,19 +1282,19 @@ function EditContactForm({ contact, onSave, onCancel }) {
         </div>
         <div>
           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Phone Number</label>
-          <input className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} required />
+          <input className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" value={form.phone || ''} onChange={e => setForm({ ...form, phone: e.target.value })} required />
         </div>
         <div>
           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Email Address</label>
-          <input className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+          <input className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" type="email" value={form.email || ''} onChange={e => setForm({ ...form, email: e.target.value })} />
         </div>
         <div className="md:col-span-2">
           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Project Focus</label>
-          <input className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" value={form.project} onChange={e => setForm({ ...form, project: e.target.value })} required />
+          <input className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" value={form.project || ''} onChange={e => setForm({ ...form, project: e.target.value })} required />
         </div>
         <div className="md:col-span-2">
           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Physical Address</label>
-          <input className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} required />
+          <input className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" value={form.address || ''} onChange={e => setForm({ ...form, address: e.target.value })} required />
         </div>
         <div className="md:col-span-2">
           {/* Replaced fixed select with input + datalist so ANY lead source can be entered */}
@@ -843,7 +1366,7 @@ function EditDealForm({ deal, contacts, onSave, onCancel }) {
           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Est. Value (₹)</label>
           <div className="relative">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold">₹</span>
-            <input className="w-full bg-black/20 border border-white/10 rounded-xl p-3 pl-9 text-sm text-white font-black focus:ring-2 focus:ring-stone-900 outline-none transition-all" value={form.value} onChange={e => setForm({ ...form, value: e.target.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1') })} type="text" inputMode="decimal" pattern="^\d*\.?\d*$" required min="0" />
+            <input className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 pl-9 text-sm font-bold outline-none focus:border-violet-500 transition-all" value={form.value} onChange={e => setForm({ ...form, value: e.target.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1') })} type="text" inputMode="decimal" pattern="^\d*\.?\d*$" required min="0" />
           </div>
         </div>
       </div>
@@ -869,8 +1392,11 @@ function EditActivityForm({ activity, contacts, onSave, onCancel }) {
     datePart: initialDate,
     timePart: initialTime,
     contactName: initialContact?.name || '', 
-    status: activity?.status || 'Pending' 
+    status: activity?.status || 'Pending',
+    notes: activity?.notes || ''
   });
+
+  const isSiteSurvey = form.type.toLowerCase().includes('site');
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -881,7 +1407,8 @@ function EditActivityForm({ activity, contacts, onSave, onCancel }) {
       type: form.type,
       date: `${form.datePart}T${form.timePart}`,
       client: existing ? existing.id.toString() : form.contactName.trim(),
-      status: form.status || 'Pending'
+      status: form.status || 'Pending',
+      notes: form.notes
     });
   };
 
@@ -918,6 +1445,18 @@ function EditActivityForm({ activity, contacts, onSave, onCancel }) {
             {contacts.map(c => <option key={c.id} value={c.name} />)}
           </datalist>
         </div>
+        
+        {isSiteSurvey && (
+          <div>
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Meeting Notes</label>
+            <textarea 
+              className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all min-h-[100px] resize-y" 
+              value={form.notes} 
+              onChange={e => setForm({ ...form, notes: e.target.value })} 
+              placeholder="Enter meeting notes..." 
+            />
+          </div>
+        )}
       </div>
 
       <div className="flex gap-3 justify-end mt-6 pt-5 border-t border-[var(--border-color)]">
@@ -925,6 +1464,352 @@ function EditActivityForm({ activity, contacts, onSave, onCancel }) {
         <button type="submit" className="px-5 py-2.5 rounded-xl text-sm font-bold dark:bg-violet-700 bg-[#D4AF37] text-white shadow-md dark:hover:bg-slate-800 hover:bg-[#c4a133] transition-all">Save Schedule</button>
       </div>
     </form>
+  );
+}
+
+function EditSiteSurveyForm({ site, contacts, mode, onSave, onCancel }) {
+  const defaultSurveyDateStr = site?.surveyDate || new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  const initialSurveyDate = defaultSurveyDateStr.split('T')[0];
+  const initialSurveyTime = defaultSurveyDateStr.split('T')[1] || '12:00';
+
+  const [form, setForm] = useState({
+    ...(site || {}),
+    id: site?.id,
+    name: site?.name || '',
+    clientName: site?.clientName || '',
+    phone: site?.phone || '',
+    organizationName: site?.organizationName || '',
+    assignedTeam: site?.assignedTeam || '',
+    address: site?.address || '',
+    status: site?.status || 'Pre-Construction',
+    startDate: site?.startDate || new Date().toISOString().split('T')[0],
+    budget: site?.budget || 0,
+    description: site?.description || '',
+    isNegotiated: site?.isNegotiated || false,
+    negotiationDetails: site?.negotiationDetails || '',
+    isArchived: site?.isArchived || false,
+    surveyStatus: site?.surveyStatus || 'Not Taken',
+    surveyDatePart: initialSurveyDate,
+    surveyTimePart: initialSurveyTime
+  });
+
+  const [notesList, setNotesList] = useState(
+    site?.surveyNotes ? site.surveyNotes.split('\n').filter(n => n.trim() !== '') : ['']
+  );
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave({
+      ...form,
+      surveyDate: form.surveyStatus === 'Scheduled' ? `${form.surveyDatePart}T${form.surveyTimePart}` : '',
+      surveyNotes: notesList.filter(n => n.trim() !== '').join('\n')
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className={`flex flex-col h-full ${mode === 'notes' ? 'min-h-[80vh]' : ''}`}>
+      <h2 className="font-black text-3xl mb-1 text-themed tracking-tight">{mode === 'notes' ? 'Survey Notes' : 'Site Details'}</h2>
+      <p className="text-muted font-medium text-sm mb-6 pb-4 border-b border-[var(--border-color)]">
+        {mode === 'notes' ? `Log structural requirements for ${site?.name || 'this site'}.` : 'Create or edit site information.'}
+      </p>
+      
+      <div className="space-y-4 flex-1">
+        {mode === 'full' && (
+          <>
+            <div>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Site Name</label>
+              <input className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required placeholder="e.g. Skyline Apartment 4B" />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Client</label>
+                <input 
+                  list="survey-client-list"
+                  className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" 
+                  value={form.clientName} 
+                  onChange={e => {
+                    const val = e.target.value;
+                    const contact = contacts.find(c => c.name === val);
+                    setForm({ ...form, clientName: val, phone: contact && contact.phone ? contact.phone : form.phone });
+                  }} 
+                  required
+                />
+                <datalist id="survey-client-list">
+                  {contacts.map(c => <option key={c.id} value={c.name} />)}
+                </datalist>
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Client Phone Number</label>
+                <input className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Survey Status</label>
+                <select className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all [&>option]:bg-[var(--modal-bg)]" value={form.surveyStatus} onChange={e => setForm({ ...form, surveyStatus: e.target.value })}>
+                  <option value="Not Taken">Not Taken</option>
+                  <option value="Scheduled">Scheduled</option>
+                  <option value="Taken">Taken</option>
+                </select>
+              </div>
+              
+              {form.surveyStatus === 'Scheduled' ? (
+                <>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Schedule Date</label>
+                    <input type="date" className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" value={form.surveyDatePart} onChange={e => setForm({ ...form, surveyDatePart: e.target.value })} required />
+                  </div>
+                  <div className="col-span-1 md:col-span-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Schedule Time</label>
+                    <input type="time" className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" value={form.surveyTimePart} onChange={e => setForm({ ...form, surveyTimePart: e.target.value })} required />
+                  </div>
+                </>
+              ) : (
+                 <div>
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Project Status</label>
+                    <select className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all [&>option]:bg-[var(--modal-bg)]" value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
+                      <option value="Pre-Construction">Pre-Construction</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Completed">Completed</option>
+                    </select>
+                 </div>
+              )}
+            </div>
+            
+            <div>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Site Address</label>
+              <input className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} required />
+            </div>
+          </>
+        )}
+
+        {mode === 'notes' && (
+          <>
+            <div>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Survey Status</label>
+              <select className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all [&>option]:bg-[var(--modal-bg)] mb-2" value={form.surveyStatus} onChange={e => setForm({ ...form, surveyStatus: e.target.value })}>
+                <option value="Not Taken">Not Taken</option>
+                <option value="Scheduled">Scheduled</option>
+                <option value="Taken">Taken</option>
+              </select>
+            </div>
+            
+            {form.surveyStatus === 'Scheduled' && (
+              <div className="grid grid-cols-2 gap-4 mb-2">
+                <div>
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Schedule Date</label>
+                  <input type="date" className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" value={form.surveyDatePart} onChange={e => setForm({ ...form, surveyDatePart: e.target.value })} required />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Schedule Time</label>
+                  <input type="time" className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" value={form.surveyTimePart} onChange={e => setForm({ ...form, surveyTimePart: e.target.value })} required />
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        <div>
+          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Survey Notes & Requirements</label>
+          <div className="space-y-2">
+            {notesList.map((note, index) => (
+              <div key={index} className="flex gap-2 items-start">
+                <div className="mt-3.5 ml-2 text-violet-500 flex-shrink-0">
+                  <div className="w-1.5 h-1.5 rounded-full bg-violet-500"></div>
+                </div>
+                <input 
+                  className="themed-input w-full border border-[var(--border-color)] rounded-xl p-2.5 text-sm font-bold outline-none focus:border-violet-500 transition-all" 
+                  value={note}
+                  onChange={(e) => {
+                    const newList = [...notesList];
+                    newList[index] = e.target.value;
+                    setNotesList(newList);
+                  }}
+                  placeholder={index === 0 ? "Ceiling height is 10ft..." : "Add another note..."}
+                />
+                <button 
+                  type="button"
+                  onClick={() => setNotesList(notesList.filter((_, i) => i !== index))}
+                  className="p-2.5 text-slate-400 hover:text-red-500 transition-colors bg-[var(--bg-surface)] hover:bg-red-500/10 rounded-xl flex-shrink-0 border border-[var(--border-color)] hover:border-red-500/20"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ))}
+            <div className="flex justify-center mt-6">
+              <button 
+                type="button" 
+                onClick={() => setNotesList([...notesList, ''])}
+                className="flex items-center gap-1.5 text-sm font-black text-violet-500 hover:text-white bg-violet-500/10 hover:bg-violet-600 px-6 py-3 rounded-2xl transition-all"
+              >
+                <Plus size={16} /> Add Bullet Point
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex gap-3 justify-center mt-8 pt-5 border-t border-[var(--border-color)] mt-auto">
+        <button type="button" onClick={onCancel} className="px-8 py-3 rounded-xl text-sm font-bold text-slate-400 hover:bg-white/5 transition-colors">Cancel</button>
+        <button type="submit" className="px-8 py-3 rounded-xl text-sm font-bold dark:bg-violet-700 bg-[#D4AF37] text-white shadow-md dark:hover:bg-slate-800 hover:bg-[#c4a133] transition-all">Save Notes</button>
+      </div>
+    </form>
+  );
+}
+
+// --- LOG CALL FORM ---
+function LogCallForm({ onSave, onCancel }) {
+  const [form, setForm] = useState({
+    customer: '',
+    phone: '',
+    type: 'outbound',
+    outcome: 'Interested',
+    duration: '00:00',
+    note: ''
+  });
+
+  return (
+    <form onSubmit={e => { 
+      e.preventDefault(); 
+      onSave({ 
+        ...form, 
+        id: Date.now(), 
+        date: `Today, ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` 
+      }); 
+    }} className="space-y-6">
+      <h2 className="font-black text-3xl mb-1 text-themed tracking-tight">Log Call</h2>
+      <p className="text-muted font-medium text-sm mb-6 pb-4 border-b border-[var(--border-color)]">Record details of a customer interaction.</p>
+      
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Customer Name</label>
+          <input className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-[#D4AF37] transition-all" value={form.customer} onChange={e => setForm({ ...form, customer: e.target.value })} required />
+        </div>
+        <div>
+          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Phone Number</label>
+          <input type="tel" className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-[#D4AF37] transition-all" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} required />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <div>
+          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Call Type</label>
+          <select className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-[#D4AF37] transition-all [&>option]:bg-[var(--modal-bg)]" value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}>
+            <option value="outbound">Outbound</option>
+            <option value="inbound">Inbound</option>
+            <option value="missed">Missed</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Outcome</label>
+          <select className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-[#D4AF37] transition-all [&>option]:bg-[var(--modal-bg)]" value={form.outcome} onChange={e => setForm({ ...form, outcome: e.target.value })}>
+            <option value="Interested">Interested</option>
+            <option value="Call Later">Call Later</option>
+            <option value="Missed">Missed</option>
+            <option value="Converted">Converted</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Duration</label>
+          <input type="text" placeholder="MM:SS" className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-[#D4AF37] transition-all" value={form.duration} onChange={e => setForm({ ...form, duration: e.target.value })} />
+        </div>
+      </div>
+
+      <div>
+        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Call Notes</label>
+        <textarea rows="4" className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-[#D4AF37] transition-all" value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} placeholder="Discussed pricing and availability..."></textarea>
+      </div>
+
+      <div>
+        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Upload Recording</label>
+        <div className="themed-input w-full border border-dashed border-[var(--border-color)] rounded-xl p-6 flex flex-col items-center justify-center gap-3 hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer relative overflow-hidden group">
+          <input type="file" accept="audio/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onChange={e => {
+            if (e.target.files[0]) {
+               setForm({...form, audioFileName: e.target.files[0].name});
+            }
+          }} />
+          <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-[#D4AF37]/10 group-hover:text-[#D4AF37] transition-colors">
+            <Phone size={18} />
+          </div>
+          <span className="text-xs font-bold text-muted group-hover:text-themed transition-colors">
+            {form.audioFileName ? form.audioFileName : "Click to select or drag and drop audio file"}
+          </span>
+        </div>
+      </div>
+      
+      <div className="flex gap-3 justify-end mt-8 pt-5 border-t border-[var(--border-color)]">
+        <button type="button" onClick={onCancel} className="px-6 py-2.5 rounded-xl text-sm font-bold text-slate-400 hover:bg-white/5 transition-colors">Cancel</button>
+        <button type="submit" className="px-6 py-2.5 rounded-xl text-sm font-bold bg-[#D4AF37] text-white shadow-md hover:bg-[#c4a133] transition-all">Save Call</button>
+      </div>
+    </form>
+  );
+}
+
+// --- CALL NOTES MODAL CONTENT ---
+function CallNotesModalContent({ note, onClose }) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    let interval;
+    if (isPlaying) {
+      interval = setInterval(() => {
+        setProgress(p => {
+          if (p >= 100) { setIsPlaying(false); return 0; }
+          return p + 2;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isPlaying]);
+
+  return (
+    <div className="p-2 space-y-6">
+      <div className="flex items-center gap-4 mb-2">
+        <div className="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-2xl flex items-center justify-center text-2xl shadow-sm border border-amber-500/20">
+          <FileText size={24} />
+        </div>
+        <div>
+          <h3 className="font-black text-2xl text-themed tracking-tight">Call Notes</h3>
+          <p className="text-xs font-bold text-muted">{note.customer} • {note.date}</p>
+        </div>
+      </div>
+
+      <div>
+        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Notes Summary</label>
+        <div className="bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-xl p-4 text-sm font-bold text-themed leading-relaxed">
+          {note.note || 'No notes available for this call.'}
+        </div>
+      </div>
+
+      <div>
+        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Call Recording</label>
+        <div className="bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-xl p-4 flex items-center gap-4">
+          <button onClick={() => setIsPlaying(!isPlaying)} className="w-10 h-10 rounded-full bg-[#f97316] text-white flex items-center justify-center flex-shrink-0 shadow-md hover:bg-[#ea580c] transition-colors">
+            {isPlaying ? <Pause size={18} /> : <Play size={18} className="ml-0.5" />}
+          </button>
+          <div className="flex-1">
+            <div className="h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden mb-1.5 relative">
+              <div className="h-full bg-[#f97316] rounded-full relative transition-all duration-1000 ease-linear" style={{ width: `${progress}%` }}>
+                 <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-sm border-2 border-[#f97316]"></div>
+              </div>
+            </div>
+            <div className="flex justify-between text-[10px] font-black text-slate-400">
+              <span>{isPlaying ? 'Playing...' : '00:00'}</span>
+              <span>{note.duration}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end pt-4">
+        <button onClick={onClose} className="px-6 py-2.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-sm rounded-xl transition-colors">
+          Close
+        </button>
+      </div>
+    </div>
   );
 }
 

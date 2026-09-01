@@ -11,6 +11,7 @@ namespace Blackstone_Interior.models
         public string Name { get; set; } = string.Empty;
 
         public string ClientName { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
         public string OrganizationName { get; set; } = string.Empty;
         public string AssignedTeam { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
@@ -39,5 +40,12 @@ namespace Blackstone_Interior.models
 
         [Column(TypeName = "longtext")]
         public string Media { get; set; } = "[]";
+
+        [Column(TypeName = "longtext")]
+        public string SurveyNotes { get; set; } = string.Empty;
+        
+        public string SurveyStatus { get; set; } = "Pending";
+        
+        public string SurveyDate { get; set; } = string.Empty;
     }
 }

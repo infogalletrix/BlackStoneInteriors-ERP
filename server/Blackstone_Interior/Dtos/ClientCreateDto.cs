@@ -1,4 +1,4 @@
-﻿namespace Blackstone_Interior.Dtos
+namespace Blackstone_Interior.Dtos
 {
     public class ClientCreateDto
     {

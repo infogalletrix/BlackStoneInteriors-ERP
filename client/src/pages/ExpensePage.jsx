@@ -4,13 +4,11 @@ import {
   Receipt,
   Search,
   TrendingUp,
-  TrendingDown,
   X,
   Plus,
   User,
   Building2,
   Tag,
-  Calendar,
   Layers,
   Filter,
   ListPlus,
@@ -18,7 +16,6 @@ import {
   RotateCcw,
   Trash2,
   ArrowLeft,
-  CheckCircle,
   Pencil,
 } from "lucide-react";
 import { useDialog } from "../contexts/DialogContext";

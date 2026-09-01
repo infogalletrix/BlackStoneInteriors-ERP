@@ -38,5 +38,19 @@ namespace Blackstone_Interior.models
 
         // ISO date string for DB sorting
         public string Date { get; set; } = string.Empty;
+
+        // New advanced fields (matching Quotation)
+        public string EmailId { get; set; } = string.Empty;
+        public string MobileNo { get; set; } = string.Empty;
+        public string DeliveryTimeline { get; set; } = string.Empty;
+        
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal InstallationMaterial { get; set; }
+        
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal DeliveryLoading { get; set; }
+        
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal AdditionalDiscount { get; set; }
     }
 }

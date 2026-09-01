@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:5050';
+const BASE_URL = 'http://localhost:5000';
 
 async function testEndpoint(name, method, url, body = null) {
     console.log(`\nTesting ${name}...`);
@@ -22,15 +22,15 @@ async function testEndpoint(name, method, url, body = null) {
         }
 
         if (res.ok) {
-            console.log(`✅ [PASS] ${method} ${url} (Status: ${res.status})`);
+            console.log(`Ã¢Å“â€¦ [PASS] ${method} ${url} (Status: ${res.status})`);
             return { success: true, data };
         } else {
-            console.log(`❌ [FAIL] ${method} ${url} (Status: ${res.status})`);
+            console.log(`Ã¢ÂÅ’ [FAIL] ${method} ${url} (Status: ${res.status})`);
             console.log(`   Response:`, data);
             return { success: false, data };
         }
     } catch (err) {
-        console.log(`❌ [FAIL] ${method} ${url} - Exception: ${err.message}`);
+        console.log(`Ã¢ÂÅ’ [FAIL] ${method} ${url} - Exception: ${err.message}`);
         return { success: false, error: err.message };
     }
 }
@@ -242,7 +242,7 @@ async function runTests() {
         await testEndpoint('Delete Site', 'DELETE', `/api/sites/${siteId}`);
     }
 
-    console.log("\n✅ All Endpoints Tested.");
+    console.log("\nÃ¢Å“â€¦ All Endpoints Tested.");
 }
 
 runTests();

@@ -23,7 +23,7 @@ namespace Blackstone_Interior.Controllers
             return Ok(records.Select(a => new { id = a.Id, employeeId = a.EmployeeId, date = a.Date, status = a.Status, overtime = a.Overtime }));
         }
 
-        // POST /api/attendance — upsert (same employee+date => update)
+        // POST /api/attendance Ã¢â‚¬â€ upsert (same employee+date => update)
         [HttpPost]
         public async Task<IActionResult> Save([FromBody] AttendanceDto dto)
         {

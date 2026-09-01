@@ -13,7 +13,7 @@ namespace Blackstone_Interior.Controllers
         private readonly BlackstoneinteriorDbContext _db;
         public CrmController(BlackstoneinteriorDbContext db) => _db = db;
 
-        // ── CONTACTS ─────────────────────────────────────────────────
+        // Ã¢â€â‚¬Ã¢â€â‚¬ CONTACTS Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
         // GET /api/crm
         [HttpGet]
@@ -110,7 +110,7 @@ namespace Blackstone_Interior.Controllers
             return Ok(new { message = "Contact deleted" });
         }
 
-        // ── DEALS ────────────────────────────────────────────────────
+        // Ã¢â€â‚¬Ã¢â€â‚¬ DEALS Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
         // GET /api/crm/deals/all
         [HttpGet("deals/all")]
@@ -222,7 +222,7 @@ namespace Blackstone_Interior.Controllers
             return Ok(new { message = "Deal deleted" });
         }
 
-        // ── ACTIVITIES ───────────────────────────────────────────────
+        // Ã¢â€â‚¬Ã¢â€â‚¬ ACTIVITIES Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
         // GET /api/crm/activities/all
         [HttpGet("activities/all")]
@@ -235,7 +235,8 @@ namespace Blackstone_Interior.Controllers
                 type = a.Type,
                 date = a.Date,
                 client = a.ClientId,
-                status = a.Status
+                status = a.Status,
+                notes = a.Notes
             });
             return Ok(result);
         }
@@ -258,7 +259,8 @@ namespace Blackstone_Interior.Controllers
                 Type = dto.Type,
                 Date = dto.Date,
                 ClientId = string.IsNullOrWhiteSpace(clientIdStr) ? "0" : clientIdStr,
-                Status = dto.Status
+                Status = dto.Status,
+                Notes = dto.Notes ?? ""
             };
             _db.Activities.Add(act);
             await _db.SaveChangesAsync();
@@ -285,6 +287,7 @@ namespace Blackstone_Interior.Controllers
             act.Date = dto.Date;
             act.ClientId = string.IsNullOrWhiteSpace(clientIdStr) ? "0" : clientIdStr;
             act.Status = dto.Status;
+            act.Notes = dto.Notes ?? act.Notes;
 
             await _db.SaveChangesAsync();
             return Ok(new { message = "Activity updated" });

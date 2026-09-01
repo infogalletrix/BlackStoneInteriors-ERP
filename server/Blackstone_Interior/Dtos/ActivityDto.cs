@@ -7,5 +7,6 @@ namespace Blackstone_Interior.Dtos
         public string Date { get; set; } = string.Empty;
         public string Client { get; set; } = string.Empty;  // matches frontend "client" field
         public string Status { get; set; } = "Pending";
+        public string? Notes { get; set; }
     }
 }

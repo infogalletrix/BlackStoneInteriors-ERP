@@ -24,7 +24,7 @@ namespace Blackstone_Interior.models
         // "GST" | "Non-GST"
         public string BillType { get; set; } = "GST";
 
-        // Items stored as JSON string — serialized list of line items
+        // Items stored as JSON string Ã¢â‚¬â€ serialized list of line items
         [Column(TypeName = "longtext")]
         public string Items { get; set; } = "[]";
 
@@ -34,5 +34,20 @@ namespace Blackstone_Interior.models
         // Added for CRM Pipeline syncing
         public string Status { get; set; } = "Pending";
         public int? DealId { get; set; }
+
+        // New advanced quotation fields
+        public string EmailId { get; set; } = string.Empty;
+        public string MobileNo { get; set; } = string.Empty;
+        public string CustomerGst { get; set; } = string.Empty;
+        public string DeliveryTimeline { get; set; } = string.Empty;
+        
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal InstallationMaterial { get; set; }
+        
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal DeliveryLoading { get; set; }
+        
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal AdditionalDiscount { get; set; }
     }
 }

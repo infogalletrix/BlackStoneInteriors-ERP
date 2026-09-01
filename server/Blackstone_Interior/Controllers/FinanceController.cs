@@ -13,7 +13,7 @@ namespace Blackstone_Interior.Controllers
         private readonly BlackstoneinteriorDbContext _db;
         public FinanceController(BlackstoneinteriorDbContext db) => _db = db;
 
-        // ── INVOICES ─────────────────────────────────────────────────
+        // Ã¢â€â‚¬Ã¢â€â‚¬ INVOICES Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
         // Shared helper: compute next serial for YY-MM-XXXX within current month
         private int ComputeNextInvoiceSerial()
@@ -37,7 +37,7 @@ namespace Blackstone_Interior.Controllers
             return maxSerial >= 9999 ? 1 : maxSerial + 1;
         }
 
-        // GET /api/finance/invoices/next-number  (preview only — does NOT reserve a number)
+        // GET /api/finance/invoices/next-number  (preview only Ã¢â‚¬â€ does NOT reserve a number)
         [HttpGet("invoices/next-number")]
         public IActionResult GetNextInvoiceNumber()
         {
@@ -71,7 +71,13 @@ namespace Blackstone_Interior.Controllers
                     total = i.Total,
                     billType = i.BillType,
                     status = i.Status,
-                    date = i.Date
+                    date = i.Date,
+                    emailId = i.EmailId,
+                    mobileNo = i.MobileNo,
+                    deliveryTimeline = i.DeliveryTimeline,
+                    installationMaterial = i.InstallationMaterial,
+                    deliveryLoading = i.DeliveryLoading,
+                    additionalDiscount = i.AdditionalDiscount
                 };
             });
             return Ok(result);
@@ -108,7 +114,13 @@ namespace Blackstone_Interior.Controllers
                 Total = dto.Total,
                 BillType = dto.BillType,
                 Status = dto.Status,
-                Date = rawDate
+                Date = rawDate,
+                EmailId = dto.EmailId ?? string.Empty,
+                MobileNo = dto.MobileNo ?? string.Empty,
+                DeliveryTimeline = dto.DeliveryTimeline ?? string.Empty,
+                InstallationMaterial = dto.InstallationMaterial ?? 0,
+                DeliveryLoading = dto.DeliveryLoading ?? 0,
+                AdditionalDiscount = dto.AdditionalDiscount ?? 0
             };
             _db.Invoices.Add(inv);
             await _db.SaveChangesAsync();
@@ -139,12 +151,19 @@ namespace Blackstone_Interior.Controllers
             inv.Total = dto.Total;
             inv.BillType = dto.BillType;
             inv.Status = dto.Status;
+            
+            if (dto.EmailId != null) inv.EmailId = dto.EmailId;
+            if (dto.MobileNo != null) inv.MobileNo = dto.MobileNo;
+            if (dto.DeliveryTimeline != null) inv.DeliveryTimeline = dto.DeliveryTimeline;
+            if (dto.InstallationMaterial.HasValue) inv.InstallationMaterial = dto.InstallationMaterial.Value;
+            if (dto.DeliveryLoading.HasValue) inv.DeliveryLoading = dto.DeliveryLoading.Value;
+            if (dto.AdditionalDiscount.HasValue) inv.AdditionalDiscount = dto.AdditionalDiscount.Value;
 
             await _db.SaveChangesAsync();
             return Ok(new { message = "Invoice updated" });
         }
 
-        // PATCH /api/finance/invoices/{id}/status — update payment status only
+        // PATCH /api/finance/invoices/{id}/status Ã¢â‚¬â€ update payment status only
         [HttpPatch("invoices/{id}/status")]
         public async Task<IActionResult> UpdateInvoiceStatus(int id, [FromBody] JsonElement body)
         {
@@ -169,7 +188,7 @@ namespace Blackstone_Interior.Controllers
             return Ok(new { message = "Invoice deleted" });
         }
 
-        // ── EXPENSES ─────────────────────────────────────────────────
+        // Ã¢â€â‚¬Ã¢â€â‚¬ EXPENSES Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
         // GET /api/finance/expenses
         [HttpGet("expenses")]
@@ -249,7 +268,7 @@ namespace Blackstone_Interior.Controllers
             return Ok(new { message = "Expense deleted" });
         }
 
-        // ── PAYROLL ──────────────────────────────────────────────────
+        // Ã¢â€â‚¬Ã¢â€â‚¬ PAYROLL Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
         // GET /api/finance/payroll
         [HttpGet("payroll")]
@@ -386,7 +405,7 @@ namespace Blackstone_Interior.Controllers
             return Ok(new { message = "Payroll reversed" });
         }
 
-        // ── RECEIPTS ──────────────────────────────────────────────────
+        // Ã¢â€â‚¬Ã¢â€â‚¬ RECEIPTS Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
         [HttpGet("receipts")]
         public async Task<IActionResult> GetReceipts()
@@ -519,7 +538,7 @@ namespace Blackstone_Interior.Controllers
             return Ok(new { message = "Receipt deleted" });
         }
 
-        // ── ACCOUNTS (Computed Ledger) ────────────────────────────────
+        // Ã¢â€â‚¬Ã¢â€â‚¬ ACCOUNTS (Computed Ledger) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
         // GET /api/finance/accounts
         [HttpGet("accounts")]
@@ -535,7 +554,7 @@ namespace Blackstone_Interior.Controllers
                 date = r.Date,
                 type = "Credit",
                 category = "Project Income",
-                description = $"Receipt #{r.ReceiptNo} — {r.ClientName}",
+                description = $"Receipt #{r.ReceiptNo} Ã¢â‚¬â€ {r.ClientName}",
                 amount = r.AmountPaid
             }).AsEnumerable().Concat(expenses.Select(e => new
             {
@@ -551,7 +570,7 @@ namespace Blackstone_Interior.Controllers
                 date = p.PaidDate,
                 type = "Debit",
                 category = "Employee Payroll",
-                description = $"Payroll — Employee ID {p.EmployeeId} ({p.Month} {p.Year})",
+                description = $"Payroll Ã¢â‚¬â€ Employee ID {p.EmployeeId} ({p.Month} {p.Year})",
                 amount = p.NetPay
             })).ToList();
 
@@ -561,7 +580,7 @@ namespace Blackstone_Interior.Controllers
                 date = p.PaidDate,
                 type = "Credit",
                 category = "Employee Payroll",
-                description = $"Payroll Reversal — Employee ID {p.EmployeeId} ({p.Month} {p.Year})",
+                description = $"Payroll Reversal Ã¢â‚¬â€ Employee ID {p.EmployeeId} ({p.Month} {p.Year})",
                 amount = p.NetPay
             }).ToList();
 

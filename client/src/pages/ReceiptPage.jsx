@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useReactToPrint } from "react-to-print";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Receipt, Printer, History, User, Calendar, IndianRupee, Trash2, Save, ArrowLeft, Building, X, CheckCircle2, Search, MapPin, Pencil } from "lucide-react";
+import { Receipt, Printer, User, Trash2, Save, Building, CheckCircle2, Search, MapPin, Pencil } from "lucide-react";
 import { useDialog } from "../contexts/DialogContext";
-import SearchableSelect from "../components/SearchableSelect";
 import NotificationWidget from "../components/NotificationWidget";
 
 export default function ReceiptPage() {

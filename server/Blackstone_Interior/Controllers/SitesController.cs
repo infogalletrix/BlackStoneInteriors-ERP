@@ -33,6 +33,7 @@ namespace Blackstone_Interior.Controllers
                     id = s.Id,
                     name = s.Name,
                     clientName = s.ClientName,
+                    phone = s.Phone,
                     organizationName = s.OrganizationName,
                     assignedTeam = s.AssignedTeam,
                     address = s.Address,
@@ -45,7 +46,10 @@ namespace Blackstone_Interior.Controllers
                     isArchived = s.IsArchived,
                     workHistory = parsedWH,
                     maintenance = parsedMain,
-                    media = parsedMed
+                    media = parsedMed,
+                    surveyNotes = s.SurveyNotes,
+                    surveyStatus = s.SurveyStatus,
+                    surveyDate = s.SurveyDate
                 };
             }));
         }
@@ -56,21 +60,25 @@ namespace Blackstone_Interior.Controllers
         {
             var site = new Site
             {
-                Name = dto.Name,
-                ClientName = dto.ClientName,
+                Name = dto.Name ?? "",
+                ClientName = dto.ClientName ?? "",
+                Phone = dto.Phone ?? "",
                 OrganizationName = dto.OrganizationName ?? "",
-                AssignedTeam = dto.AssignedTeam,
-                Address = dto.Address,
-                Status = dto.Status,
-                StartDate = dto.StartDate,
+                AssignedTeam = dto.AssignedTeam ?? "",
+                Address = dto.Address ?? "",
+                Status = dto.Status ?? "Pre-Construction",
+                StartDate = dto.StartDate ?? "",
                 Budget = dto.Budget,
-                Description = dto.Description,
+                Description = dto.Description ?? "",
                 IsNegotiated = dto.IsNegotiated,
                 NegotiationDetails = dto.NegotiationDetails ?? "",
                 IsArchived = dto.IsArchived,
                 WorkHistory = dto.WorkHistory.HasValue ? dto.WorkHistory.Value.GetRawText() : "[]",
                 Maintenance = dto.Maintenance.HasValue ? dto.Maintenance.Value.GetRawText() : "{}",
-                Media = dto.Media.HasValue ? dto.Media.Value.GetRawText() : "[]"
+                Media = dto.Media.HasValue ? dto.Media.Value.GetRawText() : "[]",
+                SurveyNotes = dto.SurveyNotes ?? "",
+                SurveyStatus = dto.SurveyStatus ?? "Pending",
+                SurveyDate = dto.SurveyDate ?? ""
             };
             _db.Sites.Add(site);
             await _db.SaveChangesAsync();
@@ -83,17 +91,21 @@ namespace Blackstone_Interior.Controllers
         {
             var site = await _db.Sites.FindAsync(id);
             if (site == null) return NotFound();
-            site.Name = dto.Name;
-            site.ClientName = dto.ClientName;
+            site.Name = dto.Name ?? site.Name;
+            site.ClientName = dto.ClientName ?? site.ClientName;
+            
+            if (dto.Phone != null)
+                site.Phone = dto.Phone;
+                
             site.OrganizationName = dto.OrganizationName ?? site.OrganizationName;
-            site.AssignedTeam = dto.AssignedTeam;
-            site.Address = dto.Address;
-            site.Status = dto.Status;
-            site.StartDate = dto.StartDate;
+            site.AssignedTeam = dto.AssignedTeam ?? site.AssignedTeam;
+            site.Address = dto.Address ?? site.Address;
+            site.Status = dto.Status ?? site.Status;
+            site.StartDate = dto.StartDate ?? site.StartDate;
             site.Budget = dto.Budget;
-            site.Description = dto.Description;
+            site.Description = dto.Description ?? site.Description;
             site.IsNegotiated = dto.IsNegotiated;
-            site.NegotiationDetails = dto.NegotiationDetails ?? "";
+            site.NegotiationDetails = dto.NegotiationDetails ?? site.NegotiationDetails;
             site.IsArchived = dto.IsArchived;
             if (dto.WorkHistory.HasValue)
                 site.WorkHistory = dto.WorkHistory.Value.GetRawText();
@@ -149,6 +161,15 @@ namespace Blackstone_Interior.Controllers
 
             if (dto.Media.HasValue)
                 site.Media = dto.Media.Value.GetRawText();
+                
+            if (dto.SurveyNotes != null)
+                site.SurveyNotes = dto.SurveyNotes;
+                
+            if (dto.SurveyStatus != null)
+                site.SurveyStatus = dto.SurveyStatus;
+                
+            if (dto.SurveyDate != null)
+                site.SurveyDate = dto.SurveyDate;
                 
             await _db.SaveChangesAsync();
             return Ok(new { message = "Site updated" });

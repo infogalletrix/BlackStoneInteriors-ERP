@@ -1,4 +1,4 @@
-import React, { forwardRef } from "react";
+import { forwardRef } from "react";
 
 const PrintableCertificate = forwardRef(({ site }, ref) => {
   if (!site) return null;

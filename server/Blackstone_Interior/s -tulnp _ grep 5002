@@ -1,4 +1,4 @@
-● interior.service - Blackstone Interior Backend
+Ã¢â€”Â interior.service - Blackstone Interior Backend
      Loaded: loaded (]8;;file://srv1243339/etc/systemd/system/interior.service/etc/systemd/system/interior.service]8;;; [0;1;32menabled[0m; preset: [0;1;32menabled[0m)
      Active: activating (auto-restart) (Result: core-dump) since Sat 2026-05-23 04:59:23 UTC; 4s ago
     Process: 526645 ExecStart=/usr/bin/dotnet /var/www/blackstone-interior/server/Blackstone_Interior/bin/Release/net8.0/publish/Blackstone_Interior.dll [0;1;31m(code=dumped, signal=ABRT)[0m

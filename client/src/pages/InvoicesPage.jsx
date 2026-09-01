@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useReactToPrint } from "react-to-print";
 import PrintableInvoice from "../components/PrintableInvoice";
 import PrintableQuotation from "../components/PrintableQuotation";
@@ -135,7 +135,7 @@ export default function HistoryPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 relative z-50">
         <div>
           <h1 className="text-xl font-black text-themed flex items-center gap-2">
-            <History className="text-[#C9A227]" size={18} /> Transaction History
+            <History className="text-[#9E8B6E]" size={18} /> Transaction History
           </h1>
           <p className="text-muted text-xs mt-0.5 font-medium">All invoices and quotations in one place.</p>
         </div>
@@ -146,7 +146,7 @@ export default function HistoryPage() {
               onClick={() => { setActiveTab("invoices"); setSearchTerm(""); }}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-sm transition-all shadow-sm ${
                 activeTab === "invoices"
-                  ? "bg-[#C9A227] text-white shadow-md"
+                  ? "bg-[#9E8B6E] text-white shadow-md"
                   : "bg-white/5 text-muted border border-[var(--border-color)] hover:bg-white/10"
               }`}
             >

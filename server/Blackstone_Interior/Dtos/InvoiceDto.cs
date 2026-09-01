@@ -19,5 +19,13 @@ namespace Blackstone_Interior.Dtos
         public string BillType { get; set; } = "GST";
         public string Status { get; set; } = "Unpaid";
         public string Date { get; set; } = string.Empty;
+        
+        // Advanced fields
+        public string? EmailId { get; set; }
+        public string? MobileNo { get; set; }
+        public string? DeliveryTimeline { get; set; }
+        public decimal? InstallationMaterial { get; set; }
+        public decimal? DeliveryLoading { get; set; }
+        public decimal? AdditionalDiscount { get; set; }
     }
 }
