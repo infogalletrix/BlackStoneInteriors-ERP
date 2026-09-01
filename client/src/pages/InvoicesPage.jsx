@@ -28,12 +28,15 @@ export default function HistoryPage() {
   const [activeTab, setActiveTab] = useState(location.state?.activeTab || "invoices");
   const [savedInvoices, setSavedInvoices] = useState([]);
   const [quotations, setQuotations] = useState([]);
+  const [isLoadingInvoices, setIsLoadingInvoices] = useState(true);
+  const [isLoadingQuotes, setIsLoadingQuotes] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [previewInvoice, setPreviewInvoice] = useState(null);
   const componentRef = useRef();
   const handlePrint = useReactToPrint({ contentRef: componentRef });
 
   const fetchInvoices = async () => {
+    setIsLoadingInvoices(true);
     try {
       const res = await fetch("/api/finance/invoices");
       const data = await res.json();
@@ -58,14 +61,17 @@ export default function HistoryPage() {
       });
       setSavedInvoices(mapped);
     } catch (err) { console.error(err); }
+    finally { setIsLoadingInvoices(false); }
   };
 
   const fetchQuotations = async () => {
+    setIsLoadingQuotes(true);
     try {
       const res = await fetch("/api/quotations");
       const data = await res.json();
       setQuotations(Array.isArray(data) ? data : []);
     } catch (err) { console.error(err); }
+    finally { setIsLoadingQuotes(false); }
   };
 
   const updateQuotationStatus = async (q, newStatus) => {
@@ -135,7 +141,7 @@ export default function HistoryPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 relative z-50">
         <div>
           <h1 className="text-xl font-black text-themed flex items-center gap-2">
-            <History className="text-[#9E8B6E]" size={18} /> Transaction History
+            <History className="text-accent" size={18} /> Transaction History
           </h1>
           <p className="text-muted text-xs mt-0.5 font-medium">All invoices and quotations in one place.</p>
         </div>
@@ -146,7 +152,7 @@ export default function HistoryPage() {
               onClick={() => { setActiveTab("invoices"); setSearchTerm(""); }}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-sm transition-all shadow-sm ${
                 activeTab === "invoices"
-                  ? "bg-[#9E8B6E] text-white shadow-md"
+                  ? "bg-accent text-white shadow-md"
                   : "bg-white/5 text-muted border border-[var(--border-color)] hover:bg-white/10"
               }`}
             >
@@ -241,7 +247,11 @@ export default function HistoryPage() {
                 </tbody>
               </table>
             </div>
-            {filteredInvoices.length === 0 && (
+            {isLoadingInvoices ? (
+              <div className="py-20 flex justify-center items-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
+              </div>
+            ) : filteredInvoices.length === 0 && (
               <div className="py-20 text-center">
                 <Filter className="mx-auto text-slate-200 mb-3" size={40} />
                 <p className="text-slate-400 font-bold uppercase text-xs tracking-widest">
@@ -342,7 +352,11 @@ export default function HistoryPage() {
                 </tbody>
               </table>
             </div>
-            {filteredQuotations.length === 0 && (
+            {isLoadingQuotes ? (
+              <div className="py-20 flex justify-center items-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
+              </div>
+            ) : filteredQuotations.length === 0 && (
               <div className="py-20 text-center">
                 <Filter className="mx-auto text-slate-200 mb-3" size={40} />
                 <p className="text-slate-400 font-bold uppercase text-xs tracking-widest">

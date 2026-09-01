@@ -36,7 +36,23 @@ export default function BillingPage() {
 
   const [invoiceId, setInvoiceId] = useState(null);
   const [invoiceNo, setInvoiceNo] = useState("");
-  const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
+  const [invoiceDate, setInvoiceDate] = useState("");
+
+  const fetchInternetDate = async () => {
+    try {
+      const res = await fetch('https://worldtimeapi.org/api/timezone/Asia/Kolkata');
+      const data = await res.json();
+      return data.datetime.split('T')[0];
+    } catch {
+      return new Date().toISOString().split('T')[0];
+    }
+  };
+
+  useEffect(() => {
+    if (!invoiceDate) {
+      fetchInternetDate().then(setInvoiceDate);
+    }
+  }, []);
 
   // New advanced fields
   const [emailId, setEmailId] = useState("");
@@ -138,15 +154,19 @@ export default function BillingPage() {
       setDeliveryLoading(0);
       setAdditionalDiscount(0);
       
-      // Fetch the next invoice number from the backend
-      fetch(`/api/finance/invoices/next-number`)
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.nextNumber) {
-            setInvoiceNo(data.nextNumber);
-          }
-        })
-        .catch(err => console.error("Failed to fetch next quote number:", err));
+      // Fetch the real internet date to ensure it's correct even if PC clock is off or app is left open
+      fetchInternetDate().then(realDate => {
+        setInvoiceDate(realDate);
+        // Fetch the next invoice number from the backend with the correct date
+        fetch(`/api/finance/invoices/next-number?date=${realDate}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.nextNumber) {
+              setInvoiceNo(data.nextNumber);
+            }
+          })
+          .catch(err => console.error("Failed to fetch next quote number:", err));
+      });
     }
     localStorage.setItem("active_invoice_session", activeSessionId);
   }, [activeSessionId]);

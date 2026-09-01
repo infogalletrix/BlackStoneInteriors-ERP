@@ -53,7 +53,7 @@ export default function SettingsModal({ isOpen, onClose, onLogout }) {
         <div className={`w-full md:w-64 p-6 border-b md:border-b-0 md:border-r flex flex-col ${t.isDark ? "bg-slate-800/50 border-white/10" : "bg-slate-50 border-slate-200"}`}>
           <div className="flex justify-between items-center mb-8">
             <h2 className={`text-xl font-black flex items-center gap-2 ${t.isDark ? "text-white" : "text-slate-900"}`}>
-              <Shield className="text-[#9E8B6E]" size={24} />
+              <Shield className="text-accent" size={24} />
               Settings
             </h2>
             <button onClick={onClose} className="md:hidden p-1 text-slate-400 hover:text-red-500 transition-colors">
@@ -62,13 +62,13 @@ export default function SettingsModal({ isOpen, onClose, onLogout }) {
           </div>
 
           <div className="flex flex-col gap-2 flex-1">
-            <button onClick={() => setActiveTab('account')} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'account' ? "bg-[#9E8B6E] text-white shadow-md shadow-[#9E8B6E]/20" : t.isDark ? "text-slate-400 hover:bg-white/5 hover:text-white" : "text-slate-500 hover:bg-black/5 hover:text-slate-900"}`}>
+            <button onClick={() => setActiveTab('account')} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'account' ? "bg-accent text-white shadow-md shadow-accent/20" : t.isDark ? "text-slate-400 hover:bg-white/5 hover:text-white" : "text-slate-500 hover:bg-black/5 hover:text-slate-900"}`}>
               <Key size={18} /> Account & Security
             </button>
-            <button onClick={() => setActiveTab('activity')} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'activity' ? "bg-[#9E8B6E] text-white shadow-md shadow-[#9E8B6E]/20" : t.isDark ? "text-slate-400 hover:bg-white/5 hover:text-white" : "text-slate-500 hover:bg-black/5 hover:text-slate-900"}`}>
+            <button onClick={() => setActiveTab('activity')} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'activity' ? "bg-accent text-white shadow-md shadow-accent/20" : t.isDark ? "text-slate-400 hover:bg-white/5 hover:text-white" : "text-slate-500 hover:bg-black/5 hover:text-slate-900"}`}>
               <Activity size={18} /> Activity Log
             </button>
-            <button onClick={() => setActiveTab('logins')} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'logins' ? "bg-[#9E8B6E] text-white shadow-md shadow-[#9E8B6E]/20" : t.isDark ? "text-slate-400 hover:bg-white/5 hover:text-white" : "text-slate-500 hover:bg-black/5 hover:text-slate-900"}`}>
+            <button onClick={() => setActiveTab('logins')} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'logins' ? "bg-accent text-white shadow-md shadow-accent/20" : t.isDark ? "text-slate-400 hover:bg-white/5 hover:text-white" : "text-slate-500 hover:bg-black/5 hover:text-slate-900"}`}>
               <Clock size={18} /> Login History
             </button>
           </div>
@@ -111,15 +111,15 @@ export default function SettingsModal({ isOpen, onClose, onLogout }) {
               <div className="max-w-md space-y-5">
                 <div>
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Current Password</label>
-                  <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="••••••••" className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-[#9E8B6E] transition-all" />
+                  <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="••••••••" className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-accent transition-all" />
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">New Password</label>
-                  <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="••••••••" className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-[#9E8B6E] transition-all" />
+                  <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="••••••••" className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-accent transition-all" />
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Confirm New Password</label>
-                  <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-[#9E8B6E] transition-all" />
+                  <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-accent transition-all" />
                 </div>
                 
                 {passwordMessage.text && (
@@ -128,7 +128,7 @@ export default function SettingsModal({ isOpen, onClose, onLogout }) {
                   </div>
                 )}
                 
-                <button onClick={handleUpdatePassword} className="bg-[#9E8B6E] hover:bg-[#7D6C54] text-white px-6 py-2.5 rounded-xl font-black text-sm uppercase tracking-widest shadow-md transition-all mt-4">
+                <button onClick={handleUpdatePassword} className="bg-accent hover:bg-accent-hover text-white px-6 py-2.5 rounded-xl font-black text-sm uppercase tracking-widest shadow-md transition-all mt-4">
                   Update Password
                 </button>
               </div>

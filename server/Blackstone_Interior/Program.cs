@@ -13,7 +13,15 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 2. CORS Ã¢â‚¬â€ allow the Vite dev server
+// Enable Response Compression for faster API responses
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProvider>();
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProvider>();
+});
+
+// 2. CORS Ã¢â‚¬â€  allow the Vite dev server
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -63,6 +71,7 @@ catch (Exception ex)
 }
 
 // 5. PIPELINE
+app.UseResponseCompression();
 app.UseMiddleware<Blackstone_Interior.Middleware.GlobalExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())

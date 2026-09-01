@@ -478,7 +478,7 @@ const CRMPage = () => {
               { id: "telecalling", label: "Telecalling", icon: <Phone size={14} /> },
               { id: "campaigns", label: "Campaigns", icon: <BarChart2 size={14} /> },
             ].map((tab) => (
-              <button key={tab.id} onClick={() => { setActiveTab(tab.id); setSearchTerm(""); }} className={`flex-shrink-0 flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300 ${activeTab === tab.id ? "dark:bg-violet-600 bg-[#D4AF37] text-white shadow-md" : "text-muted hover:text-themed hover:bg-[var(--bg-card-hover)]"}`}>
+              <button key={tab.id} onClick={() => { setActiveTab(tab.id); setSearchTerm(""); }} className={`flex-shrink-0 flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300 ${activeTab === tab.id ? "dark:bg-violet-600 bg-accent text-white shadow-md" : "text-muted hover:text-themed hover:bg-[var(--bg-card-hover)]"}`}>
                 {tab.icon} <span className="hidden sm:inline">{tab.label}</span>
               </button>
             ))}
@@ -513,7 +513,7 @@ const CRMPage = () => {
           {/* ADD BUTTON (Right) */}
           <div className="flex w-full md:w-auto order-3 gap-3 items-center">
             {activeTab !== "campaigns" && activeTab !== "telecalling" && (
-              <button onClick={() => { if (activeTab === "leads" || activeTab === "customers") setEditContact({ status: 'Cold', tags: [] }); else if (activeTab === "pipeline") setEditDeal({ value: 0, contactId: contacts[0]?.id || '' }); else if (activeTab === "site_surveys") { setEditSiteMode('full'); setEditSiteSurvey({ name: '', clientName: '', address: '', status: 'Pre-Construction', startDate: new Date().toISOString().split('T')[0], surveyNotes: '' }); } else setEditActivity({ type: '', date: new Date().toISOString().split('T')[0], client: contacts[0]?.id || '', status: 'Pending' }); }} className="w-full md:w-auto flex-shrink-0 flex items-center justify-center gap-1.5 px-6 py-2.5 rounded-xl text-sm font-black transition-all duration-300 dark:bg-violet-700 bg-[#D4AF37] text-white shadow-lg dark:hover:bg-slate-800 hover:bg-[#c4a133]">
+              <button onClick={() => { if (activeTab === "leads" || activeTab === "customers") setEditContact({ status: 'Cold', tags: [] }); else if (activeTab === "pipeline") setEditDeal({ value: 0, contactId: contacts[0]?.id || '' }); else if (activeTab === "site_surveys") { setEditSiteMode('full'); setEditSiteSurvey({ name: '', clientName: '', address: '', status: 'Pre-Construction', startDate: new Date().toISOString().split('T')[0], surveyNotes: '' }); } else setEditActivity({ type: '', date: new Date().toISOString().split('T')[0], client: contacts[0]?.id || '', status: 'Pending' }); }} className="w-full md:w-auto flex-shrink-0 flex items-center justify-center gap-1.5 px-6 py-2.5 rounded-xl text-sm font-black transition-all duration-300 dark:bg-violet-700 bg-accent text-white shadow-lg dark:hover:bg-slate-800 hover:bg-accent-hover">
                 <Plus size={16} /> <span className="hidden sm:inline">Add New</span>
               </button>
             )}
@@ -682,7 +682,7 @@ const CRMPage = () => {
                           <>
                             {c.status !== 'Not Interested' && <button className="font-bold px-3 py-1.5 rounded-lg text-xs transition-all opacity-0 group-hover:opacity-100 border border-slate-500 text-slate-500 hover:bg-slate-500/10" onClick={() => handleMarkNotInterested(c.id, false)}>Not Interested</button>}
                             <button className="font-bold px-3 py-1.5 rounded-lg text-xs transition-all opacity-0 group-hover:opacity-100 border border-blue-500 text-blue-500 hover:bg-blue-500/10" onClick={() => setEditActivity({ type: 'Follow-up Call', date: new Date().toISOString().split('T')[0], client: c.id, status: 'Pending' })}>Schedule Follow-up</button>
-                            <button className="font-bold px-3 py-1.5 rounded-lg text-xs transition-all opacity-0 group-hover:opacity-100 border border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37]/10" onClick={() => handleConvertToCustomer(c)}>Convert to Customer</button>
+                            <button className="font-bold px-3 py-1.5 rounded-lg text-xs transition-all opacity-0 group-hover:opacity-100 border border-accent text-accent hover:bg-accent/10" onClick={() => handleConvertToCustomer(c)}>Convert to Customer</button>
                           </>
                         )}
                         <button
@@ -727,7 +727,7 @@ const CRMPage = () => {
                         <>
                           {c.status !== 'Not Interested' && <button className="font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-slate-500 text-slate-500 hover:bg-slate-500/10" onClick={() => handleMarkNotInterested(c.id, false)} title="Not Interested"><XCircle size={12}/></button>}
                           <button className="font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-blue-500 text-blue-500 hover:bg-blue-500/10" onClick={() => setEditActivity({ type: 'Follow-up Call', date: new Date().toISOString().split('T')[0], client: c.id, status: 'Pending' })} title="Schedule Follow-up"><Phone size={12}/></button>
-                          <button className="font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37]/10" onClick={() => handleConvertToCustomer(c)}>Convert</button>
+                          <button className="font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-accent text-accent hover:bg-accent/10" onClick={() => handleConvertToCustomer(c)}>Convert</button>
                         </>
                       )}
                       <button
@@ -1030,7 +1030,7 @@ const CRMPage = () => {
             
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-black text-themed">Recent Calls</h2>
-              <button onClick={() => setIsLogCallOpen(true)} className="px-4 py-2 bg-[#D4AF37] hover:bg-[#c4a133] text-white rounded-xl text-xs font-bold transition-colors shadow-md flex items-center gap-2">
+              <button onClick={() => setIsLogCallOpen(true)} className="px-4 py-2 bg-accent hover:bg-accent-hover text-white rounded-xl text-xs font-bold transition-colors shadow-md flex items-center gap-2">
                 <Plus size={14}/> Log New Call
               </button>
             </div>
@@ -1114,7 +1114,7 @@ const CRMPage = () => {
 
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-black text-themed">Marketing Campaigns</h2>
-              <button className="px-4 py-2 bg-[#D4AF37] hover:bg-[#c4a133] text-white rounded-xl text-xs font-bold transition-colors shadow-md flex items-center gap-2" onClick={() => setEditCampaign({ name: '', platform: 'Email', status: 'Scheduled', date: new Date().toISOString().split('T')[0] })}>
+              <button className="px-4 py-2 bg-accent hover:bg-accent-hover text-white rounded-xl text-xs font-bold transition-colors shadow-md flex items-center gap-2" onClick={() => setEditCampaign({ name: '', platform: 'Email', status: 'Scheduled', date: new Date().toISOString().split('T')[0] })}>
                 <Plus size={14}/> Create Campaign
               </button>
             </div>
@@ -1253,7 +1253,7 @@ function EditCampaignForm({ campaign, onSave, onCancel }) {
 
       <div className="flex gap-3 justify-end pt-5 border-t border-[var(--border-color)]">
         <button type="button" onClick={onCancel} className="px-6 py-2.5 rounded-xl text-sm font-bold text-slate-400 hover:bg-white/5 transition-colors">Cancel</button>
-        <button type="submit" className="px-6 py-2.5 rounded-xl text-sm font-bold dark:bg-violet-700 bg-[#D4AF37] text-white shadow-md dark:hover:bg-slate-800 hover:bg-[#c4a133] transition-all">Save Campaign</button>
+        <button type="submit" className="px-6 py-2.5 rounded-xl text-sm font-bold dark:bg-violet-700 bg-accent text-white shadow-md dark:hover:bg-slate-800 hover:bg-accent-hover transition-all">Save Campaign</button>
       </div>
     </form>
   );
@@ -1311,7 +1311,7 @@ function EditContactForm({ contact, onSave, onCancel }) {
 
       <div className="flex gap-3 justify-end mt-6 pt-5 border-t border-[var(--border-color)]">
         <button type="button" onClick={onCancel} className="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-400 hover:bg-white/5 transition-colors">Cancel</button>
-        <button type="submit" className="px-5 py-2.5 rounded-xl text-sm font-bold dark:bg-violet-700 bg-[#D4AF37] text-white shadow-md dark:hover:bg-slate-800 hover:bg-[#c4a133] transition-all">Save Profile</button>
+        <button type="submit" className="px-5 py-2.5 rounded-xl text-sm font-bold dark:bg-violet-700 bg-accent text-white shadow-md dark:hover:bg-slate-800 hover:bg-accent-hover transition-all">Save Profile</button>
       </div>
     </form>
   );
@@ -1373,7 +1373,7 @@ function EditDealForm({ deal, contacts, onSave, onCancel }) {
 
       <div className="flex gap-3 justify-end mt-6 pt-5 border-t border-[var(--border-color)]">
         <button type="button" onClick={onCancel} className="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-400 hover:bg-white/5 transition-colors">Cancel</button>
-        <button type="submit" className="px-5 py-2.5 rounded-xl text-sm font-bold dark:bg-violet-700 bg-[#D4AF37] text-white shadow-md dark:hover:bg-slate-800 hover:bg-[#c4a133] transition-all">Save Project</button>
+        <button type="submit" className="px-5 py-2.5 rounded-xl text-sm font-bold dark:bg-violet-700 bg-accent text-white shadow-md dark:hover:bg-slate-800 hover:bg-accent-hover transition-all">Save Project</button>
       </div>
     </form>
   );
@@ -1461,7 +1461,7 @@ function EditActivityForm({ activity, contacts, onSave, onCancel }) {
 
       <div className="flex gap-3 justify-end mt-6 pt-5 border-t border-[var(--border-color)]">
         <button type="button" onClick={onCancel} className="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-400 hover:bg-white/5 transition-colors">Cancel</button>
-        <button type="submit" className="px-5 py-2.5 rounded-xl text-sm font-bold dark:bg-violet-700 bg-[#D4AF37] text-white shadow-md dark:hover:bg-slate-800 hover:bg-[#c4a133] transition-all">Save Schedule</button>
+        <button type="submit" className="px-5 py-2.5 rounded-xl text-sm font-bold dark:bg-violet-700 bg-accent text-white shadow-md dark:hover:bg-slate-800 hover:bg-accent-hover transition-all">Save Schedule</button>
       </div>
     </form>
   );
@@ -1653,7 +1653,7 @@ function EditSiteSurveyForm({ site, contacts, mode, onSave, onCancel }) {
 
       <div className="flex gap-3 justify-center mt-8 pt-5 border-t border-[var(--border-color)] mt-auto">
         <button type="button" onClick={onCancel} className="px-8 py-3 rounded-xl text-sm font-bold text-slate-400 hover:bg-white/5 transition-colors">Cancel</button>
-        <button type="submit" className="px-8 py-3 rounded-xl text-sm font-bold dark:bg-violet-700 bg-[#D4AF37] text-white shadow-md dark:hover:bg-slate-800 hover:bg-[#c4a133] transition-all">Save Notes</button>
+        <button type="submit" className="px-8 py-3 rounded-xl text-sm font-bold dark:bg-violet-700 bg-accent text-white shadow-md dark:hover:bg-slate-800 hover:bg-accent-hover transition-all">Save Notes</button>
       </div>
     </form>
   );
@@ -1685,18 +1685,18 @@ function LogCallForm({ onSave, onCancel }) {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Customer Name</label>
-          <input className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-[#D4AF37] transition-all" value={form.customer} onChange={e => setForm({ ...form, customer: e.target.value })} required />
+          <input className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-accent transition-all" value={form.customer} onChange={e => setForm({ ...form, customer: e.target.value })} required />
         </div>
         <div>
           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Phone Number</label>
-          <input type="tel" className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-[#D4AF37] transition-all" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} required />
+          <input type="tel" className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-accent transition-all" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} required />
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-4">
         <div>
           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Call Type</label>
-          <select className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-[#D4AF37] transition-all [&>option]:bg-[var(--modal-bg)]" value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}>
+          <select className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-accent transition-all [&>option]:bg-[var(--modal-bg)]" value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}>
             <option value="outbound">Outbound</option>
             <option value="inbound">Inbound</option>
             <option value="missed">Missed</option>
@@ -1704,7 +1704,7 @@ function LogCallForm({ onSave, onCancel }) {
         </div>
         <div>
           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Outcome</label>
-          <select className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-[#D4AF37] transition-all [&>option]:bg-[var(--modal-bg)]" value={form.outcome} onChange={e => setForm({ ...form, outcome: e.target.value })}>
+          <select className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-accent transition-all [&>option]:bg-[var(--modal-bg)]" value={form.outcome} onChange={e => setForm({ ...form, outcome: e.target.value })}>
             <option value="Interested">Interested</option>
             <option value="Call Later">Call Later</option>
             <option value="Missed">Missed</option>
@@ -1713,13 +1713,13 @@ function LogCallForm({ onSave, onCancel }) {
         </div>
         <div>
           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Duration</label>
-          <input type="text" placeholder="MM:SS" className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-[#D4AF37] transition-all" value={form.duration} onChange={e => setForm({ ...form, duration: e.target.value })} />
+          <input type="text" placeholder="MM:SS" className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-accent transition-all" value={form.duration} onChange={e => setForm({ ...form, duration: e.target.value })} />
         </div>
       </div>
 
       <div>
         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Call Notes</label>
-        <textarea rows="4" className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-[#D4AF37] transition-all" value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} placeholder="Discussed pricing and availability..."></textarea>
+        <textarea rows="4" className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-accent transition-all" value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} placeholder="Discussed pricing and availability..."></textarea>
       </div>
 
       <div>
@@ -1730,7 +1730,7 @@ function LogCallForm({ onSave, onCancel }) {
                setForm({...form, audioFileName: e.target.files[0].name});
             }
           }} />
-          <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-[#D4AF37]/10 group-hover:text-[#D4AF37] transition-colors">
+          <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-accent/10 group-hover:text-accent transition-colors">
             <Phone size={18} />
           </div>
           <span className="text-xs font-bold text-muted group-hover:text-themed transition-colors">
@@ -1741,7 +1741,7 @@ function LogCallForm({ onSave, onCancel }) {
       
       <div className="flex gap-3 justify-end mt-8 pt-5 border-t border-[var(--border-color)]">
         <button type="button" onClick={onCancel} className="px-6 py-2.5 rounded-xl text-sm font-bold text-slate-400 hover:bg-white/5 transition-colors">Cancel</button>
-        <button type="submit" className="px-6 py-2.5 rounded-xl text-sm font-bold bg-[#D4AF37] text-white shadow-md hover:bg-[#c4a133] transition-all">Save Call</button>
+        <button type="submit" className="px-6 py-2.5 rounded-xl text-sm font-bold bg-accent text-white shadow-md hover:bg-accent-hover transition-all">Save Call</button>
       </div>
     </form>
   );

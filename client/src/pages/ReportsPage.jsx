@@ -151,7 +151,7 @@ const ReportsPage = () => {
         <div>
           <motion.h1 initial={{ opacity:0, x:-20 }} animate={{ opacity:1, x:0 }}
             className={`text-xl font-black tracking-tight flex items-center gap-2 ${t.heading}`}>
-            <Activity className={t.isDark ? "text-violet-400" : "text-[#D4AF37]"} size={20} />
+            <Activity className={t.isDark ? "text-violet-400" : "text-accent"} size={20} />
             Reports &amp; Insights
           </motion.h1>
           <p className={`mt-0.5 text-xs font-medium ${t.muted}`}>
@@ -170,7 +170,7 @@ const ReportsPage = () => {
               { label:"Total Inflow", value:`₹${(totalInflow/100000).toFixed(2)}L`, icon:TrendingUp, color: t.isDark ? "text-emerald-400" : "text-emerald-600" },
               { label:"Total Outflow", value:`₹${(totalOutflow/100000).toFixed(2)}L`, icon:TrendingDown, color: t.isDark ? "text-rose-400" : "text-rose-600" },
               { label:"CRM Leads", value:totalLeads, icon:Users, color: t.isDark ? "text-blue-400" : "text-blue-600" },
-              { label:"Active Projects", value:activeProjects, icon:Building, color: t.isDark ? "text-violet-400" : "text-[#D4AF37]" },
+              { label:"Active Projects", value:activeProjects, icon:Building, color: t.isDark ? "text-violet-400" : "text-accent" },
             ].map(({ label, value, icon: Icon, color }) => (
               <div key={label} className={`${t.card} ${t.cardHover} p-6 rounded-[2rem]`}>
                 <h3 className={`${t.label} mb-2 flex items-center gap-2`}>
@@ -187,7 +187,7 @@ const ReportsPage = () => {
               {/* Cashflow Chart */}
               <div className={`${t.card} rounded-[2rem] p-6 lg:p-8`}>
                 <h3 className={`text-sm font-black mb-6 flex items-center gap-2 uppercase tracking-widest ${t.heading}`}>
-                  <Activity size={16} className={t.isDark ? "text-violet-400" : "text-[#D4AF37]"}/> Cashflow Overview (6 Months)
+                  <Activity size={16} className={t.isDark ? "text-violet-400" : "text-accent"}/> Cashflow Overview (6 Months)
                 </h3>
                 <ResponsiveContainer width="100%" height={250} minWidth={1}>
                   <BarChart data={cashflowTrend} margin={{ top:5, right:10, left:0, bottom:5 }} barCategoryGap="30%">
@@ -204,7 +204,7 @@ const ReportsPage = () => {
               {/* Lead Sources Pie */}
               <div className={`${t.card} rounded-[2rem] p-6 lg:p-8`}>
                 <h3 className={`text-sm font-black mb-6 flex items-center gap-2 uppercase tracking-widest ${t.heading}`}>
-                  <PieChartIcon size={16} className={t.isDark ? "text-violet-400" : "text-[#D4AF37]"}/> CRM Lead Sources
+                  <PieChartIcon size={16} className={t.isDark ? "text-violet-400" : "text-accent"}/> CRM Lead Sources
                 </h3>
                 <ResponsiveContainer width="100%" height={250} minWidth={1}>
                   <PieChart>
@@ -222,7 +222,7 @@ const ReportsPage = () => {
             {/* REPORT GENERATOR — RIGHT COL */}
             <div className="xl:col-span-1">
               <div className={`${generatorPanel} rounded-[2rem] p-6 lg:p-8 shadow-xl sticky top-8 relative overflow-hidden`}>
-                <div className="absolute -right-4 -bottom-4 opacity-10"><FileText size={150} /></div>
+
                 <h3 className="text-xl font-black mb-2 flex items-center gap-2 tracking-tight text-white">Report Generator</h3>
                 <p className="text-xs font-medium mb-8 text-white/70">Select a dataset to compile into a downloadable document.</p>
 
@@ -233,7 +233,7 @@ const ReportsPage = () => {
                       className={`w-full rounded-xl p-3 text-sm font-bold outline-none transition-all cursor-pointer appearance-none ${
                         t.isDark
                           ? "bg-slate-800/80 border border-white/10 text-white focus:ring-2 focus:ring-violet-500 [&_optgroup]:bg-slate-900 [&_option]:bg-slate-900"
-                          : "bg-white/20 border border-white/30 text-white focus:ring-2 focus:ring-white/50 [&_optgroup]:bg-[#D4AF37] [&_option]:bg-[#D4AF37] [&_optgroup]:text-white [&_option]:text-white"
+                          : "bg-white/20 border border-white/30 text-white focus:ring-2 focus:ring-white/50 [&_optgroup]:bg-accent [&_option]:bg-accent [&_optgroup]:text-white [&_option]:text-white"
                       }`}
                       value={selectedReport}
                       onChange={(e) => setSelectedReport(e.target.value)}

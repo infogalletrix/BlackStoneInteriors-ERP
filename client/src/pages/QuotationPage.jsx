@@ -33,7 +33,23 @@ export default function QuotationPage() {
 
   const [quoteId, setQuoteId] = useState(null);
   const [quoteNo, setQuoteNo] = useState("");
-  const [quoteDate, setQuoteDate] = useState(new Date().toISOString().split('T')[0]);
+  const [quoteDate, setQuoteDate] = useState("");
+
+  const fetchInternetDate = async () => {
+    try {
+      const res = await fetch('https://worldtimeapi.org/api/timezone/Asia/Kolkata');
+      const data = await res.json();
+      return data.datetime.split('T')[0];
+    } catch {
+      return new Date().toISOString().split('T')[0];
+    }
+  };
+
+  useEffect(() => {
+    if (!quoteDate) {
+      fetchInternetDate().then(setQuoteDate);
+    }
+  }, []);
 
   // New advanced fields
   const [emailId, setEmailId] = useState("");
@@ -117,15 +133,19 @@ export default function QuotationPage() {
       setDeliveryLoading(0);
       setAdditionalDiscount(0);
       
-      // Fetch the next quotation number from the backend
-      fetch(`/api/quotations/next-number?date=${quoteDate}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.nextNumber) {
-            setQuoteNo(data.nextNumber);
-          }
-        })
-        .catch(err => console.error("Failed to fetch next quote number:", err));
+      // Fetch the real internet date
+      fetchInternetDate().then(realDate => {
+        setQuoteDate(realDate);
+        // Fetch the next quotation number from the backend with the internet date
+        fetch(`/api/quotations/next-number?date=${realDate}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.nextNumber) {
+              setQuoteNo(data.nextNumber);
+            }
+          })
+          .catch(err => console.error("Failed to fetch next quote number:", err));
+      });
     }
     localStorage.setItem("active_quotation_session", activeSessionId);
   }, [activeSessionId]);

@@ -570,7 +570,7 @@ export default function ExpensePage() {
                 onConfirm: () => setBulkItems([{ id: Date.now(), material: "", qty: "", cost: "" }])
               });
             }}
-            className="bg-[#D4AF37] hover:bg-[#c4a133] text-white px-4 py-1.5 rounded flex items-center gap-2 text-xs font-bold transition shadow-sm"
+            className="bg-accent hover:bg-accent-hover text-white px-4 py-1.5 rounded flex items-center gap-2 text-xs font-bold transition shadow-sm"
           >
             <RotateCcw size={14} /> Clear List
           </button>

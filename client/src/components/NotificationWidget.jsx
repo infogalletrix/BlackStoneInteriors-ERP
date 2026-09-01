@@ -35,23 +35,30 @@ export default function NotificationWidget({ compact = false }) {
         // Only show pending or overdue activities
         const activeActivities = data.filter(act => act.status === 'Pending' || act.status === 'Overdue');
         
-        reminders = activeActivities.map(act => {
+        activeActivities.forEach(act => {
           const actDate = new Date(act.date || new Date());
           const checkDate = new Date(actDate);
-          if (!act.date || !act.date.includes('T') || act.date.endsWith('00:00:00.000Z')) {
+          if (!act.date || !act.date.includes('T') || act.date.endsWith('00:00:00') || act.date.endsWith('00:00:00.000Z')) {
             checkDate.setHours(23, 59, 59, 999);
           }
-          const isPast = checkDate < new Date();
-          const client = contacts.find(c => c.id == act.client);
-          const clientName = client ? client.name : "Unknown Client";
           
-          return {
-            id: act.id,
-            title: `${act.type} - ${clientName}`,
-            time: actDate.toLocaleString('default', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
-            type: isPast ? "warning" : "info",
-            isRead: false,
-          };
+          const now = new Date();
+          const timeDiffHours = (checkDate - now) / (1000 * 60 * 60);
+          
+          // Trigger notification if it's past due, or due within the next 24 hours
+          if (timeDiffHours <= 24) {
+            const isPast = checkDate < now;
+            const client = contacts.find(c => c.id == act.client);
+            const clientName = client ? client.name : "Unknown Client";
+            
+            reminders.push({
+              id: act.id,
+              title: `${act.type} - ${clientName}`,
+              time: actDate.toLocaleString('default', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+              type: isPast ? "warning" : "info",
+              isRead: false,
+            });
+          }
         });
       }
 
@@ -62,14 +69,21 @@ export default function NotificationWidget({ compact = false }) {
             const dueDate = new Date(site.maintenance.nextDue);
             const checkDueDate = new Date(dueDate);
             checkDueDate.setHours(23, 59, 59, 999);
-            const isPast = checkDueDate < new Date();
-            maintenance.push({
-              id: `maint-${site.id}`,
-              title: `${site.name} - ${site.maintenance.frequency} Maintenance`,
-              time: `Due: ${dueDate.toLocaleDateString('en-GB')}`,
-              type: isPast ? "warning" : "info",
-              isRead: false
-            });
+            
+            const now = new Date();
+            const timeDiffDays = (checkDueDate - now) / (1000 * 60 * 60 * 24);
+            
+            // Trigger maintenance notifications 3 days before due date, or if overdue
+            if (timeDiffDays <= 3) {
+              const isPast = checkDueDate < now;
+              maintenance.push({
+                id: `maint-${site.id}`,
+                title: `${site.name} - ${site.maintenance.frequency} Maintenance`,
+                time: `Due: ${dueDate.toLocaleDateString('en-GB')}`,
+                type: isPast ? "warning" : "info",
+                isRead: false
+              });
+            }
           }
         });
       }

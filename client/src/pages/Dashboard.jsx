@@ -204,7 +204,7 @@ const Dashboard = () => {
       <motion.div initial={{opacity:0,y:-16}} animate={{opacity:1,y:0}}
         className="flex flex-col md:flex-row justify-between items-start md:items-center mb-7 gap-4 relative z-50">
         <div>
-          <h1 className={`text-2xl font-black tracking-tight ${d?"text-white":"text-[#1C2B4B]"}`}>
+          <h1 className={`text-2xl font-black tracking-tight ${d?"text-white":"text-[var(--text-primary)]"}`}>
             Executive Dashboard
           </h1>
           <p className={`${t.muted} mt-0.5 uppercase tracking-widest`}>Real-time Business Intelligence</p>
@@ -216,7 +216,7 @@ const Dashboard = () => {
             <span className={`${t.label} mb-0.5`}>Period</span>
             <div className="flex items-center gap-1">
               <select value={activePreset} onChange={handlePresetChange}
-                className={`text-xs font-black bg-transparent outline-none cursor-pointer w-28 appearance-none ${d?"text-slate-200":"text-[#1C2B4B]"}`}>
+                className={`text-xs font-black bg-transparent outline-none cursor-pointer w-28 appearance-none ${d?"text-slate-200":"text-[var(--text-primary)]"}`}>
                 <option value="custom">Custom</option>
                 <option value="this_month">This Month</option>
                 <option value="last_month">Last Month</option>
@@ -228,10 +228,10 @@ const Dashboard = () => {
           </div>
           <div className={`hidden sm:block w-px h-5 ${t.divider}`}/>
           <input type="date" value={dateFrom} max={dateTo} onChange={e=>handleDateChange("from",e.target.value)}
-            className={`text-xs font-bold bg-transparent outline-none cursor-pointer ${d?"text-slate-200":"text-[#1C2B4B]"}`}/>
+            className={`text-xs font-bold bg-transparent outline-none cursor-pointer ${d?"text-slate-200":"text-[var(--text-primary)]"}`}/>
           <span className={`text-xs font-black ${t.muted}`}>→</span>
           <input type="date" value={dateTo} min={dateFrom} onChange={e=>handleDateChange("to",e.target.value)}
-            className={`text-xs font-bold bg-transparent outline-none cursor-pointer ${d?"text-slate-200":"text-[#1C2B4B]"}`}/>
+            className={`text-xs font-bold bg-transparent outline-none cursor-pointer ${d?"text-slate-200":"text-[var(--text-primary)]"}`}/>
           <NotificationWidget/>
         </div>
       </motion.div>
@@ -281,7 +281,7 @@ const Dashboard = () => {
           <motion.div variants={fade} className={`xl:col-span-8 ${t.card} rounded-2xl p-6`}>
             <div className="mb-5 flex items-start justify-between">
               <div>
-                <h3 className={`font-black text-base ${d?"text-white":"text-[#1C2B4B]"}`}>Financial Trajectory</h3>
+                <h3 className={`font-black text-base ${d?"text-white":"text-[var(--text-primary)]"}`}>Financial Trajectory</h3>
                 <p className={`${t.muted} mt-0.5`}>Income vs Expenses — last 6 months</p>
               </div>
               <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest">
@@ -320,14 +320,14 @@ const Dashboard = () => {
 
           {/* Site Status donut – 4 cols */}
           <motion.div variants={fade} className={`xl:col-span-4 ${t.card} rounded-2xl p-6 flex flex-col`}>
-            <h3 className={`font-black text-base mb-1 ${d?"text-white":"text-[#1C2B4B]"}`}>Site Status</h3>
+            <h3 className={`font-black text-base mb-1 ${d?"text-white":"text-[var(--text-primary)]"}`}>Site Status</h3>
             <p className={`${t.muted} mb-4`}>Work order breakdown</p>
             <div className="flex-1 min-h-[180px] relative">
               {siteStatusData.length > 0 ? (
                 <>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
                     <span className={t.label}>Total</span>
-                    <span className={`text-xl font-black ${d?"text-white":"text-[#1C2B4B]"}`}>{sites.length}</span>
+                    <span className={`text-xl font-black ${d?"text-white":"text-[var(--text-primary)]"}`}>{sites.length}</span>
                   </div>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -348,9 +348,9 @@ const Dashboard = () => {
                 <div key={i} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full" style={{background:COLORS[i%COLORS.length]}}/>
-                    <span className={`text-xs font-semibold ${d?"text-slate-300":"text-[#3D5A8A]"}`}>{s.name}</span>
+                    <span className={`text-xs font-semibold ${d?"text-slate-300":"text-[var(--text-secondary)]"}`}>{s.name}</span>
                   </div>
-                  <span className={`text-xs font-black ${d?"text-white":"text-[#1C2B4B]"}`}>{s.value}</span>
+                  <span className={`text-xs font-black ${d?"text-white":"text-[var(--text-primary)]"}`}>{s.value}</span>
                 </div>
               ))}
             </div>
@@ -362,7 +362,7 @@ const Dashboard = () => {
 
           {/* Expense bar chart – 8 cols */}
           <motion.div variants={fade} className={`xl:col-span-8 ${t.card} rounded-2xl p-6`}>
-            <h3 className={`font-black text-base mb-1 ${d?"text-white":"text-[#1C2B4B]"}`}>Expense Categories</h3>
+            <h3 className={`font-black text-base mb-1 ${d?"text-white":"text-[var(--text-primary)]"}`}>Expense Categories</h3>
             <p className={`${t.muted} mb-5`}>Breakdown by classification (current period)</p>
             {expenseBreakdown.length > 0 ? (
               <div className="h-48">
@@ -387,7 +387,7 @@ const Dashboard = () => {
 
           {/* Quick Actions – 4 cols */}
           <motion.div variants={fade} className="xl:col-span-4 flex flex-col gap-3">
-            <h3 className={`font-black text-base ${d?"text-white":"text-[#1C2B4B]"}`}>Quick Actions</h3>
+            <h3 className={`font-black text-base ${d?"text-white":"text-[var(--text-primary)]"}`}>Quick Actions</h3>
             {[
               { label:"New Quotation",  sub:"Create & send",       path:"/quotations", color: d?"#8b5cf6":"#9E8B6E" },
               { label:"New Receipt",    sub:"Log a payment",       path:"/receipts",   color: incomeColor },
@@ -400,7 +400,7 @@ const Dashboard = () => {
                 className={`w-full text-left p-3.5 rounded-lg flex items-center justify-between group transition-all ${t.card} ${t.cardHover}`}
                 style={{borderLeft:`3px solid ${btn.color}`}}>
                 <div>
-                  <p className={`font-black text-xs ${d?"text-white":"text-[#1C2B4B]"}`}>{btn.label}</p>
+                  <p className={`font-black text-xs ${d?"text-white":"text-[var(--text-primary)]"}`}>{btn.label}</p>
                   <p className={t.muted}>{btn.sub}</p>
                 </div>
                 <ArrowRight size={14} className="opacity-30 group-hover:opacity-100 group-hover:translate-x-1 transition-all" style={{color:btn.color}}/>

@@ -2,6 +2,23 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --color-emerald-500: var(--color-success);
+  --color-emerald-600: var(--color-success);
+  --color-amber-500: var(--color-warning);
+  --color-amber-600: var(--color-warning);
+  --color-rose-500: var(--color-danger);
+  --color-red-500: var(--color-danger);
+  --color-blue-500: var(--color-info);
+  --color-indigo-500: var(--color-info);
+  --color-violet-500: var(--color-purple);
+  --color-teal-500: var(--color-teal);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-glow: var(--accent-glow);
+}
+
 /* ═══════════════════════════════════════════════════
    DESIGN TOKENS — Light (default) & Dark
 ════════════════════════════════════════════════════ */
@@ -15,6 +32,15 @@
   --text-primary:     #1C2B4B;
   --text-secondary:   #3D5A8A;
   --text-muted:       #6B7C99;
+  
+  /* Status Colors */
+  --color-success:    #10b981; /* emerald-500 */
+  --color-warning:    #f59e0b; /* amber-500 */
+  --color-danger:     #f43f5e; /* rose-500 */
+  --color-info:       #3b82f6; /* blue-500 */
+  --color-purple:     #8b5cf6; /* violet-500 */
+  --color-teal:       #14b8a6; /* teal-500 */
+
   --accent:           #C9A227;
   --accent-hover:     #B8911F;
   --accent-soft:      #FDF3D0;
@@ -47,6 +73,14 @@ html.dark {
   --text-primary:     #f1f5f9;
   --text-secondary:   #cbd5e1;
   --text-muted:       #94a3b8;
+  
+  /* Dark Status Colors */
+  --color-success:    #10b981; 
+  --color-warning:    #f59e0b; 
+  --color-danger:     #f43f5e; 
+  --color-info:       #3b82f6; 
+  --color-purple:     #8b5cf6; 
+  --color-teal:       #14b8a6; 
   --accent:           #8b5cf6;
   --accent-hover:     #7c3aed;
   --accent-soft:      rgba(139,92,246,0.2);

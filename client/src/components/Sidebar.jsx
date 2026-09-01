@@ -113,24 +113,24 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
         isOpen ? "w-64" : "w-20"
       } ${ t.isDark
         ? "bg-slate-900/80 backdrop-blur-xl border-r border-white/10 text-slate-200"
-        : "bg-[#111827] border-r border-slate-800 text-slate-100"
+        : "bg-[var(--bg-card)] border-r border-[var(--border-color)] text-[var(--text-primary)]"
       } flex flex-col h-screen transition-all duration-300 relative shadow-2xl flex-shrink-0 z-20`}
     >
       {/* Header */}
       <div
         onClick={toggleSidebar}
-        className={`py-5 px-4 flex items-center cursor-pointer group transition ${ t.isDark ? "hover:bg-white/5 border-b border-white/10" : "hover:bg-slate-800 border-b border-slate-800"}`}
+        className={`py-5 px-4 flex items-center cursor-pointer group transition ${ t.isDark ? "hover:bg-white/5 border-b border-white/10" : "hover:bg-[var(--bg-card-hover)] border-b border-[var(--border-color)]"}`}
         title={isOpen ? "Collapse Sidebar" : "Expand Sidebar"}
       >
         <div className={`flex items-center gap-3 ${!isOpen ? "justify-center w-full" : ""}`}>
-          <div className={`flex-shrink-0 ${ t.isDark ? "text-violet-400" : "text-[#D4AF37]"}`}>
+          <div className={`flex-shrink-0 ${ t.isDark ? "text-violet-400" : "text-[var(--accent)]"}`}>
             {isOpen ? <ChevronLeft size={22} /> : <img src="/logo.png" alt="Logo" className="w-8 h-8 rounded-md object-cover shadow-md" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} />}
           </div>
           {isOpen && (
             <div className="flex items-center gap-2">
               <img src="/logo.png" alt="Black Stone Interiorss" className="w-10 h-10 rounded-md object-cover shadow-sm" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} />
               <div>
-                <h2 className={`text-base font-black leading-tight ${ t.isDark ? "bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent" : "text-white"}`}>
+                <h2 className={`text-base font-black leading-tight ${ t.isDark ? "bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent" : "text-[var(--text-primary)]"}`}>
                   Black Stone <br /> Interiors
                 </h2>
               </div>
@@ -150,7 +150,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
                 </span>
               </li>
             ) : (
-              <li key={index} className={`h-px my-3 mx-2 ${ t.isDark ? "bg-white/10" : "bg-slate-800"}`} />
+              <li key={index} className={`h-px my-3 mx-2 ${ t.isDark ? "bg-white/10" : "bg-[var(--border-color)]"}`} />
             );
           }
 
@@ -166,7 +166,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
                   className={`w-full flex items-center justify-between px-2 py-2.5 rounded-xl transition-all duration-200 ${
                     t.isDark
                       ? "text-slate-300 hover:text-white hover:bg-white/5"
-                      : "text-slate-200 hover:text-white hover:bg-white/10"
+                      : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)]"
                   } ${isOpen ? "px-3" : "justify-center"}`}
                 >
                   <div className="flex items-center gap-3">
@@ -193,11 +193,11 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
                             className={`block pl-[44px] pr-3 py-2 rounded-lg transition-all duration-200 text-[13px] font-medium ${
                               isActive
                                 ? t.isDark
-                                  ? "bg-white/10 text-[#D4AF37]"
-                                  : "bg-white/20 text-[#D4AF37]"
+                                  ? "bg-white/10 text-[var(--accent)]"
+                                  : "bg-[var(--accent-soft)] text-[var(--accent)]"
                                 : t.isDark
                                   ? "text-slate-400 hover:text-slate-200 hover:bg-white/5"
-                                  : "text-slate-300 hover:text-white hover:bg-white/5"
+                                  : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)]"
                             }`}
                           >
                             {sub.name}
@@ -223,10 +223,10 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
                   isActive
                     ? t.isDark
                       ? "bg-violet-600/80 text-white shadow-lg shadow-violet-900/40"
-                      : "bg-white/10 text-[#D4AF37] shadow-lg shadow-black/20"
+                      : "bg-[var(--accent-glow)] text-[var(--accent)] font-bold shadow-sm"
                     : t.isDark
                       ? "text-slate-400 hover:text-white hover:bg-white/5"
-                      : "text-slate-200 hover:text-white hover:bg-white/10"
+                      : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)]"
                 }`}
               >
                 <span className="flex-shrink-0">{item.icon}</span>
@@ -242,10 +242,10 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
       </ul>
 
       {/* Footer */}
-      <div className={`p-4 flex flex-col items-center gap-2 border-t ${ t.isDark ? "border-white/10" : "border-slate-800"}`}>
+      <div className={`p-4 flex flex-col items-center gap-2 border-t ${ t.isDark ? "border-white/10" : "border-[var(--border-color)]"}`}>
         <button
           onClick={() => setIsSettingsOpen(true)}
-          className={`flex items-center justify-center p-2 rounded-xl transition-all duration-200 ${ t.isDark ? "text-slate-400 hover:text-white hover:bg-white/5" : "text-slate-300 hover:text-white hover:bg-white/10"} ${isOpen ? "w-full gap-3" : "w-10 h-10"}`}
+          className={`flex items-center justify-center p-2 rounded-xl transition-all duration-200 ${ t.isDark ? "text-slate-400 hover:text-white hover:bg-white/5" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)]"} ${isOpen ? "w-full gap-3" : "w-10 h-10"}`}
           title="Settings"
         >
           <Settings size={20} />
@@ -257,7 +257,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
               © 2026 Black Stone Interiors
             </p>
             <p className={`text-[8px] text-center font-bold uppercase tracking-[0.15em] ${ t.isDark ? "text-slate-600" : "text-slate-500"}`}>
-              Developed by <span className="text-[#D4AF37] font-black tracking-widest">Galletrix Innovations</span>
+              Developed by <span className="text-[var(--accent)] font-black tracking-widest">Galletrix Innovations</span>
             </p>
           </div>
         )}

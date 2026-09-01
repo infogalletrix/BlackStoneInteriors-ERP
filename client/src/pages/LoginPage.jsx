@@ -28,10 +28,10 @@ export default function LoginPage({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[#F4F5F7] dark:bg-slate-950 p-4 transition-colors duration-300 relative overflow-hidden">
+    <div className="min-h-screen w-full flex items-center justify-center bg-[var(--bg)] dark:bg-slate-950 p-4 transition-colors duration-300 relative overflow-hidden">
       {/* Background Ornaments */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/10 dark:bg-indigo-500/20 rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#9E8B6E]/10 dark:bg-[#9E8B6E]/20 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent/10 dark:bg-accent/20 rounded-full blur-[100px] pointer-events-none" />
 
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
@@ -56,7 +56,7 @@ export default function LoginPage({ onLogin }) {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-900 dark:text-white font-bold focus:ring-2 focus:ring-[#9E8B6E] outline-none transition-all"
+                  className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-900 dark:text-white font-bold focus:ring-2 focus:ring-accent outline-none transition-all"
                   placeholder="admin"
                   required
                 />
@@ -71,7 +71,7 @@ export default function LoginPage({ onLogin }) {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-900 dark:text-white font-bold focus:ring-2 focus:ring-[#9E8B6E] outline-none transition-all"
+                  className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-900 dark:text-white font-bold focus:ring-2 focus:ring-accent outline-none transition-all"
                   placeholder="••••••••"
                   required
                 />
@@ -87,7 +87,7 @@ export default function LoginPage({ onLogin }) {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-[#9E8B6E] hover:bg-[#7D6C54] text-white py-3.5 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-[#9E8B6E]/20 transition-all flex justify-center items-center gap-2 group disabled:opacity-70"
+              className="w-full bg-accent hover:bg-accent-hover text-white py-3.5 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-accent/20 transition-all flex justify-center items-center gap-2 group disabled:opacity-70"
             >
               {isLoading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

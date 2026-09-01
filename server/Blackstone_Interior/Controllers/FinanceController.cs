@@ -13,13 +13,11 @@ namespace Blackstone_Interior.Controllers
         private readonly BlackstoneinteriorDbContext _db;
         public FinanceController(BlackstoneinteriorDbContext db) => _db = db;
 
-        // Ã¢â€â‚¬Ã¢â€â‚¬ INVOICES Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-
-        // Shared helper: compute next serial for YY-MM-XXXX within current month
-        private int ComputeNextInvoiceSerial()
+        // Ã¢â€â‚¬Ã¢â€â‚¬ INVOICES Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚        // Shared helper: compute next serial for YY-MM-XXXX within current month
+        private int ComputeNextInvoiceSerial(DateTime targetDate)
         {
-            string yy = DateTime.Now.ToString("yy");
-            string mm = DateTime.Now.ToString("MM");
+            string yy = targetDate.ToString("yy");
+            string mm = targetDate.ToString("MM");
             string monthPrefix = $"INV-{mm}{yy}-";
 
             var currentMonthNums = _db.Invoices
@@ -37,13 +35,17 @@ namespace Blackstone_Interior.Controllers
             return maxSerial >= 9999 ? 1 : maxSerial + 1;
         }
 
-        // GET /api/finance/invoices/next-number  (preview only Ã¢â‚¬â€ does NOT reserve a number)
+        // GET /api/finance/invoices/next-number  (preview only - does NOT reserve a number)
         [HttpGet("invoices/next-number")]
-        public IActionResult GetNextInvoiceNumber()
+        public IActionResult GetNextInvoiceNumber([FromQuery] string date = null)
         {
-            string yy = DateTime.Now.ToString("yy");
-            string mm = DateTime.Now.ToString("MM");
-            int next = ComputeNextInvoiceSerial();
+            DateTime targetDate;
+            if (!DateTime.TryParse(date, out targetDate)) {
+                targetDate = DateTime.Now;
+            }
+            string yy = targetDate.ToString("yy");
+            string mm = targetDate.ToString("MM");
+            int next = ComputeNextInvoiceSerial(targetDate);
             return Ok(new { nextNumber = $"INV-{mm}{yy}-{next:D4}" });
         }
 
@@ -91,9 +93,10 @@ namespace Blackstone_Interior.Controllers
             string assignedNo = dto.InvoiceNo;
             if (string.IsNullOrWhiteSpace(assignedNo))
             {
-                string yy = DateTime.Now.ToString("yy");
-                string mm = DateTime.Now.ToString("MM");
-                int next = ComputeNextInvoiceSerial();
+                DateTime targetDate = string.IsNullOrEmpty(dto.Date) ? DateTime.Now : DateTime.Parse(dto.Date);
+                string yy = targetDate.ToString("yy");
+                string mm = targetDate.ToString("MM");
+                int next = ComputeNextInvoiceSerial(targetDate);
                 assignedNo = $"INV-{mm}{yy}-{next:D4}";
             }
 
