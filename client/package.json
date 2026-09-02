@@ -8,6 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -25,6 +26,10 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "license": "eula.txt"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "public/logo.png"
     }
   },
   "dependencies": {

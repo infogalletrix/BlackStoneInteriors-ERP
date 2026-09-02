@@ -1,0 +1,32 @@
+name: Build Mac Installer
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20
+
+    - name: Install dependencies
+      working-directory: ./client
+      run: npm install
+
+    - name: Build Mac App
+      working-directory: ./client
+      run: npm run build:mac
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: mac-installer
+        path: client/release/*.dmg
