@@ -39,13 +39,7 @@ export default function BillingPage() {
   const [invoiceDate, setInvoiceDate] = useState("");
 
   const fetchInternetDate = async () => {
-    try {
-      const res = await fetch('https://worldtimeapi.org/api/timezone/Asia/Kolkata');
-      const data = await res.json();
-      return data.datetime.split('T')[0];
-    } catch {
-      return new Date().toISOString().split('T')[0];
-    }
+    return new Date().toISOString().split('T')[0];
   };
 
   useEffect(() => {
