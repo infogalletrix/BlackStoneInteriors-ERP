@@ -1,7 +1,7 @@
 {
   "name": "client",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "main": "electron/main.js",
   "scripts": {
@@ -13,7 +13,7 @@
   },
   "build": {
     "appId": "com.blackstone.erp",
-    "productName": "Black Stone Setup",
+    "productName": "Black Stone Interiors",
     "directories": {
       "output": "release"
     },

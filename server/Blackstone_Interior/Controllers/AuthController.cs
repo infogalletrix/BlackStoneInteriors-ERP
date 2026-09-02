@@ -22,7 +22,7 @@ namespace Blackstone_Interior.Controllers
                 _context.AdminUsers.Add(new AdminUser
                 {
                     Username = "admin",
-                    Password = "password123", // Default password
+                    Password = "admin123", // Default password
                     Email = "nakul.blackstoneinteriors@gmail.com"
                 });
                 await _context.SaveChangesAsync();
