@@ -35,10 +35,32 @@ namespace Blackstone_Interior.Controllers
             await EnsureAdminExists();
             
             var user = await _context.AdminUsers.FirstOrDefaultAsync(u => u.Username == req.Username && u.Password == req.Password);
+            
+            var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+            var loginHistory = new LoginHistory
+            {
+                IpAddress = ip,
+                Location = "Local System", // For now
+                Status = user != null ? "Success" : "Failed",
+                Timestamp = DateTime.UtcNow
+            };
+            
+            _context.LoginHistories.Add(loginHistory);
+
             if (user == null)
             {
+                await _context.SaveChangesAsync();
                 return Unauthorized(new { message = "Invalid credentials." });
             }
+            
+            var activityLog = new SystemActivityLog
+            {
+                Action = "Admin user logged in",
+                Icon = "Key",
+                Timestamp = DateTime.UtcNow
+            };
+            _context.SystemActivityLogs.Add(activityLog);
+            await _context.SaveChangesAsync();
             
             // Note: In a real app, generate a JWT token. For this simple ERP, returning success is sufficient since there is no token middleware setup yet.
             return Ok(new { message = "Login successful", username = user.Username, email = user.Email });
@@ -105,9 +127,31 @@ namespace Blackstone_Interior.Controllers
             user.ResetOtp = null;
             user.OtpExpiry = null;
 
+            var activityLog = new SystemActivityLog
+            {
+                Action = "Admin password reset via OTP",
+                Icon = "Key",
+                Timestamp = DateTime.UtcNow
+            };
+            _context.SystemActivityLogs.Add(activityLog);
+
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Password reset successfully." });
+        }
+
+        [HttpGet("login-history")]
+        public async Task<IActionResult> GetLoginHistory()
+        {
+            var logs = await _context.LoginHistories.OrderByDescending(l => l.Timestamp).Take(50).ToListAsync();
+            return Ok(logs);
+        }
+
+        [HttpGet("activity-logs")]
+        public async Task<IActionResult> GetActivityLogs()
+        {
+            var logs = await _context.SystemActivityLogs.OrderByDescending(l => l.Timestamp).Take(50).ToListAsync();
+            return Ok(logs);
         }
     }
 

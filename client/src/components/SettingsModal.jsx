@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Moon, Sun, LogOut, Key, Activity, Clock, Shield } from 'lucide-react';
+import { X, Moon, Sun, LogOut, Key, Activity, Clock, Shield, User } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useThemeClasses } from '../hooks/useThemeClasses';
 
@@ -14,10 +14,26 @@ export default function SettingsModal({ isOpen, onClose, onLogout }) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordMessage, setPasswordMessage] = useState({ text: '', type: '' });
 
-  if (!isOpen) return null;
+  const [loginHistory, setLoginHistory] = useState([]);
+  const [activityLogs, setActivityLogs] = useState([]);
 
-  const dummyLogins = [];
-  const dummyActivity = [];
+  const API_URL = import.meta.env.VITE_API_URL || 'http://72.61.241.138:8081/api';
+
+  useEffect(() => {
+    if (isOpen) {
+      fetch(`${API_URL}/auth/login-history`)
+        .then(res => res.json())
+        .then(data => setLoginHistory(data))
+        .catch(err => console.error(err));
+
+      fetch(`${API_URL}/auth/activity-logs`)
+        .then(res => res.json())
+        .then(data => setActivityLogs(data))
+        .catch(err => console.error(err));
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
 
   const handleUpdatePassword = () => {
     const storedPassword = localStorage.getItem('adminPassword') || 'admin123';
@@ -141,14 +157,14 @@ export default function SettingsModal({ isOpen, onClose, onLogout }) {
               <p className="text-muted text-sm font-medium mb-8">Audit trail of actions performed within the ERP.</p>
               
               <div className="space-y-4">
-                {dummyActivity.length > 0 ? dummyActivity.map(act => (
+                {activityLogs.length > 0 ? activityLogs.map(act => (
                   <div key={act.id} className={`flex items-center gap-4 p-4 rounded-2xl border ${t.isDark ? "border-white/5 bg-white/5" : "border-slate-100 bg-white shadow-sm"}`}>
                     <div className={`p-3 rounded-xl ${t.isDark ? "bg-black/20" : "bg-slate-50"}`}>
-                      {act.icon}
+                      {act.icon === 'Key' ? <Key size={20} className="text-accent" /> : <Activity size={20} className="text-accent" />}
                     </div>
                     <div>
                       <h4 className={`font-bold text-sm ${t.isDark ? "text-white" : "text-slate-900"}`}>{act.action}</h4>
-                      <p className="text-xs text-muted font-medium mt-0.5">{act.time}</p>
+                      <p className="text-xs text-muted font-medium mt-0.5">{new Date(act.timestamp).toLocaleString()}</p>
                     </div>
                   </div>
                 )) : (
@@ -176,11 +192,11 @@ export default function SettingsModal({ isOpen, onClose, onLogout }) {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[var(--border-color)]">
-                    {dummyLogins.length > 0 ? dummyLogins.map(log => (
+                    {loginHistory.length > 0 ? loginHistory.map(log => (
                       <tr key={log.id} className="hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
-                        <td className={`p-4 text-sm font-bold ${t.isDark ? "text-white" : "text-slate-900"}`}>{log.ip}</td>
+                        <td className={`p-4 text-sm font-bold ${t.isDark ? "text-white" : "text-slate-900"}`}>{log.ipAddress}</td>
                         <td className="p-4 text-sm font-medium text-muted">{log.location}</td>
-                        <td className="p-4 text-sm font-medium text-muted">{log.time}</td>
+                        <td className="p-4 text-sm font-medium text-muted">{new Date(log.timestamp).toLocaleString()}</td>
                         <td className="p-4">
                           <span className={`text-[10px] px-2 py-1 rounded-md font-black uppercase tracking-widest ${
                             log.status === 'Success' ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500"

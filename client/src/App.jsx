@@ -27,17 +27,17 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(
-    localStorage.getItem("isAuthenticated") === "true"
+    sessionStorage.getItem("isAuthenticated") === "true"
   );
 
   const handleLogin = () => {
     setIsAuthenticated(true);
-    localStorage.setItem("isAuthenticated", "true");
+    sessionStorage.setItem("isAuthenticated", "true");
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
-    localStorage.removeItem("isAuthenticated");
+    sessionStorage.removeItem("isAuthenticated");
   };
 
   if (!isAuthenticated) {
