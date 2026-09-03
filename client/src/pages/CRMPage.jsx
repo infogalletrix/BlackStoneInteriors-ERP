@@ -468,7 +468,7 @@ const CRMPage = () => {
 
       {/* HEADER & TABS */}
       <div className="flex flex-col mb-4 gap-3">
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col lg:flex-row items-center justify-between gap-3 w-full relative z-50">
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col lg:flex-row items-center justify-between gap-3 w-full relative z-10">
           
           {/* TABS (Left) */}
           <div className="flex w-full md:w-auto gap-1 p-1 rounded-xl border border-[var(--border-color)] themed-card shadow-sm overflow-x-auto order-2 lg:order-1">

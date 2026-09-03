@@ -202,7 +202,7 @@ const Dashboard = () => {
 
       {/* ── Header ── */}
       <motion.div initial={{opacity:0,y:-16}} animate={{opacity:1,y:0}}
-        className="flex flex-col md:flex-row justify-between items-start md:items-center mb-7 gap-4 relative z-50">
+        className="flex flex-col md:flex-row justify-between items-start md:items-center mb-7 gap-4 relative z-10">
         <div>
           <h1 className={`text-2xl font-black tracking-tight ${d?"text-white":"text-[var(--text-primary)]"}`}>
             Executive Dashboard

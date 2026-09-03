@@ -527,7 +527,7 @@ export default function BillingPage() {
   return (
     <div className="page-wrapper min-h-screen font-sans flex flex-col">
       {/* Sessions Tab Bar */}
-      <div className="bg-[var(--bg-surface)] px-2 pt-2 flex items-center justify-between border-b border-[var(--border-color)] relative z-50">
+      <div className="bg-[var(--bg-surface)] px-2 pt-2 flex items-center justify-between border-b border-[var(--border-color)] relative z-10">
         <div className="flex items-center gap-1 overflow-x-auto no-scrollbar flex-1">
           {sessions.map(s => (
             <div
@@ -562,14 +562,14 @@ export default function BillingPage() {
         </div>
       </div>
       {/* ── TOP INFO BAR ── */}
-      <div className="themed-card p-2 grid grid-cols-12 gap-2 border-b border-[var(--border-color)] items-end">
-        <div className="col-span-2">
+      <div className="themed-card p-4 md:p-2 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-2 border-b border-[var(--border-color)] items-end">
+        <div className="md:col-span-2">
           <label className="block text-[10px] font-bold text-muted uppercase">Invoice Number</label>
           <input disabled value={invoiceNo}
             className="w-full bg-[var(--accent-soft)] border border-[var(--accent)]/30 text-amber-800 dark:text-[var(--accent)] px-2 py-1 text-sm font-bold outline-none rounded" />
         </div>
 
-        <div className="col-span-2">
+        <div className="md:col-span-2">
           <label className="block text-[10px] font-bold text-muted uppercase">Date</label>
           <input 
             type="date" 
@@ -588,7 +588,7 @@ export default function BillingPage() {
         </div>
 
         {/* Bill Type + GST Mode Toggle */}
-        <div className="col-span-2">
+        <div className="md:col-span-2">
           <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Bill Type</label>
           <div className="flex bg-white/10 rounded p-0.5 gap-0.5">
             <button
@@ -614,7 +614,7 @@ export default function BillingPage() {
           )}
         </div>
 
-        <div className="col-span-3">
+        <div className="md:col-span-3">
           <label className="block text-[10px] font-bold text-slate-500 uppercase">
             Client Name
           </label>
@@ -642,7 +642,7 @@ export default function BillingPage() {
           </datalist>
         </div>
 
-        <div className="col-span-3">
+        <div className="md:col-span-3">
           <label className="block text-[10px] font-bold text-slate-500 uppercase">
             Email ID
           </label>
@@ -655,8 +655,8 @@ export default function BillingPage() {
         </div>
       </div>
 
-      <div className="themed-card p-2 grid grid-cols-12 gap-2 border-b border-[var(--border-color)] items-end">
-        <div className="col-span-3">
+      <div className="themed-card p-4 md:p-2 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-2 border-b border-[var(--border-color)] items-end">
+        <div className="md:col-span-3">
           <label className="block text-[10px] font-bold text-slate-500 uppercase">
             Mobile No
           </label>
@@ -668,7 +668,7 @@ export default function BillingPage() {
           />
         </div>
         
-        <div className="col-span-3">
+        <div className="md:col-span-3">
           <label className="block text-[10px] font-bold text-slate-500 uppercase">
             Customer GST
           </label>
@@ -680,7 +680,7 @@ export default function BillingPage() {
           />
         </div>
         
-        <div className="col-span-3">
+        <div className="md:col-span-3">
           <label className="block text-[10px] font-bold text-slate-500 uppercase">
             Delivery Timeline
           </label>
@@ -692,7 +692,7 @@ export default function BillingPage() {
           />
         </div>
 
-        <div className="col-span-3">
+        <div className="md:col-span-3">
           <label className="block text-[10px] font-bold text-slate-500 uppercase">
             Organization Name (Optional)
           </label>
@@ -706,8 +706,8 @@ export default function BillingPage() {
       </div>
 
       {/* ── WORK ORDER + LOAD FROM QUOTE BAR ── */}
-      <div className="themed-card p-2 grid grid-cols-12 gap-2 border-b border-[var(--border-color)] items-end bg-blue-500/5">
-        <div className="col-span-5">
+      <div className="themed-card p-4 md:p-2 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-2 border-b border-[var(--border-color)] items-end bg-blue-500/5">
+        <div className="md:col-span-5">
           <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Link Work Order (Site)</label>
           <select
             value={workOrderId}
@@ -732,7 +732,7 @@ export default function BillingPage() {
           </select>
         </div>
 
-        <div className="col-span-5">
+        <div className="md:col-span-5">
           <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Load Items from Quote</label>
           <select
             value={sourceQuoteId}
@@ -764,7 +764,7 @@ export default function BillingPage() {
           </select>
         </div>
 
-        <div className="col-span-2 flex flex-col items-end justify-end gap-1 pb-0.5">
+        <div className="md:col-span-2 flex flex-row md:flex-col items-center md:items-end justify-start md:justify-end gap-2 md:gap-1 pb-0.5">
           {workOrderId && (
             <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
@@ -780,8 +780,8 @@ export default function BillingPage() {
         </div>
       </div>
 
-      <div className="themed-card p-2 grid grid-cols-12 gap-2 border-b border-[var(--border-color)] items-end">
-        <div className="col-span-5">
+      <div className="themed-card p-4 md:p-2 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-2 border-b border-[var(--border-color)] items-end">
+        <div className="md:col-span-5">
           <label className="block text-[10px] font-bold text-slate-500 uppercase">
             Site Address
           </label>
@@ -793,7 +793,7 @@ export default function BillingPage() {
           />
         </div>
 
-        <div className="col-span-5">
+        <div className="md:col-span-5">
           <label className="block text-[10px] font-bold text-slate-500 uppercase">Project Title</label>
           <input 
             placeholder="e.g. 3BHK Apartment Interior" 
@@ -803,7 +803,7 @@ export default function BillingPage() {
           />
         </div>
 
-        <div className="col-span-2 flex flex-col items-end justify-end pb-0.5">
+        <div className="md:col-span-2 flex flex-col md:items-end justify-start md:justify-end pb-0.5">
           <span className="text-[9px] font-bold text-amber-700 dark:text-[var(--accent)] uppercase tracking-widest">Sub Total</span>
           <span className="text-sm font-black text-amber-700 dark:text-[var(--accent)]">₹{subTotal.toLocaleString()}</span>
         </div>
@@ -811,8 +811,8 @@ export default function BillingPage() {
 
 
       {/* ── MAIN TABLE ── */}
-      <div className="flex-grow bg-[var(--bg-surface)] overflow-y-auto">
-        <table className="w-full text-[11px]">
+      <div className="flex-grow bg-[var(--bg-surface)] overflow-x-auto overflow-y-auto">
+        <table className="w-full text-[11px] min-w-[1000px]">
           <thead className="themed-thead border-b border-[var(--border-color)] sticky top-0">
             <tr className="uppercase text-muted font-bold">
               <th className="px-2 py-1 border-r border-gray-300 text-center w-12">

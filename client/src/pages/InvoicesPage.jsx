@@ -138,7 +138,7 @@ export default function HistoryPage() {
   return (
     <div className="p-4 md:p-6 page-wrapper">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 relative z-50">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 relative z-10">
         <div>
           <h1 className="text-xl font-black text-themed flex items-center gap-2">
             <History className="text-accent" size={18} /> Transaction History
