@@ -34,6 +34,7 @@ const CRMPage = () => {
     const p = location.pathname.split('/').pop();
     if (p === 'leads') setActiveTab('leads');
     else if (p === 'customers') setActiveTab('customers');
+    else if (p === 'not-interested') setActiveTab('not_interested');
     else if (p === 'pipeline') setActiveTab('pipeline');
     else if (p === 'schedule') setActiveTab('schedule');
     else if (p === 'telecalling') setActiveTab('telecalling'); 
@@ -406,9 +407,11 @@ const CRMPage = () => {
   const filteredContacts = contacts.filter((c) => {
     let tabMatch = true;
     if (activeTab === 'leads') {
-      tabMatch = ['Lead', 'Cold', 'Not Interested'].includes(c.status) || !c.status;
+      tabMatch = ['Lead', 'Cold'].includes(c.status) || !c.status;
     } else if (activeTab === 'customers') {
       tabMatch = c.status === 'Customer';
+    } else if (activeTab === 'not_interested') {
+      tabMatch = c.status === 'Not Interested';
     }
 
     const searchMatch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) || (c.project || "").toLowerCase().includes(searchTerm.toLowerCase()) || (c.tags && c.tags.join(" ").toLowerCase().includes(searchTerm.toLowerCase()));
@@ -472,6 +475,7 @@ const CRMPage = () => {
             {[
               { id: "leads", label: "Leads", icon: <User size={14} /> },
               { id: "customers", label: "Customers", icon: <User size={14} /> },
+              { id: "not_interested", label: "Not Interested", icon: <XCircle size={14} /> },
               { id: "pipeline", label: "Pipeline", icon: <Briefcase size={14} /> },
               { id: "site_surveys", label: "Site Surveys", icon: <MapPin size={14} /> },
               { id: "schedule", label: "Schedule", icon: <Calendar size={14} /> },
@@ -512,7 +516,7 @@ const CRMPage = () => {
 
           {/* ADD BUTTON (Right) */}
           <div className="flex w-full md:w-auto order-3 gap-3 items-center">
-            {activeTab !== "campaigns" && activeTab !== "telecalling" && (
+            {activeTab !== "campaigns" && activeTab !== "telecalling" && activeTab !== "not_interested" && (
               <button onClick={() => { if (activeTab === "leads" || activeTab === "customers") setEditContact({ status: 'Cold', tags: [] }); else if (activeTab === "pipeline") setEditDeal({ value: 0, contactId: contacts[0]?.id || '' }); else if (activeTab === "site_surveys") { setEditSiteMode('full'); setEditSiteSurvey({ name: '', clientName: '', address: '', status: 'Pre-Construction', startDate: new Date().toISOString().split('T')[0], surveyNotes: '' }); } else setEditActivity({ type: '', date: new Date().toISOString().split('T')[0], client: contacts[0]?.id || '', status: 'Pending' }); }} className="w-full md:w-auto flex-shrink-0 flex items-center justify-center gap-1.5 px-6 py-2.5 rounded-xl text-sm font-black transition-all duration-300 dark:bg-violet-700 bg-accent text-white shadow-lg dark:hover:bg-slate-800 hover:bg-accent-hover">
                 <Plus size={16} /> <span className="hidden sm:inline">Add New</span>
               </button>
@@ -609,11 +613,11 @@ const CRMPage = () => {
         )}
 
         {/* SECTION: CLIENTS */}
-        {(activeTab === "leads" || activeTab === "customers") && (
+        {(activeTab === "leads" || activeTab === "customers" || activeTab === "not_interested") && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="overflow-x-auto bg-transparent">
             <div className="flex justify-between items-center p-6 border-b border-[var(--border-color)]">
               <h2 className="text-lg font-black text-themed">
-                {activeTab === "leads" ? "Pre-Sales Leads" : "Active Customers"}
+                {activeTab === "leads" ? "Pre-Sales Leads" : activeTab === "customers" ? "Active Customers" : "Not Interested Leads"}
               </h2>
               <div className="flex items-center gap-3">
                 <div className="flex bg-[var(--bg-surface)] p-1 rounded-xl border border-[var(--border-color)]">
