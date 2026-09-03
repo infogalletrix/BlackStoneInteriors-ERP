@@ -95,6 +95,16 @@ const EmployeesPage = () => {
       return;
     }
 
+    const cleanedPhone = (formData.phone || "").replace(/\D/g, "");
+    if (cleanedPhone.length !== 10) {
+      showDialog({
+        title: "Invalid Phone Number",
+        message: "Phone number must be exactly 10 digits.",
+        type: "alert"
+      });
+      return;
+    }
+
     // Prevent duplicate email IDs (if provided)
     if (formData.email && formData.email.trim() !== "") {
       const isDuplicateEmail = employees.some(emp => 

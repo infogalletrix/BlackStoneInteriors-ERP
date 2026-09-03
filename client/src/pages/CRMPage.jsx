@@ -1261,13 +1261,24 @@ function EditCampaignForm({ campaign, onSave, onCancel }) {
 
 // --- EXTENDED FORMS ---
 function EditContactForm({ contact, onSave, onCancel }) {
+  const { showDialog } = useDialog();
   const [form, setForm] = useState(contact || { name: '', organizationName: '', project: '', phone: '', email: '', address: '', status: 'Cold', source: '', tags: [] });
   const [tagInput, setTagInput] = useState("");
 
   const addTag = () => { if (tagInput.trim() && !form.tags.includes(tagInput.trim())) { setForm({...form, tags: [...form.tags, tagInput.trim()]}); setTagInput(""); } };
 
   return (
-    <form onSubmit={e => { e.preventDefault(); onSave(form); }} className="space-y-6">
+    <form onSubmit={e => { 
+      e.preventDefault(); 
+      if (form.phone) {
+        const cleanedPhone = form.phone.replace(/\D/g, "");
+        if (cleanedPhone.length !== 10) {
+          showDialog({ title: "Invalid Phone Number", message: "Phone number must be exactly 10 digits.", type: "alert" });
+          return;
+        }
+      }
+      onSave(form); 
+    }} className="space-y-6">
       <h2 className="font-black text-3xl mb-1 text-themed tracking-tight">Client Profile</h2>
       <p className="text-muted font-medium text-sm mb-6 pb-4 border-b border-[var(--border-color)]">Comprehensive details for your design client.</p>
       
@@ -1468,6 +1479,7 @@ function EditActivityForm({ activity, contacts, onSave, onCancel }) {
 }
 
 function EditSiteSurveyForm({ site, contacts, mode, onSave, onCancel }) {
+  const { showDialog } = useDialog();
   const defaultSurveyDateStr = site?.surveyDate || new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
   const initialSurveyDate = defaultSurveyDateStr.split('T')[0];
   const initialSurveyTime = defaultSurveyDateStr.split('T')[1] || '12:00';
@@ -1499,6 +1511,13 @@ function EditSiteSurveyForm({ site, contacts, mode, onSave, onCancel }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (form.phone) {
+      const cleanedPhone = form.phone.replace(/\D/g, "");
+      if (cleanedPhone.length !== 10) {
+        showDialog({ title: "Invalid Phone Number", message: "Client phone number must be exactly 10 digits.", type: "alert" });
+        return;
+      }
+    }
     onSave({
       ...form,
       surveyDate: form.surveyStatus === 'Scheduled' ? `${form.surveyDatePart}T${form.surveyTimePart}` : '',
@@ -1661,6 +1680,7 @@ function EditSiteSurveyForm({ site, contacts, mode, onSave, onCancel }) {
 
 // --- LOG CALL FORM ---
 function LogCallForm({ onSave, onCancel }) {
+  const { showDialog } = useDialog();
   const [form, setForm] = useState({
     customer: '',
     phone: '',
@@ -1673,6 +1693,13 @@ function LogCallForm({ onSave, onCancel }) {
   return (
     <form onSubmit={e => { 
       e.preventDefault(); 
+      if (form.phone) {
+        const cleanedPhone = form.phone.replace(/\D/g, "");
+        if (cleanedPhone.length !== 10) {
+          showDialog({ title: "Invalid Phone Number", message: "Phone number must be exactly 10 digits.", type: "alert" });
+          return;
+        }
+      }
       onSave({ 
         ...form, 
         id: Date.now(), 

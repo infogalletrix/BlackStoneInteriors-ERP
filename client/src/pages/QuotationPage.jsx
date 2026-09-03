@@ -320,6 +320,15 @@ export default function QuotationPage() {
       showDialog({ title: "Missing Information", message: "Add client name and at least one item.", type: "alert" });
       return;
     }
+    
+    if (mobileNo) {
+      const cleanedPhone = mobileNo.replace(/\D/g, "");
+      if (cleanedPhone.length !== 10) {
+        showDialog({ title: "Invalid Phone Number", message: "Mobile number must be exactly 10 digits.", type: "alert" });
+        return;
+      }
+    }
+
     const newQuote = {
       quoteNo: quoteNo || null, // Let backend assign the YY-MM-XXXX number atomically if empty
       clientName,
@@ -553,6 +562,12 @@ export default function QuotationPage() {
               if (matchedClient) {
                 if (!organizationName && matchedClient.organizationName) {
                   setOrganizationName(matchedClient.organizationName);
+                }
+                if (!emailId && matchedClient.email) {
+                  setEmailId(matchedClient.email);
+                }
+                if (!mobileNo && matchedClient.phone) {
+                  setMobileNo(matchedClient.phone);
                 }
               }
             }}
