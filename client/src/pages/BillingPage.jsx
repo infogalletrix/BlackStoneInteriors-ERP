@@ -627,9 +627,10 @@ export default function BillingPage() {
               setClientName(val);
               const matchedClient = crmClients.find(c => c.name.toLowerCase() === val.toLowerCase());
               if (matchedClient) {
-                if (!organizationName && matchedClient.organizationName) {
-                  setOrganizationName(matchedClient.organizationName);
-                }
+                setOrganizationName(matchedClient.organizationName || "");
+                setEmailId(matchedClient.email || "");
+                setMobileNo(matchedClient.phone || "");
+                setClientAddress(matchedClient.address || "");
               }
             }}
             className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none focus:border-amber-400"

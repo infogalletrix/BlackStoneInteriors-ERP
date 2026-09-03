@@ -3,7 +3,7 @@ import { Building2, Lock, User, ArrowRight, ShieldCheck, Mail, Key } from 'lucid
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Use standard API URL resolution (assumes Vite proxy or direct URL)
-const API_URL = import.meta.env.VITE_API_URL || 'http://72.61.241.138:8081/api';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 export default function LoginPage({ onLogin }) {
   const [mode, setMode] = useState('login'); // 'login', 'forgot', 'verify'

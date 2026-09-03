@@ -27,12 +27,16 @@ function createWindow() {
   
   win.maximize() // Maximize the window by default
 
-  // Clear cache to ensure we always get the latest version from the VPS
-  win.webContents.session.clearCache().then(() => {
-    // Since we have deployed it to a VPS, the desktop app just needs to load the VPS URL directly!
-    // That way, we don't need to package the react app locally and worry about proxy configuration
-    // Nativefier does the same thing, but electron-builder creates a nice installer setup.exe
-    win.loadURL('http://72.61.241.138:8081')
+  // Aggressively clear cache and storage data to ensure we always get the latest version
+  win.webContents.session.clearStorageData({
+    storages: ['appcache', 'serviceworkers', 'cachestorage', 'websql', 'indexdb']
+  }).then(() => {
+    return win.webContents.session.clearCache();
+  }).then(() => {
+    // Load the live URL forcefully skipping any remaining HTTP cache
+    win.loadURL('https://blackstoneinteriors.galletrix.com', {
+      extraHeaders: 'pragma: no-cache\nCache-Control: no-cache'
+    });
   });
 }
 

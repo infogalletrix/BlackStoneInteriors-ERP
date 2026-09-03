@@ -7,20 +7,35 @@ import {
 } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import { lazy, Suspense } from "react";
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const CRMPage = lazy(() => import("./pages/CRMPage"));
-const BillingPage = lazy(() => import("./pages/BillingPage"));
-const InvoicesPage = lazy(() => import("./pages/InvoicesPage"));
-const QuotationPage = lazy(() => import("./pages/QuotationPage"));
-const ExpensePage = lazy(() => import("./pages/ExpensePage"));
-const SitesPage = lazy(() => import("./pages/SitesPage"));
-const AccountsPage = lazy(() => import("./pages/AccountsPage"));
-const EmployeesPage = lazy(() => import("./pages/EmployeesPage"));
-const AttendancePage = lazy(() => import("./pages/AttendancePage"));
-const SalaryPage = lazy(() => import("./pages/SalaryPage"));
-const ReportsPage = lazy(() => import("./pages/ReportsPage"));
-const ReceiptPage = lazy(() => import("./pages/ReceiptPage"));
-const LoginPage = lazy(() => import("./pages/LoginPage"));
+const lazyWithRetry = (componentImport) =>
+  lazy(async () => {
+    try {
+      return await componentImport();
+    } catch (error) {
+      if (
+        error.message.includes("Failed to fetch dynamically imported module") ||
+        error.name === "TypeError"
+      ) {
+        window.location.reload();
+      }
+      throw error;
+    }
+  });
+
+const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
+const CRMPage = lazyWithRetry(() => import("./pages/CRMPage"));
+const BillingPage = lazyWithRetry(() => import("./pages/BillingPage"));
+const InvoicesPage = lazyWithRetry(() => import("./pages/InvoicesPage"));
+const QuotationPage = lazyWithRetry(() => import("./pages/QuotationPage"));
+const ExpensePage = lazyWithRetry(() => import("./pages/ExpensePage"));
+const SitesPage = lazyWithRetry(() => import("./pages/SitesPage"));
+const AccountsPage = lazyWithRetry(() => import("./pages/AccountsPage"));
+const EmployeesPage = lazyWithRetry(() => import("./pages/EmployeesPage"));
+const AttendancePage = lazyWithRetry(() => import("./pages/AttendancePage"));
+const SalaryPage = lazyWithRetry(() => import("./pages/SalaryPage"));
+const ReportsPage = lazyWithRetry(() => import("./pages/ReportsPage"));
+const ReceiptPage = lazyWithRetry(() => import("./pages/ReceiptPage"));
+const LoginPage = lazyWithRetry(() => import("./pages/LoginPage"));
 import { DialogProvider } from "./contexts/DialogContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 

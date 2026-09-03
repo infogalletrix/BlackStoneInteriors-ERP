@@ -17,7 +17,7 @@ export default function SettingsModal({ isOpen, onClose, onLogout }) {
   const [loginHistory, setLoginHistory] = useState([]);
   const [activityLogs, setActivityLogs] = useState([]);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://72.61.241.138:8081/api';
+  const API_URL = import.meta.env.VITE_API_URL || '/api';
 
   useEffect(() => {
     if (isOpen) {

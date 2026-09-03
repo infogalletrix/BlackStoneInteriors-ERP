@@ -1,7 +1,7 @@
 {
   "name": "client",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.0.3",
   "type": "module",
   "main": "electron/main.js",
   "scripts": {
@@ -16,7 +16,7 @@
     "appId": "com.blackstone.erp",
     "productName": "Black Stone Interiors",
     "directories": {
-      "output": "release"
+      "output": "release2"
     },
     "win": {
       "target": "nsis",
