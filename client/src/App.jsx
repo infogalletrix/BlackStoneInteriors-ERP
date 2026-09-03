@@ -41,18 +41,15 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    sessionStorage.getItem("isAuthenticated") === "true"
-  );
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const handleLogin = () => {
     setIsAuthenticated(true);
-    sessionStorage.setItem("isAuthenticated", "true");
+    // Removed sessionStorage persistence so it asks for login on refresh
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
-    sessionStorage.removeItem("isAuthenticated");
   };
 
   if (!isAuthenticated) {
