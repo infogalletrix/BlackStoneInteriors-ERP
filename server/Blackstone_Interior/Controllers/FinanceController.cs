@@ -557,7 +557,7 @@ namespace Blackstone_Interior.Controllers
                 date = r.Date,
                 type = "Credit",
                 category = "Project Income",
-                description = $"Receipt #{r.ReceiptNo} Ã¢â‚¬â€ {r.ClientName}",
+                description = $"Receipt #{r.ReceiptNo} - {r.ClientName}",
                 amount = r.AmountPaid
             }).AsEnumerable().Concat(expenses.Select(e => new
             {
@@ -573,7 +573,7 @@ namespace Blackstone_Interior.Controllers
                 date = p.PaidDate,
                 type = "Debit",
                 category = "Employee Payroll",
-                description = $"Payroll Ã¢â‚¬â€ Employee ID {p.EmployeeId} ({p.Month} {p.Year})",
+                description = $"Payroll - Employee ID {p.EmployeeId} ({p.Month} {p.Year})",
                 amount = p.NetPay
             })).ToList();
 
@@ -583,7 +583,7 @@ namespace Blackstone_Interior.Controllers
                 date = p.PaidDate,
                 type = "Credit",
                 category = "Employee Payroll",
-                description = $"Payroll Reversal Ã¢â‚¬â€ Employee ID {p.EmployeeId} ({p.Month} {p.Year})",
+                description = $"Payroll Reversal - Employee ID {p.EmployeeId} ({p.Month} {p.Year})",
                 amount = p.NetPay
             }).ToList();
 

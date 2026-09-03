@@ -147,7 +147,7 @@ const ReportsPage = () => {
     <div className={`p-4 md:p-6 ${t.page}`}>
 
       {/* HEADER */}
-      <div className="relative z-50 mb-6 flex justify-between items-start">
+      <div className="relative z-10 mb-6 flex justify-between items-start">
         <div>
           <motion.h1 initial={{ opacity:0, x:-20 }} animate={{ opacity:1, x:0 }}
             className={`text-xl font-black tracking-tight flex items-center gap-2 ${t.heading}`}>

@@ -551,7 +551,7 @@ export default function SalaryPage() {
       <motion.div 
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative z-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4"
+        className="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4"
       >
         <div>
           <h1 className="text-xl font-black text-themed flex items-center gap-2 tracking-tight">

@@ -422,7 +422,7 @@ const EmployeesPage = () => {
   return (
     <div className="p-4 md:p-6 page-wrapper">
       {/* HEADER */}
-      <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-3 relative z-50">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-3 relative z-10">
         <div>
           <h1 className="text-xl font-black text-themed tracking-tight flex items-center gap-2">
             <Users className="text-accent" size={18} />

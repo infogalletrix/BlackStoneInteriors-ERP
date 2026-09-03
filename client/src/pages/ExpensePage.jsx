@@ -368,7 +368,7 @@ export default function ExpensePage() {
     return (
       <div className="page-wrapper min-h-screen font-sans flex flex-col">
         {/* ── TOP INFO BAR ── */}
-        <div className="themed-card p-2 grid grid-cols-12 gap-2 border-b border-[var(--border-color)] items-end relative z-50">
+        <div className="themed-card p-2 grid grid-cols-12 gap-2 border-b border-[var(--border-color)] items-end relative z-10">
           <div className="col-span-2">
             <label className="block text-[10px] font-bold text-muted uppercase">Transaction Type</label>
             <select
@@ -588,7 +588,7 @@ export default function ExpensePage() {
   return (
     <div className="p-4 md:p-6 page-wrapper min-h-screen relative">
       {/* Header */}
-      <div className="flex justify-between items-center mb-5 relative z-50">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-5 gap-4 relative z-10">
         <div>
           <h1 className="text-xl font-black text-themed flex items-center gap-2">
             <Receipt className="text-[var(--accent)]" size={18} />
@@ -600,7 +600,7 @@ export default function ExpensePage() {
               : 'Track client material costs & business overhead separately.'}
           </p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
           <div className="flex themed-card p-1 rounded-xl">
             {["Monthly", "Financial Year"].map((type) => (
               <button
@@ -701,7 +701,7 @@ export default function ExpensePage() {
         {/* Table Controls */}
         <div className="p-5 border-b border-[var(--border-color)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           {/* Tabs */}
-          <div className="flex gap-1 themed-card p-1 rounded-xl">
+          <div className="flex w-full md:w-auto gap-1 themed-card p-1 rounded-xl overflow-x-auto no-scrollbar">
             {TABS.filter(t => !isClientOnlyView || t !== "Overhead").map((tab) => (
               <button
                 key={tab}
