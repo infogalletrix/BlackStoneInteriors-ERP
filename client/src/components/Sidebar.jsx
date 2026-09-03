@@ -39,6 +39,12 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
     setExpandedMenus((prev) => ({ ...prev, [name]: !prev[name] }));
   };
 
+  const handleLinkClick = () => {
+    if (window.innerWidth < 768 && isOpen) {
+      toggleSidebar();
+    }
+  };
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.altKey && e.key === "s") toggleSidebar();
@@ -108,14 +114,20 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
   ];
 
   return (
-    <nav
-      className={`${
-        isOpen ? "w-64" : "w-20"
-      } ${ t.isDark
-        ? "bg-slate-900/80 backdrop-blur-xl border-r border-white/10 text-slate-200"
-        : "bg-[var(--bg-card)] border-r border-[var(--border-color)] text-[var(--text-primary)]"
-      } flex flex-col h-screen transition-all duration-300 relative shadow-2xl flex-shrink-0 z-20`}
-    >
+    <>
+      {/* Mobile Backdrop */}
+      <div 
+        className={`md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`} 
+        onClick={toggleSidebar}
+      />
+      <nav
+        className={`${
+          isOpen ? "translate-x-0 w-64" : "-translate-x-full w-64 md:translate-x-0 md:w-20"
+        } fixed md:relative top-0 left-0 h-screen transition-all duration-300 z-50 flex flex-col shadow-2xl flex-shrink-0 ${ t.isDark
+          ? "bg-slate-900/95 backdrop-blur-xl border-r border-white/10 text-slate-200"
+          : "bg-[var(--bg-card)] border-r border-[var(--border-color)] text-[var(--text-primary)]"
+        }`}
+      >
       {/* Header */}
       <div
         onClick={toggleSidebar}
@@ -190,6 +202,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
                         <li key={sub.path}>
                           <Link
                             to={sub.path}
+                            onClick={handleLinkClick}
                             className={`block pl-[44px] pr-3 py-2 rounded-lg transition-all duration-200 text-[13px] font-medium ${
                               isActive
                                 ? t.isDark
@@ -217,6 +230,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
               <Link
                 to={item.path}
                 title={!isOpen ? item.name : ""}
+                onClick={handleLinkClick}
                 className={`flex items-center ${
                   isOpen ? "justify-start gap-3 px-3" : "justify-center px-2"
                 } py-2.5 rounded-xl transition-all duration-200 ${
@@ -269,6 +283,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
         onLogout={onLogout} 
       />
     </nav>
+    </>
   );
 };
 
