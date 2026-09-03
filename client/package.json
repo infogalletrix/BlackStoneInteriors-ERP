@@ -28,7 +28,12 @@
       "license": "eula.txt"
     },
     "mac": {
-      "target": "dmg",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["universal"]
+        }
+      ],
       "icon": "public/logo.png"
     }
   },

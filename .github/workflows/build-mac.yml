@@ -23,10 +23,10 @@ jobs:
 
     - name: Build Mac App
       working-directory: ./client
-      run: npm run build:mac
+      run: npm run build && npm run build:mac
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: mac-installer
-        path: client/release/**/*.dmg
+        path: client/release2/**/*.dmg
