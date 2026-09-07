@@ -2,6 +2,11 @@ import { useState, useRef, useEffect } from "react";
 import { useReactToPrint } from "react-to-print";
 import { useNavigate, useLocation } from "react-router-dom";
 import PrintableInvoice from "../components/PrintableInvoice";
+import ManageOptionsModal, {
+  DEFAULT_PRODUCTS,
+  DEFAULT_SPECIFICATIONS,
+  DEFAULT_SECTIONS
+} from "../components/ManageOptionsModal";
 import {
   Trash2,
   Printer,
@@ -55,25 +60,60 @@ export default function BillingPage() {
   const [deliveryTimeline, setDeliveryTimeline] = useState("3 to 4 Weeks");
   const [installationMaterial, setInstallationMaterial] = useState(0);
   const [deliveryLoading, setDeliveryLoading] = useState(0);
+  const [transportationCharges, setTransportationCharges] = useState(0);
   const [additionalDiscount, setAdditionalDiscount] = useState(0);
+  const [cgstPercent, setCgstPercent] = useState("9");
+  const [sgstPercent, setSgstPercent] = useState("9");
 
   const [crmClients, setCrmClients] = useState([]);
   const [quotations, setQuotations] = useState([]);
   const [sites, setSites] = useState([]);
 
-  // Section / Category Management
+  // Dropdown Options Management (Products, Specifications, Sections / Types)
+  const [productsList, setProductsList] = useState(() => {
+    const saved = localStorage.getItem("quote_products");
+    return saved ? JSON.parse(saved) : DEFAULT_PRODUCTS;
+  });
+
+  const [specificationsList, setSpecificationsList] = useState(() => {
+    const saved = localStorage.getItem("quote_specifications");
+    return saved ? JSON.parse(saved) : DEFAULT_SPECIFICATIONS;
+  });
+
   const [sectionsList, setSectionsList] = useState(() => {
     const saved = localStorage.getItem("quote_sections");
-    return saved ? JSON.parse(saved) : ["General", "M.B.R Dresser Wardrobe", "Kitchen", "Living Room"];
+    return saved ? JSON.parse(saved) : DEFAULT_SECTIONS;
   });
-  
+
+  useEffect(() => {
+    localStorage.setItem("quote_products", JSON.stringify(productsList));
+  }, [productsList]);
+
+  useEffect(() => {
+    localStorage.setItem("quote_specifications", JSON.stringify(specificationsList));
+  }, [specificationsList]);
+
   useEffect(() => {
     localStorage.setItem("quote_sections", JSON.stringify(sectionsList));
   }, [sectionsList]);
 
-  const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
-  const [editingSectionIdx, setEditingSectionIdx] = useState(null);
-  const [newSectionName, setNewSectionName] = useState("");
+  const [isOptionsModalOpen, setIsOptionsModalOpen] = useState(false);
+  const [activeOptionsTab, setActiveOptionsTab] = useState("products");
+
+  const openOptionsModal = (tab = "products") => {
+    setActiveOptionsTab(tab);
+    setIsOptionsModalOpen(true);
+  };
+
+  const handleRenameOption = (type, oldVal, newVal) => {
+    if (type === "sections") {
+      setItems(prev => prev.map(i => i.section === oldVal ? { ...i, section: newVal } : i));
+    } else if (type === "products") {
+      setItems(prev => prev.map(i => i.product === oldVal ? { ...i, product: newVal } : i));
+    } else if (type === "specifications") {
+      setItems(prev => prev.map(i => i.specification === oldVal ? { ...i, specification: newVal } : i));
+    }
+  };
 
   // Fetch CRM clients, quotations, sites on mount
   useEffect(() => {
@@ -124,12 +164,15 @@ export default function BillingPage() {
       setDeliveryTimeline(d.deliveryTimeline || "3 to 4 Weeks");
       setInstallationMaterial(d.installationMaterial || 0);
       setDeliveryLoading(d.deliveryLoading || 0);
+      setTransportationCharges(d.transportationCharges || 0);
       setAdditionalDiscount(d.additionalDiscount || 0);
+      setCgstPercent(d.cgstPercent !== undefined ? d.cgstPercent : "9");
+      setSgstPercent(d.sgstPercent !== undefined ? d.sgstPercent : "9");
       if (d.invoiceDate) setInvoiceDate(d.invoiceDate);
       if (d.invoiceNo) setInvoiceNo(d.invoiceNo);
     } else {
       // Clear for a new session if no data
-      setItems([{ id: Date.now(), section: "General", product: "", specification: "", qty: "", unit: "Sq.Ft", rate: "", discountPrice: "", amount: 0 }]);
+      setItems([{ id: Date.now(), section: "General", product: "", specification: "", qty: "", unit: "Sq.Ft", rate: "", discountType: "percent", discountPercent: "", discountPrice: "", amount: 0 }]);
       setClientName("");
       setOrganizationName("");
       setClientAddress("");
@@ -146,7 +189,10 @@ export default function BillingPage() {
       setDeliveryTimeline("3 to 4 Weeks");
       setInstallationMaterial(0);
       setDeliveryLoading(0);
+      setTransportationCharges(0);
       setAdditionalDiscount(0);
+      setCgstPercent("9");
+      setSgstPercent("9");
       
       // Fetch the real internet date to ensure it's correct even if PC clock is off or app is left open
       fetchInternetDate().then(realDate => {
@@ -171,11 +217,11 @@ export default function BillingPage() {
       setSessions(prev => prev.map(s => s.id === activeSessionId ? {
         ...s,
         title: clientName || "New Invoice",
-        data: { items, clientName, organizationName, clientAddress, projectTitle, workDescription, billType, isInterState, workOrderId, sourceQuoteId, invoiceNo, invoiceId, invoiceDate, emailId, mobileNo, customerGst, deliveryTimeline, installationMaterial, deliveryLoading, additionalDiscount }
+        data: { items, clientName, organizationName, clientAddress, projectTitle, workDescription, billType, isInterState, workOrderId, sourceQuoteId, invoiceNo, invoiceId, invoiceDate, emailId, mobileNo, customerGst, deliveryTimeline, installationMaterial, deliveryLoading, transportationCharges, additionalDiscount, cgstPercent, sgstPercent }
       } : s));
     }, 500);
     return () => clearTimeout(timer);
-  }, [items, clientName, organizationName, clientAddress, projectTitle, workDescription, billType, isInterState, workOrderId, sourceQuoteId, invoiceNo, invoiceId, invoiceDate, activeSessionId, emailId, mobileNo, customerGst, deliveryTimeline, installationMaterial, deliveryLoading, additionalDiscount]);
+  }, [items, clientName, organizationName, clientAddress, projectTitle, workDescription, billType, isInterState, workOrderId, sourceQuoteId, invoiceNo, invoiceId, invoiceDate, activeSessionId, emailId, mobileNo, customerGst, deliveryTimeline, installationMaterial, deliveryLoading, transportationCharges, additionalDiscount, cgstPercent, sgstPercent]);
 
   useEffect(() => {
     localStorage.setItem("invoice_sessions", JSON.stringify(sessions));
@@ -238,7 +284,10 @@ export default function BillingPage() {
           deliveryTimeline: q.deliveryTimeline || "3 to 4 Weeks",
           installationMaterial: q.installationMaterial || 0,
           deliveryLoading: q.deliveryLoading || 0,
-          additionalDiscount: q.additionalDiscount || 0
+          transportationCharges: q.transportationCharges || 0,
+          additionalDiscount: q.additionalDiscount || 0,
+          cgstPercent: q.cgstPercent !== undefined ? q.cgstPercent : "9",
+          sgstPercent: q.sgstPercent !== undefined ? q.sgstPercent : "9"
         }
       };
       setSessions(prev => [...prev, newSession]);
@@ -271,7 +320,10 @@ export default function BillingPage() {
           deliveryTimeline: q.deliveryTimeline || "3 to 4 Weeks",
           installationMaterial: q.installationMaterial || 0,
           deliveryLoading: q.deliveryLoading || 0,
-          additionalDiscount: q.additionalDiscount || 0
+          transportationCharges: q.transportationCharges || 0,
+          additionalDiscount: q.additionalDiscount || 0,
+          cgstPercent: q.cgstPercent !== undefined ? q.cgstPercent : "9",
+          sgstPercent: q.sgstPercent !== undefined ? q.sgstPercent : "9"
         }
       };
       setSessions(prev => [...prev, newSession]);
@@ -284,11 +336,71 @@ export default function BillingPage() {
     setItems((prevItems) => {
       return prevItems.map((item) => {
         if (item.id === id) {
-          const updatedItem = { ...item, [field]: value };
-          const qty = parseFloat(updatedItem.qty || 0);
-          const rateToUse = updatedItem.discountPrice ? parseFloat(updatedItem.discountPrice) : parseFloat(updatedItem.rate || 0);
-          const amount = qty * rateToUse;
-          return { ...updatedItem, amount };
+          const updated = { ...item, [field]: value };
+          const qty = parseFloat(updated.qty || 0);
+          const rate = parseFloat(updated.rate || 0);
+          const discType = updated.discountType || "percent";
+
+          if (field === "rate") {
+            if (discType === "percent" && updated.discountPercent) {
+              const p = parseFloat(updated.discountPercent);
+              const discPrice = rate - (rate * p / 100);
+              updated.discountPrice = discPrice > 0 ? discPrice.toFixed(2) : "0";
+            } else if (discType === "price" && updated.discountPrice && rate > 0) {
+              const dp = parseFloat(updated.discountPrice);
+              updated.discountPercent = (((rate - dp) / rate) * 100).toFixed(1);
+            }
+          } else if (field === "discountPercent") {
+            if (value && parseFloat(value) > 0) {
+              const p = parseFloat(value);
+              const discPrice = rate - (rate * p / 100);
+              updated.discountPrice = discPrice > 0 ? discPrice.toFixed(2) : "0";
+            } else {
+              updated.discountPrice = "";
+            }
+          } else if (field === "discountPrice") {
+            if (value && parseFloat(value) > 0) {
+              const dp = parseFloat(value);
+              if (rate > 0) {
+                updated.discountPercent = (((rate - dp) / rate) * 100).toFixed(1);
+              }
+            } else {
+              updated.discountPercent = "";
+            }
+          }
+
+          const effectiveRate = updated.discountPrice ? parseFloat(updated.discountPrice) : rate;
+          updated.amount = qty * effectiveRate;
+          return updated;
+        }
+        return item;
+      });
+    });
+  };
+
+  const handleToggleDiscountType = (id) => {
+    setItems((prevItems) => {
+      return prevItems.map((item) => {
+        if (item.id === id) {
+          const currentType = item.discountType || "percent";
+          const newType = currentType === "percent" ? "price" : "percent";
+          const rate = parseFloat(item.rate || 0);
+
+          if (newType === "price") {
+            if (item.discountPercent && rate > 0) {
+              const p = parseFloat(item.discountPercent);
+              const discPrice = rate - (rate * p / 100);
+              return { ...item, discountType: "price", discountPrice: discPrice > 0 ? discPrice.toFixed(2) : "0" };
+            }
+            return { ...item, discountType: "price" };
+          } else {
+            if (item.discountPrice && rate > 0) {
+              const dp = parseFloat(item.discountPrice);
+              const p = (((rate - dp) / rate) * 100).toFixed(1);
+              return { ...item, discountType: "percent", discountPercent: p > 0 ? p : "" };
+            }
+            return { ...item, discountType: "percent" };
+          }
         }
         return item;
       });
@@ -351,6 +463,8 @@ export default function BillingPage() {
         qty: "",
         unit: "Sq.Ft",
         rate: "",
+        discountType: "percent",
+        discountPercent: "",
         discountPrice: "",
         amount: 0,
       },
@@ -360,13 +474,24 @@ export default function BillingPage() {
   const removeItem = (id) => {
     const idx = items.findIndex(i => i.id === id);
     if (idx === 0) {
-      setItems(prev => prev.map(item => item.id === id ? { ...item, section: "General", product: "", specification: "", qty: "", rate: "", discountPrice: "", amount: 0 } : item));
+      setItems(prev => prev.map(item => item.id === id ? { ...item, section: "General", product: "", specification: "", qty: "", rate: "", discountType: "percent", discountPercent: "", discountPrice: "", amount: 0 } : item));
     } else {
       setItems(items.filter((i) => i.id !== id));
     }
   };
 
   const subTotal = items.reduce((s, i) => s + i.amount, 0);
+  const delivery = parseFloat(deliveryLoading || 0);
+  const transport = parseFloat(transportationCharges || 0);
+  const installation = parseFloat(installationMaterial || 0);
+  const discount = parseFloat(additionalDiscount || 0);
+  const taxableAmount = Math.max(0, subTotal + delivery + transport + installation - discount);
+  const cgstRate = billType === "GST" && cgstPercent !== "" ? parseFloat(cgstPercent || 0) : 0;
+  const sgstRate = billType === "GST" && sgstPercent !== "" ? parseFloat(sgstPercent || 0) : 0;
+  const cgstAmount = billType === "GST" ? (taxableAmount * cgstRate) / 100 : 0;
+  const sgstAmount = billType === "GST" ? (taxableAmount * sgstRate) / 100 : 0;
+  const grandTotal = taxableAmount + cgstAmount + sgstAmount;
+
   const totalArea = items.reduce(
     (s, i) => s + parseFloat(i.area || 0),
     0
@@ -386,7 +511,7 @@ export default function BillingPage() {
       workDescription,
       items,
       invoiceDate: invoiceDate,
-      total: subTotal,
+      total: grandTotal,
       billType,
       isInterState,
       workOrderId,
@@ -398,7 +523,10 @@ export default function BillingPage() {
       deliveryTimeline,
       installationMaterial,
       deliveryLoading,
-      additionalDiscount
+      transportationCharges,
+      additionalDiscount,
+      cgstPercent,
+      sgstPercent
     };
     try {
       let res;
@@ -432,7 +560,7 @@ export default function BillingPage() {
       setTimeout(() => {
         if (!invoiceId) {
           // Reset the form for the next invoice
-          setItems([{ id: Date.now(), section: "General", product: "", specification: "", qty: "", unit: "Sq.Ft", rate: "", discountPrice: "", amount: 0 }]);
+          setItems([{ id: Date.now(), section: "General", product: "", specification: "", qty: "", unit: "Sq.Ft", rate: "", discountType: "percent", discountPercent: "", discountPrice: "", amount: 0 }]);
           setClientName("");
           setOrganizationName("");
           setClientAddress("");
@@ -448,7 +576,10 @@ export default function BillingPage() {
           setDeliveryTimeline("3 to 4 Weeks");
           setInstallationMaterial(0);
           setDeliveryLoading(0);
+          setTransportationCharges(0);
           setAdditionalDiscount(0);
+          setCgstPercent("9");
+          setSgstPercent("9");
           setInvoiceId(null);
           fetch(`/api/finance/invoices/next-number`)
             .then(res => res.json())
@@ -497,7 +628,7 @@ export default function BillingPage() {
           clientAddress,
           projectTitle,
           workDescription,
-          totalAmount: subTotal,
+          totalAmount: grandTotal,
         },
       },
     });
@@ -509,7 +640,7 @@ export default function BillingPage() {
       message: "Clear all data?",
       type: "confirm",
       onConfirm: () => {
-        setItems([{ id: Date.now(), section: "General", product: "", specification: "", qty: "", unit: "Sq.Ft", rate: "", discountPrice: "", amount: 0 }]);
+        setItems([{ id: Date.now(), section: "General", product: "", specification: "", qty: "", unit: "Sq.Ft", rate: "", discountType: "percent", discountPercent: "", discountPrice: "", amount: 0 }]);
         setClientName("");
         setOrganizationName("");
         setClientAddress("");
@@ -519,7 +650,10 @@ export default function BillingPage() {
         setDeliveryTimeline("3 to 4 Weeks");
         setInstallationMaterial(0);
         setDeliveryLoading(0);
+        setTransportationCharges(0);
         setAdditionalDiscount(0);
+        setCgstPercent("9");
+        setSgstPercent("9");
       }
     });
   };
@@ -821,10 +955,10 @@ export default function BillingPage() {
               <th className="px-2 py-1 border-r border-gray-300 text-center w-10">
                 S#
               </th>
-              <th className="px-2 py-1 border-r border-gray-300 text-left w-24">
-                Section
+              <th className="px-2 py-1 border-r border-gray-300 text-left w-28">
+                Section / Type
               </th>
-              <th className="px-2 py-1 border-r border-gray-300 text-left w-32">
+              <th className="px-2 py-1 border-r border-gray-300 text-left w-36">
                 Product
               </th>
               <th className="px-2 py-1 border-r border-gray-300 text-left">
@@ -839,8 +973,11 @@ export default function BillingPage() {
               <th className="px-2 py-1 border-r border-gray-300 text-right w-24">
                 Unit Price
               </th>
-              <th className="px-2 py-1 border-r border-gray-300 text-right w-24">
-                Disc. Price
+              <th className="px-2 py-1 border-r border-gray-300 text-right w-28">
+                <div className="flex items-center justify-end gap-1">
+                  <span>Disc.</span>
+                  <span className="text-[9px] font-black opacity-75">(% / ₹)</span>
+                </div>
               </th>
               <th className="px-2 py-1 text-right w-28">Amount (₹)</th>
             </tr>
@@ -863,21 +1000,58 @@ export default function BillingPage() {
                   {idx + 1}
                 </td>
                 <td className="px-1 py-1 border-r border-white/10">
-                  <select 
-                    value={item.section || "General"} 
+                  <input 
+                    list="billing-sections-datalist"
+                    value={item.section || ""} 
                     onChange={e => handleItemChange(item.id, "section", e.target.value)} 
-                    className="w-full bg-transparent border-none outline-none text-themed text-xs px-1 appearance-none cursor-pointer"
+                    placeholder="Section / Type" 
+                    className="w-full bg-transparent border-none outline-none text-themed text-xs px-1"
+                  />
+                </td>
+                <td className="px-1 py-1 border-r border-white/10">
+                  <select
+                    value={item.product || ""}
+                    onChange={e => {
+                      if (e.target.value === "__MANAGE__") {
+                        openOptionsModal("products");
+                      } else {
+                        handleItemChange(item.id, "product", e.target.value);
+                      }
+                    }}
+                    className="w-full bg-transparent border-none outline-none text-themed font-bold text-xs px-1 cursor-pointer"
                   >
-                    {sectionsList.map((sec, i) => (
-                      <option key={i} className="bg-[var(--bg-surface)] text-[var(--text-primary)]" value={sec}>{sec}</option>
+                    <option value="" className="bg-[var(--bg-surface)] text-[var(--text-muted)]">-- Select Product --</option>
+                    {productsList.map((p, i) => (
+                      <option key={i} value={p} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{p}</option>
                     ))}
+                    {item.product && !productsList.includes(item.product) && (
+                      <option value={item.product} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{item.product}</option>
+                    )}
+                    <option value="__MANAGE__" className="bg-[var(--bg-surface)] text-amber-600 dark:text-[var(--accent)] font-bold">⚙️ Manage Options...</option>
                   </select>
                 </td>
                 <td className="px-1 py-1 border-r border-white/10">
-                  <input value={item.product || ""} onChange={e => handleItemChange(item.id, "product", e.target.value)} placeholder="Product" className="w-full bg-transparent border-none outline-none text-themed font-bold text-xs px-1" />
-                </td>
-                <td className="px-1 py-1 border-r border-white/10">
-                  <textarea value={item.specification || ""} onChange={e => handleItemChange(item.id, "specification", e.target.value)} placeholder="Specification" className="w-full bg-transparent border-none outline-none text-themed text-xs px-1 h-8 resize-none" />
+                  <select
+                    value={item.specification || ""}
+                    onChange={e => {
+                      if (e.target.value === "__MANAGE__") {
+                        openOptionsModal("specifications");
+                      } else {
+                        handleItemChange(item.id, "specification", e.target.value);
+                      }
+                    }}
+                    className="w-full bg-transparent border-none outline-none text-themed text-xs px-1 cursor-pointer truncate"
+                    title={item.specification || "Select Specification"}
+                  >
+                    <option value="" className="bg-[var(--bg-surface)] text-[var(--text-muted)]">-- Select Specification --</option>
+                    {specificationsList.map((s, i) => (
+                      <option key={i} value={s} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{s}</option>
+                    ))}
+                    {item.specification && !specificationsList.includes(item.specification) && (
+                      <option value={item.specification} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{item.specification}</option>
+                    )}
+                    <option value="__MANAGE__" className="bg-[var(--bg-surface)] text-amber-600 dark:text-[var(--accent)] font-bold">⚙️ Manage Options...</option>
+                  </select>
                 </td>
                 <td className="px-1 py-1 border-r border-white/10">
                   <input value={item.qty || ""} onChange={e => handleItemChange(item.id, "qty", e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0" className="w-full bg-transparent border-none outline-none text-center text-themed px-1" />
@@ -891,7 +1065,38 @@ export default function BillingPage() {
                   <input value={item.rate || ""} onChange={e => handleItemChange(item.id, "rate", e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0.00" className="w-full bg-transparent border-none outline-none text-right text-themed px-1" />
                 </td>
                 <td className="px-1 py-1 border-r border-white/10">
-                  <input value={item.discountPrice || ""} onChange={e => handleItemChange(item.id, "discountPrice", e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0.00" className="w-full bg-transparent border-none outline-none text-right text-themed px-1" />
+                  <div className="flex items-center gap-1 justify-end">
+                    <input 
+                      value={item.discountType === 'price' ? (item.discountPrice || "") : (item.discountPercent || "")} 
+                      onChange={e => {
+                        const val = e.target.value.replace(/[^0-9.]/g, '');
+                        if (item.discountType === 'price') {
+                          handleItemChange(item.id, "discountPrice", val);
+                        } else {
+                          handleItemChange(item.id, "discountPercent", val);
+                        }
+                      }} 
+                      placeholder={item.discountType === 'price' ? "0.00" : "0%"} 
+                      className="w-full bg-transparent border-none outline-none text-right text-themed px-1 text-xs font-semibold" 
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleToggleDiscountType(item.id)}
+                      className={`text-[9px] font-black px-1.5 py-0.5 rounded transition-all border shrink-0 ${
+                        item.discountType === 'price'
+                          ? "bg-blue-500/10 text-blue-500 border-blue-500/30 hover:bg-blue-500/20"
+                          : "bg-amber-500/10 text-amber-600 dark:text-[var(--accent)] border-amber-500/30 hover:bg-amber-500/20"
+                      }`}
+                      title={`Currently: ${item.discountType === 'price' ? 'Price (₹)' : 'Percentage (%)'}. Click to toggle.`}
+                    >
+                      {item.discountType === 'price' ? '₹' : '%'}
+                    </button>
+                  </div>
+                  {item.discountType !== 'price' && item.discountPercent && parseFloat(item.discountPercent) > 0 && item.rate && (
+                    <div className="text-[8px] text-right text-muted pr-6 -mt-0.5 leading-none font-medium">
+                      = ₹{parseFloat(item.discountPrice || 0).toFixed(2)}
+                    </div>
+                  )}
                 </td>
                 <td className="px-2 py-2 text-right font-black text-amber-700 dark:text-[var(--accent)]">
                   {(item.amount || 0).toFixed(2)}
@@ -910,6 +1115,14 @@ export default function BillingPage() {
             )}
           </tbody>
         </table>
+
+        {/* Datalist for typing sections / types with autocomplete */}
+        <datalist id="billing-sections-datalist">
+          {sectionsList.map((sec, i) => (
+            <option key={i} value={sec} />
+          ))}
+        </datalist>
+
         <div className="p-2 border-b border-[var(--border-color)] flex justify-center gap-4">
           <button 
             onClick={addNewRow}
@@ -918,44 +1131,94 @@ export default function BillingPage() {
             <Plus size={14} strokeWidth={3} /> Add Row
           </button>
           <button 
-            onClick={() => setIsSectionModalOpen(true)}
+            onClick={() => openOptionsModal("products")}
             className="flex items-center gap-2 px-4 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg font-bold text-xs hover:opacity-80 transition-all border border-[var(--border-color)]"
           >
-            <Settings size={14} /> Manage Sections
+            <Settings size={14} /> Manage Options
           </button>
         </div>
       </div>
 
       {/* ── FOOTER ── */}
-      <div className="bg-[var(--bg-surface)] p-2 border-t border-[var(--border-color)] flex justify-between items-center gap-4">
-        {/* Stats */}
-        <div className="flex gap-4 items-center">
+      <div className="bg-[var(--bg-surface)] p-2 border-t border-[var(--border-color)] flex flex-wrap justify-between items-center gap-4">
+        {/* Stats and Extra Charges */}
+        <div className="flex flex-wrap gap-3 items-center">
           <div className="bg-[var(--accent-soft)] border border-[var(--accent)]/30 px-3 py-1 flex gap-2 items-center rounded">
             <span className="text-[10px] font-bold text-amber-800 dark:text-[var(--accent)] uppercase">Total Qty:</span>
             <span className="text-sm font-bold text-[var(--text-primary)]">{items.reduce((s, i) => s + parseFloat(i.qty || 0), 0)}</span>
           </div>
           
-          <div className="flex flex-col gap-1 ml-4">
-             <label className="text-[9px] font-bold text-slate-500 uppercase">Instal. Mat. (₹)</label>
-             <input value={installationMaterial} onChange={e=>setInstallationMaterial(e.target.value)} className="w-24 themed-input px-1 py-0.5 text-xs text-right border border-[var(--border-color)]" />
-          </div>
           <div className="flex flex-col gap-1">
              <label className="text-[9px] font-bold text-slate-500 uppercase">Delivery (₹)</label>
-             <input value={deliveryLoading} onChange={e=>setDeliveryLoading(e.target.value)} className="w-24 themed-input px-1 py-0.5 text-xs text-right border border-[var(--border-color)]" />
+             <input value={deliveryLoading} onChange={e=>setDeliveryLoading(e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0.00" className="w-24 themed-input px-1.5 py-0.5 text-xs text-right border border-[var(--border-color)] rounded font-semibold" />
           </div>
+
+          <div className="flex flex-col gap-1">
+             <label className="text-[9px] font-bold text-slate-500 uppercase">Transport (₹)</label>
+             <input value={transportationCharges} onChange={e=>setTransportationCharges(e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0.00" className="w-24 themed-input px-1.5 py-0.5 text-xs text-right border border-[var(--border-color)] rounded font-semibold" />
+          </div>
+
           <div className="flex flex-col gap-1">
              <label className="text-[9px] font-bold text-slate-500 uppercase">Discount (₹)</label>
-             <input value={additionalDiscount} onChange={e=>setAdditionalDiscount(e.target.value)} className="w-24 themed-input px-1 py-0.5 text-xs text-right border border-[var(--border-color)]" />
+             <input value={additionalDiscount} onChange={e=>setAdditionalDiscount(e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0.00" className="w-24 themed-input px-1.5 py-0.5 text-xs text-right border border-[var(--border-color)] rounded font-semibold" />
           </div>
+
+          <div className="flex flex-col gap-1">
+             <label className="text-[9px] font-bold text-slate-500 uppercase">Instal. Mat. (₹)</label>
+             <input value={installationMaterial} onChange={e=>setInstallationMaterial(e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0.00" className="w-24 themed-input px-1.5 py-0.5 text-xs text-right border border-[var(--border-color)] rounded font-semibold" />
+          </div>
+
+          {/* CGST and SGST text boxes ONLY appear for GST */}
+          {billType === 'GST' && (
+            <>
+              <div className="flex flex-col gap-1 bg-blue-500/5 dark:bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20">
+                <label className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase flex items-center justify-between gap-1">
+                  <span>CGST (%)</span>
+                  <span className="text-[8px] opacity-80 font-bold">₹{cgstAmount.toFixed(2)}</span>
+                </label>
+                <input 
+                  value={cgstPercent} 
+                  onChange={e => setCgstPercent(e.target.value.replace(/[^0-9.]/g, ''))} 
+                  placeholder="9" 
+                  className="w-20 themed-input px-1.5 py-0.5 text-xs text-right border border-blue-500/30 rounded font-bold text-blue-600 dark:text-blue-400" 
+                />
+              </div>
+
+              <div className="flex flex-col gap-1 bg-blue-500/5 dark:bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20">
+                <label className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase flex items-center justify-between gap-1">
+                  <span>SGST (%)</span>
+                  <span className="text-[8px] opacity-80 font-bold">₹{sgstAmount.toFixed(2)}</span>
+                </label>
+                <input 
+                  value={sgstPercent} 
+                  onChange={e => setSgstPercent(e.target.value.replace(/[^0-9.]/g, ''))} 
+                  placeholder="9" 
+                  className="w-20 themed-input px-1.5 py-0.5 text-xs text-right border border-blue-500/30 rounded font-bold text-blue-600 dark:text-blue-400" 
+                />
+              </div>
+            </>
+          )}
         </div>
 
         {/* Grand Total */}
         <div className="flex items-center gap-4">
           <div className="text-4xl text-amber-700 dark:text-[var(--accent)] font-light">₹</div>
-          <div className="themed-card border border-[var(--border-color)] px-10 py-2 rounded shadow-inner text-right min-w-[200px]">
-            <div className="text-[10px] font-bold text-amber-700 dark:text-[var(--accent)] uppercase -mb-1">Estimated Total</div>
-            <div className="text-5xl font-black text-amber-700 dark:text-[var(--accent)] tracking-tighter">{(subTotal + parseFloat(installationMaterial || 0) + parseFloat(deliveryLoading || 0) - parseFloat(additionalDiscount || 0)).toFixed(2)}</div>
-            {billType === 'GST' && (<div className="text-[9px] font-black uppercase mt-0.5 text-muted">+ 18% GST Applicable</div>)}
+          <div className="themed-card border border-[var(--border-color)] px-8 py-2 rounded-xl shadow-inner text-right min-w-[220px]">
+            <div className="text-[10px] font-bold text-amber-700 dark:text-[var(--accent)] uppercase -mb-1">
+              {billType === 'GST' ? "Grand Total (incl. GST)" : "Estimated Total"}
+            </div>
+            <div className="text-4xl font-black text-amber-700 dark:text-[var(--accent)] tracking-tighter">
+              {grandTotal.toFixed(2)}
+            </div>
+            {billType === 'GST' ? (
+              <div className="text-[9px] font-bold text-blue-600 dark:text-blue-400 mt-0.5">
+                CGST ({cgstPercent || 0}%): ₹{cgstAmount.toFixed(2)} | SGST ({sgstPercent || 0}%): ₹{sgstAmount.toFixed(2)}
+              </div>
+            ) : (
+              <div className="text-[9px] font-bold text-muted mt-0.5">
+                Non-GST Invoice
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -994,95 +1257,23 @@ export default function BillingPage() {
       <div className="opacity-0 fixed top-0 left-0 pointer-events-none">
         <PrintableInvoice
           ref={componentRef}
-          data={{ customer: clientName, address: clientAddress, projectTitle, workDescription, items, invoiceNo, date: invoiceDate, billType, isInterState, emailId, mobileNo, customerGst, deliveryTimeline, installationMaterial, deliveryLoading, additionalDiscount }}
+          data={{ customer: clientName, address: clientAddress, projectTitle, workDescription, items, invoiceNo, date: invoiceDate, billType, isInterState, emailId, mobileNo, customerGst, deliveryTimeline, installationMaterial, deliveryLoading, transportationCharges, additionalDiscount, cgstPercent, sgstPercent }}
         />
       </div>
-      {/* ── MANAGE SECTIONS MODAL ── */}
-      {isSectionModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] backdrop-blur-sm">
-          <div className="bg-[var(--bg-surface)] border border-[var(--border-color)] p-4 rounded-lg w-96 shadow-2xl">
-            <div className="flex justify-between items-center mb-4 border-b border-[var(--border-color)] pb-2">
-              <h3 className="font-bold text-lg text-[var(--text-primary)]">Manage Sections</h3>
-              <button onClick={() => setIsSectionModalOpen(false)} className="text-slate-500 hover:text-[var(--text-primary)]"><X size={18} /></button>
-            </div>
-            
-            <div className="flex gap-2 mb-4">
-              <input 
-                type="text" 
-                placeholder="New Section Name..." 
-                value={newSectionName}
-                onChange={e => setNewSectionName(e.target.value)}
-                onKeyDown={e => {
-                   if (e.key === "Enter" && newSectionName.trim()) {
-                      if (!sectionsList.includes(newSectionName.trim())) {
-                        setSectionsList([...sectionsList, newSectionName.trim()]);
-                        setNewSectionName("");
-                      }
-                   }
-                }}
-                className="flex-1 themed-input border border-[var(--border-color)] px-2 py-1.5 text-sm outline-none rounded focus:border-[var(--accent)]"
-              />
-              <button 
-                onClick={() => {
-                  if (newSectionName.trim() && !sectionsList.includes(newSectionName.trim())) {
-                    setSectionsList([...sectionsList, newSectionName.trim()]);
-                    setNewSectionName("");
-                  }
-                }}
-                className="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded text-sm font-bold shadow transition-all"
-              >Add</button>
-            </div>
-
-            <div className="max-h-60 overflow-y-auto pr-1 flex flex-col gap-2 no-scrollbar">
-              {sectionsList.map((sec, i) => (
-                <div key={i} className="flex justify-between items-center p-2.5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded shadow-sm">
-                  {editingSectionIdx === i ? (
-                     <input 
-                       autoFocus
-                       defaultValue={sec} 
-                       onBlur={(e) => {
-                          const val = e.target.value.trim();
-                          if (val && val !== sec && !sectionsList.includes(val)) {
-                            const newList = [...sectionsList];
-                            newList[i] = val;
-                            setSectionsList(newList);
-                            setItems(prev => prev.map(item => item.section === sec ? { ...item, section: val } : item));
-                          }
-                          setEditingSectionIdx(null);
-                       }}
-                       onKeyDown={(e) => {
-                          if (e.key === "Enter") e.target.blur();
-                       }}
-                       className="flex-1 themed-input px-1 py-0.5 text-sm outline-none font-bold rounded" 
-                     />
-                  ) : (
-                     <span className="text-sm font-bold text-[var(--text-primary)] truncate flex-1">{sec}</span>
-                  )}
-                  
-                  <div className="flex gap-2 ml-2">
-                    <button onClick={() => setEditingSectionIdx(i)} className="text-blue-500 hover:text-blue-400 p-1 bg-blue-500/10 rounded transition-colors" title="Edit">
-                      <Edit3 size={14} />
-                    </button>
-                    {sectionsList.length > 1 && (
-                      <button onClick={() => {
-                         const newList = sectionsList.filter((_, idx) => idx !== i);
-                         setSectionsList(newList);
-                         setItems(prev => prev.map(item => item.section === sec ? { ...item, section: newList[0] } : item));
-                      }} className="text-red-500 hover:text-red-400 p-1 bg-red-500/10 rounded transition-colors" title="Delete">
-                        <Trash2 size={14} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            <div className="mt-4 pt-3 flex justify-end border-t border-[var(--border-color)]">
-              <button onClick={() => setIsSectionModalOpen(false)} className="bg-slate-600 hover:bg-slate-700 text-white px-5 py-2 rounded text-sm font-bold shadow-sm transition-all">Done</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── MANAGE OPTIONS MODAL ── */}
+      <ManageOptionsModal
+        isOpen={isOptionsModalOpen}
+        onClose={() => setIsOptionsModalOpen(false)}
+        activeTab={activeOptionsTab}
+        setActiveTab={setActiveOptionsTab}
+        productsList={productsList}
+        setProductsList={setProductsList}
+        specificationsList={specificationsList}
+        setSpecificationsList={setSpecificationsList}
+        sectionsList={sectionsList}
+        setSectionsList={setSectionsList}
+        onRenameOption={handleRenameOption}
+      />
 
     </div>
   );

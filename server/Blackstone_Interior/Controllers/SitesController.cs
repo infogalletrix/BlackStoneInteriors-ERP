@@ -181,6 +181,66 @@ namespace Blackstone_Interior.Controllers
         {
             var site = await _db.Sites.FindAsync(id);
             if (site == null) return NotFound();
+
+            // Check if any quotation was linked to this site or matches this site
+            int? linkedQuotationId = null;
+            if (!string.IsNullOrWhiteSpace(site.WorkHistory))
+            {
+                try
+                {
+                    var whItems = JsonSerializer.Deserialize<List<JsonElement>>(site.WorkHistory);
+                    if (whItems != null)
+                    {
+                        foreach (var item in whItems)
+                        {
+                            if (item.TryGetProperty("quotationId", out JsonElement qIdProp))
+                            {
+                                if (int.TryParse(qIdProp.GetString() ?? qIdProp.GetRawText(), out int qId))
+                                {
+                                    linkedQuotationId = qId;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                catch { }
+            }
+
+            Quotation? quotationToRevert = null;
+            if (linkedQuotationId.HasValue)
+            {
+                quotationToRevert = await _db.Quotations.FindAsync(linkedQuotationId.Value);
+            }
+
+            if (quotationToRevert == null)
+            {
+                // Fallback: match by ClientName and ProjectTitle / Total with status == "Approved"
+                var siteClient = (site.ClientName ?? "").Trim().ToLower();
+                var siteName = (site.Name ?? "").Trim().ToLower();
+                quotationToRevert = await _db.Quotations.FirstOrDefaultAsync(q => 
+                    q.Status == "Approved" && 
+                    q.ClientName.ToLower() == siteClient && 
+                    (q.ProjectTitle.ToLower() == siteName || siteName.Contains(q.ProjectTitle.ToLower()) || q.Total == site.Budget)
+                );
+            }
+
+            if (quotationToRevert != null && quotationToRevert.Status == "Approved")
+            {
+                // Revert quotation to Pending
+                quotationToRevert.Status = "Pending";
+
+                // Also revert linked CRM Deal if it was marked as WON
+                if (quotationToRevert.DealId.HasValue)
+                {
+                    var deal = await _db.Deals.FindAsync(quotationToRevert.DealId.Value);
+                    if (deal != null && deal.Stage == "WON")
+                    {
+                        deal.Stage = "PROPOSAL";
+                    }
+                }
+            }
+
             _db.Sites.Remove(site);
             await _db.SaveChangesAsync();
             return Ok(new { message = "Site deleted" });

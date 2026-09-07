@@ -298,7 +298,7 @@ export default function SitesPage() {
           const res = await fetch(`/api/sites/${id}`, { method: 'DELETE' });
           if (res.ok) {
             setSelectedSiteId(null);
-            await loadSites();
+            await Promise.all([loadSites(), loadQuotations()]);
             showDialog({ title: "Deleted", message: "Work order removed successfully", type: "success" });
           } else {
             showDialog({ title: "Error", message: "Failed to delete work order", type: "error" });
@@ -318,8 +318,10 @@ export default function SitesPage() {
     const payload = {
       name: fd.get("name"),
       clientName: fd.get("clientName"),
+      phone: fd.get("phone"),
       organizationName: fd.get("organizationName"),
       address: fd.get("address"),
+      assignedTeam: fd.get("assignedTeam"),
       status: fd.get("status"),
       startDate: fd.get("startDate"),
       budget: parseFloat(fd.get("budget") || 0),
@@ -328,7 +330,6 @@ export default function SitesPage() {
       negotiationDetails: fd.get("negotiationDetails") || "",
       isArchived: selectedSite.isArchived,
       workHistory: selectedSite.workHistory, // Preserving original history
-      maintenance: selectedSite.maintenance, // Preserving maintenance
       media: selectedSite.media
     };
 
@@ -359,6 +360,7 @@ export default function SitesPage() {
     const isNeg = fd.get("isNegotiated") === "on";
     const budget = isNeg && fd.get("negotiatedBudget") ? parseFloat(fd.get("negotiatedBudget")) : parseFloat(fd.get("budget") || 0);
 
+    const qObj = selectedLoadQuoteId ? quotations.find(q => q.id === selectedLoadQuoteId) : null;
     // Using camelCase and ensuring NO null values for required DB columns
     const newSitePayload = {
       name: fd.get("name") || "",
@@ -372,7 +374,9 @@ export default function SitesPage() {
       isNegotiated: isNeg,
       negotiationDetails: fd.get("negotiationDetails") || "",
       isArchived: false,
-      workHistory: [],
+      workHistory: selectedLoadQuoteId
+        ? [{ id: `init-quote-${selectedLoadQuoteId}`, action: "loaded_from_quotation", quotationId: String(selectedLoadQuoteId), quoteNo: qObj?.quoteNo || "", date: new Date().toISOString().split("T")[0], desc: "Created from Quotation" }]
+        : [],
       media: []
     };
 
@@ -401,7 +405,7 @@ export default function SitesPage() {
           } catch(err) { console.error("Failed to update quotation status", err); }
         }
 
-        await loadSites();
+        await Promise.all([loadSites(), loadQuotations()]);
         setIsSiteModalOpen(false);
         if (createdData.id) setSelectedSiteId(createdData.id);
         setSelectedLoadQuoteId(null);

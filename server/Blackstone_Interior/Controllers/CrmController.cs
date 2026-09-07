@@ -116,6 +116,30 @@ namespace Blackstone_Interior.Controllers
         [HttpGet("deals/all")]
         public async Task<IActionResult> GetDeals()
         {
+            // Auto-clean stale initial LEAD deals for contacts that have already advanced to PROPOSAL, NEGOTIATION, or WON
+            var contactsWithAdvancedDeals = await _db.Deals
+                .Where(d => d.ContactId > 0 && (d.Stage == "PROPOSAL" || d.Stage == "NEGOTIATION" || d.Stage == "WON"))
+                .Select(d => d.ContactId)
+                .Distinct()
+                .ToListAsync();
+
+            if (contactsWithAdvancedDeals.Any())
+            {
+                var candidateLeadDeals = await _db.Deals
+                    .Where(d => contactsWithAdvancedDeals.Contains(d.ContactId) && d.Stage == "LEAD")
+                    .ToListAsync();
+
+                var staleLeadDeals = candidateLeadDeals
+                    .Where(d => d.Value == 0 || !_db.Quotations.Any(q => q.DealId == d.Id))
+                    .ToList();
+
+                if (staleLeadDeals.Any())
+                {
+                    _db.Deals.RemoveRange(staleLeadDeals);
+                    await _db.SaveChangesAsync();
+                }
+            }
+
             var deals = await _db.Deals.ToListAsync();
             var result = deals.Select(d => new
             {
@@ -142,6 +166,20 @@ namespace Blackstone_Interior.Controllers
                     _db.CrmContacts.Add(newContact);
                     await _db.SaveChangesAsync();
                     contactId = newContact.Id;
+                }
+            }
+
+            // Prevent duplicate initial zero-value lead deals for the same contact
+            if (contactId > 0 && (dto.Stage ?? "LEAD") == "LEAD" && dto.Value == 0)
+            {
+                var existingEmptyDeal = await _db.Deals
+                    .FirstOrDefaultAsync(d => d.ContactId == contactId && d.Stage == "LEAD" && d.Value == 0);
+                if (existingEmptyDeal != null)
+                {
+                    existingEmptyDeal.Title = dto.Title ?? existingEmptyDeal.Title;
+                    existingEmptyDeal.CloseDate = dto.CloseDate ?? existingEmptyDeal.CloseDate;
+                    await _db.SaveChangesAsync();
+                    return Ok(new { id = existingEmptyDeal.Id.ToString(), message = "Deal updated" });
                 }
             }
 

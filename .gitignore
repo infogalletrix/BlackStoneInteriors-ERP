@@ -21,4 +21,18 @@
 # OS
 .DS_Store
 Thumbs.db
-update.zip
+
+# Build Releases & Archives
+release/
+release2/
+test_extract/
+*.zip
+pack.py
+
+# Server deployment scratch scripts
+/*deploy*.js
+/*check*.js
+/*setup*.js
+/*test*.js
+/fix.js
+/flush_db.js

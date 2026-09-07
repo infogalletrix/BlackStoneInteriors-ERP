@@ -119,9 +119,24 @@ const Dashboard = () => {
   const totalIncome       = receiptIncome + creditExpenses;
   const totalSpent        = debitExpenses + totalPayroll;
   const totalWOValue      = sites.reduce((s,st) => s+(Number(st.budget)||0), 0);
-  const totalAdvances     = employees.reduce((s,e) => s+(Number(e.advanceBalance)||0), 0);
-  const pendingQuotes     = quotations.filter(q => q.status === "Pending" || !q.status).length;
-  const inProcessSites    = sites.filter(s => s.status === "In Progress" || s.status === "Active").length;
+  const pendingQuotes = quotations.filter(q => {
+    if (q.status === "Pending" || !q.status) return true;
+    if (q.status === "Approved") {
+      const qClient = (q.clientName || "").trim().toLowerCase();
+      const qProject = (q.projectTitle || "").trim().toLowerCase();
+      const hasSite = sites.some(s => {
+        const sClient = (s.clientName || "").trim().toLowerCase();
+        const sName = (s.name || "").trim().toLowerCase();
+        if (sClient && sClient === qClient) {
+          if (qProject && (sName.includes(qProject) || qProject.includes(sName))) return true;
+          if (Number(s.budget) === Number(q.total) && Number(q.total) > 0) return true;
+        }
+        return false;
+      });
+      return !hasSite;
+    }
+    return false;
+  }).length;
   const pendingWO         = sites.filter(s => s.status === "Pre-Construction" || s.status === "Pending").length;
   const presentToday      = attendance[today] ? Object.values(attendance[today]).filter(s => s==="Present"||s==="Half-Day").length : 0;
   const netProfit         = totalIncome - totalSpent;

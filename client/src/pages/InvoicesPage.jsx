@@ -480,23 +480,49 @@ export default function HistoryPage() {
         <div className="opacity-0 fixed top-0 left-0 pointer-events-none">
           {isQuote ? (
             <PrintableQuotation ref={componentRef} data={{
-              customer: previewInvoice.clientName, address: previewInvoice.clientAddress,
-              projectTitle: previewInvoice.projectTitle, workDescription: previewInvoice.workDescription,
-              items: previewInvoice.items || [], quoteNo: docNo, date: docDate, billType: previewInvoice.billType
+              customer: previewInvoice.clientName,
+              organizationName: previewInvoice.organizationName,
+              address: previewInvoice.clientAddress,
+              projectTitle: previewInvoice.projectTitle,
+              workDescription: previewInvoice.workDescription,
+              items: previewInvoice.items || [],
+              quoteNo: docNo,
+              date: docDate,
+              billType: previewInvoice.billType,
+              emailId: previewInvoice.emailId,
+              mobileNo: previewInvoice.mobileNo,
+              customerGst: previewInvoice.customerGst,
+              deliveryTimeline: previewInvoice.deliveryTimeline,
+              installationMaterial: previewInvoice.installationMaterial,
+              deliveryLoading: previewInvoice.deliveryLoading,
+              transportationCharges: previewInvoice.transportationCharges,
+              additionalDiscount: previewInvoice.additionalDiscount,
+              cgstPercent: previewInvoice.cgstPercent,
+              sgstPercent: previewInvoice.sgstPercent
             }} />
           ) : (
             <PrintableInvoice ref={componentRef} data={{
-              customer: previewInvoice.clientName, address: previewInvoice.clientAddress,
-              items: previewInvoice.items || [], invoiceNo: docNo,
-              invoiceDate: docDate, discount: previewInvoice.discount,
-              lessAmount: previewInvoice.lessAmount, advanceAmount: previewInvoice.advanceAmount,
-              receivedAmount: previewInvoice.receivedAmount, subTotal: previewInvoice.subTotal,
-              totalGst: previewInvoice.totalGst, grandTotal: previewInvoice.grandTotal || previewInvoice.total,
-              balanceAmount: previewInvoice.balanceAmount,
+              customer: previewInvoice.clientName,
               organizationName: previewInvoice.organizationName,
-              gstNumber: previewInvoice.gstNumber,
+              address: previewInvoice.clientAddress,
+              projectTitle: previewInvoice.projectTitle,
+              workDescription: previewInvoice.workDescription,
+              items: previewInvoice.items || [],
+              invoiceNo: docNo,
+              date: docDate,
               billType: previewInvoice.billType,
+              isInterState: previewInvoice.isInterState,
               workOrderId: previewInvoice.workOrderId,
+              emailId: previewInvoice.emailId,
+              mobileNo: previewInvoice.mobileNo,
+              customerGst: previewInvoice.customerGst || previewInvoice.gstNumber,
+              deliveryTimeline: previewInvoice.deliveryTimeline,
+              installationMaterial: previewInvoice.installationMaterial,
+              deliveryLoading: previewInvoice.deliveryLoading,
+              transportationCharges: previewInvoice.transportationCharges,
+              additionalDiscount: previewInvoice.additionalDiscount,
+              cgstPercent: previewInvoice.cgstPercent,
+              sgstPercent: previewInvoice.sgstPercent
             }} docType={docTypeName} />
           )}
         </div>

@@ -19,10 +19,11 @@ namespace Blackstone_Interior.Controllers
             string yy = date.ToString("yy");
             string mm = date.ToString("MM");
             string dd = date.ToString("dd");
-            string datePrefix = $"QT-{dd}{mm}{yy}-";
+            string datePrefix = $"BSI-{dd}{mm}{yy}-";
+            string legacyPrefix = $"QT-{dd}{mm}{yy}-";
 
             var currentMonthNums = _db.Quotations
-                .Where(q => q.QuoteNo != null && q.QuoteNo.StartsWith(datePrefix))
+                .Where(q => q.QuoteNo != null && (q.QuoteNo.StartsWith(datePrefix) || q.QuoteNo.StartsWith(legacyPrefix)))
                 .Select(q => q.QuoteNo)
                 .AsEnumerable()
                 .Select(qno =>
@@ -49,13 +50,69 @@ namespace Blackstone_Interior.Controllers
             string mm = parsedDate.ToString("MM");
             string dd = parsedDate.ToString("dd");
             int next = ComputeNextQuoteSerial(parsedDate);
-            return Ok(new { nextNumber = $"QT-{dd}{mm}{yy}-{next:D4}" });
+            return Ok(new { nextNumber = $"BSI-{dd}{mm}{yy}-{next:D4}" });
         }
 
         // GET /api/quotations
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
+            // Auto-reconcile orphan "Approved" quotations whose work order (Site) was deleted
+            var approvedQuotes = await _db.Quotations
+                .Where(q => q.Status == "Approved")
+                .ToListAsync();
+
+            if (approvedQuotes.Any())
+            {
+                var allSites = await _db.Sites.ToListAsync();
+                bool anyChanged = false;
+
+                foreach (var q in approvedQuotes)
+                {
+                    string qClient = (q.ClientName ?? "").Trim().ToLower();
+                    string qProject = (q.ProjectTitle ?? "").Trim().ToLower();
+
+                    bool siteExists = allSites.Any(s =>
+                    {
+                        if (!string.IsNullOrWhiteSpace(s.WorkHistory) && s.WorkHistory.Contains($"\"quotationId\":\"{q.Id}\""))
+                            return true;
+                        if (!string.IsNullOrWhiteSpace(s.WorkHistory) && s.WorkHistory.Contains($"\"quotationId\":{q.Id}"))
+                            return true;
+
+                        string sClient = (s.ClientName ?? "").Trim().ToLower();
+                        string sName = (s.Name ?? "").Trim().ToLower();
+
+                        if (!string.IsNullOrWhiteSpace(sClient) && sClient == qClient)
+                        {
+                            if (!string.IsNullOrWhiteSpace(qProject) && (sName.Contains(qProject) || qProject.Contains(sName)))
+                                return true;
+                            if (s.Budget == q.Total && q.Total > 0)
+                                return true;
+                        }
+                        return false;
+                    });
+
+                    if (!siteExists)
+                    {
+                        q.Status = "Pending";
+                        if (q.DealId.HasValue)
+                        {
+                            var deal = await _db.Deals.FindAsync(q.DealId.Value);
+                            if (deal != null && deal.Stage == "WON")
+                            {
+                                deal.Stage = "PROPOSAL";
+                            }
+                        }
+                        anyChanged = true;
+                    }
+                }
+
+                if (anyChanged)
+                {
+                    await _db.SaveChangesAsync();
+                }
+            }
+
             var quotations = await _db.Quotations.ToListAsync();
             var result = quotations.Select(q => new
             {
@@ -101,29 +158,99 @@ namespace Blackstone_Interior.Controllers
                 string mm = parsedDate.ToString("MM");
                 string dd = parsedDate.ToString("dd");
                 int next = ComputeNextQuoteSerial(parsedDate);
-                assignedNo = $"QT-{dd}{mm}{yy}-{next:D4}";
+                assignedNo = $"BSI-{dd}{mm}{yy}-{next:D4}";
             }
 
             // Try to find a matching CrmContact
-            var contact = await _db.CrmContacts.FirstOrDefaultAsync(c => c.Name == dto.ClientName);
+            var clientName = (dto.ClientName ?? "").Trim();
+            var contact = await _db.CrmContacts.FirstOrDefaultAsync(c => c.Name.ToLower() == clientName.ToLower());
             if (contact == null)
             {
-                contact = new CrmContact { Name = dto.ClientName, Status = "Cold", Source = "Other", Date = DateTime.Now.ToString("yyyy-MM-dd") };
+                contact = new CrmContact
+                {
+                    Name = clientName,
+                    OrganizationName = dto.OrganizationName ?? "",
+                    Phone = dto.MobileNo ?? "",
+                    Email = dto.EmailId ?? "",
+                    Address = dto.ClientAddress ?? "",
+                    Project = dto.ProjectTitle ?? "",
+                    Status = "Cold",
+                    Source = "Quotation",
+                    Date = DateTime.Now.ToString("yyyy-MM-dd")
+                };
                 _db.CrmContacts.Add(contact);
                 await _db.SaveChangesAsync(); // save to get Id
             }
-
-            // Create linked Deal
-            var deal = new Deal
+            else
             {
-                Title = $"{dto.ProjectTitle} ({assignedNo})",
-                Value = dto.Total,
-                ContactId = contact.Id,
-                Stage = "PROPOSAL",
-                CloseDate = DateTime.Now.AddDays(30).ToString("yyyy-MM-dd")
-            };
-            _db.Deals.Add(deal);
+                // Update empty contact fields if provided in the quotation
+                if (string.IsNullOrWhiteSpace(contact.Phone) && !string.IsNullOrWhiteSpace(dto.MobileNo)) contact.Phone = dto.MobileNo;
+                if (string.IsNullOrWhiteSpace(contact.Email) && !string.IsNullOrWhiteSpace(dto.EmailId)) contact.Email = dto.EmailId;
+                if (string.IsNullOrWhiteSpace(contact.Address) && !string.IsNullOrWhiteSpace(dto.ClientAddress)) contact.Address = dto.ClientAddress;
+                if (string.IsNullOrWhiteSpace(contact.Project) && !string.IsNullOrWhiteSpace(dto.ProjectTitle)) contact.Project = dto.ProjectTitle;
+                if (string.IsNullOrWhiteSpace(contact.OrganizationName) && !string.IsNullOrWhiteSpace(dto.OrganizationName)) contact.OrganizationName = dto.OrganizationName;
+                await _db.SaveChangesAsync();
+            }
+
+            string dealTitle = !string.IsNullOrWhiteSpace(dto.ProjectTitle)
+                ? $"{dto.ProjectTitle.Trim()} ({assignedNo})"
+                : $"{contact.Name} ({assignedNo})";
+
+            // Check if this contact already has an initial deal in LEAD or CONTACTED stage to advance
+            var existingDeal = await _db.Deals
+                .Where(d => d.ContactId == contact.Id && (d.Stage == "LEAD" || d.Stage == "CONTACTED"))
+                .OrderByDescending(d => d.Id)
+                .FirstOrDefaultAsync();
+
+            Deal deal;
+            if (existingDeal != null)
+            {
+                // Advance the existing deal to PROPOSAL
+                deal = existingDeal;
+                deal.Title = dealTitle;
+                deal.Value = dto.Total;
+                deal.Stage = "PROPOSAL";
+                deal.CloseDate = DateTime.Now.AddDays(30).ToString("yyyy-MM-dd");
+            }
+            else
+            {
+                // Check if there is an unlinked PROPOSAL deal for this contact
+                var unlinkedProposalDeal = await _db.Deals
+                    .Where(d => d.ContactId == contact.Id && d.Stage == "PROPOSAL" && !_db.Quotations.Any(q => q.DealId == d.Id))
+                    .OrderByDescending(d => d.Id)
+                    .FirstOrDefaultAsync();
+
+                if (unlinkedProposalDeal != null)
+                {
+                    deal = unlinkedProposalDeal;
+                    deal.Title = dealTitle;
+                    deal.Value = dto.Total;
+                    deal.CloseDate = DateTime.Now.AddDays(30).ToString("yyyy-MM-dd");
+                }
+                else
+                {
+                    deal = new Deal
+                    {
+                        Title = dealTitle,
+                        Value = dto.Total,
+                        ContactId = contact.Id,
+                        Stage = "PROPOSAL",
+                        CloseDate = DateTime.Now.AddDays(30).ToString("yyyy-MM-dd")
+                    };
+                    _db.Deals.Add(deal);
+                }
+            }
             await _db.SaveChangesAsync();
+
+            // Clean up any remaining obsolete 0-value LEAD deals for this contact so only one active card exists
+            var staleLeadDeals = await _db.Deals
+                .Where(d => d.ContactId == contact.Id && d.Id != deal.Id && d.Stage == "LEAD" && d.Value == 0)
+                .ToListAsync();
+            if (staleLeadDeals.Any())
+            {
+                _db.Deals.RemoveRange(staleLeadDeals);
+                await _db.SaveChangesAsync();
+            }
 
             var q = new Quotation
             {
@@ -208,6 +335,26 @@ namespace Blackstone_Interior.Controllers
         {
             var q = await _db.Quotations.FindAsync(id);
             if (q == null) return NotFound();
+
+            // Revert linked deal to LEAD if this was its only quotation
+            if (q.DealId.HasValue)
+            {
+                var deal = await _db.Deals.FindAsync(q.DealId.Value);
+                if (deal != null)
+                {
+                    var otherQuotes = await _db.Quotations.AnyAsync(otherQ => otherQ.Id != q.Id && otherQ.DealId == deal.Id);
+                    if (!otherQuotes)
+                    {
+                        deal.Stage = "LEAD";
+                        deal.Value = 0;
+                        if (deal.Title.Contains("("))
+                        {
+                            deal.Title = deal.Title.Substring(0, deal.Title.IndexOf("(")).Trim();
+                        }
+                    }
+                }
+            }
+
             _db.Quotations.Remove(q);
             await _db.SaveChangesAsync();
             return Ok(new { message = "Quotation deleted" });

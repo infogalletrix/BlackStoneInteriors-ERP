@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import {
-  User, Briefcase, Calendar, Plus, Phone, MapPin, Search, DollarSign, Activity, CheckCircle, Clock, Mail, Tag, Percent, BarChart2, Download, Filter, PieChart, Trash2, List, Grid, Edit3, Settings, FileText, ChevronDown, Play, Pause, XCircle
+  User, Briefcase, Calendar, Plus, Phone, MapPin, Search, DollarSign, Activity, CheckCircle, Clock, Mail, Tag, Percent, BarChart2, Download, Filter, PieChart, Trash2, List, Grid, Edit3, Settings, FileText, ChevronDown, Play, Pause, XCircle, RotateCcw
 } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -29,12 +29,19 @@ const CRMPage = () => {
   const { showDialog } = useDialog();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState("leads");
+  const [leadFilter, setLeadFilter] = useState("interested"); // "interested" | "not_interested" | "all"
   
   useEffect(() => {
     const p = location.pathname.split('/').pop();
-    if (p === 'leads') setActiveTab('leads');
+    if (p === 'leads') {
+      setActiveTab('leads');
+      setLeadFilter('interested');
+    }
     else if (p === 'customers') setActiveTab('customers');
-    else if (p === 'not-interested') setActiveTab('not_interested');
+    else if (p === 'not-interested' || p === 'not_interested') {
+      setActiveTab('leads');
+      setLeadFilter('not_interested');
+    }
     else if (p === 'pipeline') setActiveTab('pipeline');
     else if (p === 'schedule') setActiveTab('schedule');
     else if (p === 'telecalling') setActiveTab('telecalling'); 
@@ -92,8 +99,18 @@ const CRMPage = () => {
         NEGOTIATION: { id: "NEGOTIATION", title: "NEGOTIATING", deals: [] },
         WON: { id: "WON", title: "CLOSED WON", deals: [] }
       };
+      const advancedContactIds = new Set(
+        dRes
+          .filter(d => ['PROPOSAL', 'NEGOTIATION', 'WON'].includes(d.stage))
+          .map(d => String(d.contact_id))
+      );
+
       dRes.forEach(d => {
         const stage = d.stage || "LEAD";
+        // If an initial 0-value LEAD card exists for a contact who has already advanced to PROPOSAL or beyond, omit the duplicate
+        if (stage === "LEAD" && Number(d.value) === 0 && advancedContactIds.has(String(d.contact_id))) {
+          return;
+        }
         if(newPipe[stage]) {
           newPipe[stage].deals.push({ id: d.id, contactId: d.contact_id, title: d.title, value: Number(d.value), closeDate: d.close_date ? d.close_date.split('T')[0] : '' });
         }
@@ -233,6 +250,65 @@ const CRMPage = () => {
 
           await loadData();
           showFeedback("Marked as Not Interested!");
+        } catch(err) {
+          showFeedback("Error updating status.");
+        }
+      }
+    });
+  };
+
+  const handleMoveToInterested = (contactOrDealId, isDeal = false) => {
+    showDialog({
+      title: "Move to Interested",
+      message: "Are you sure you want to move this lead back to Interested? They will be restored to the active sales pipeline.",
+      type: "confirm",
+      onConfirm: async () => {
+        try {
+          let contactId = contactOrDealId;
+          if (isDeal) {
+             const pipelineDeals = Object.values(pipeline).flatMap(col => col.deals);
+             const deal = pipelineDeals.find(d => d.id === contactOrDealId);
+             if (deal) contactId = deal.contactId;
+          }
+          
+          const contact = contacts.find(c => c.id == contactId);
+          if (contact) {
+            await fetch(`/api/crm/${contact.id}`, { 
+              method: 'PUT', 
+              headers: {'Content-Type':'application/json'}, 
+              body: JSON.stringify({...contact, status: 'Lead'}) 
+            });
+          }
+
+          // Restore deal stage in pipeline
+          const pipelineDeals = Object.values(pipeline).flatMap(col => col.deals);
+          const dealsToUpdate = pipelineDeals.filter(d => d.contactId == contactId);
+          if (dealsToUpdate.length > 0) {
+            for (const deal of dealsToUpdate) {
+              if (deal.stage === 'LOST') {
+                await fetch(`/api/crm/deals/${deal.id}`, { 
+                  method: 'PUT', 
+                  headers: {'Content-Type':'application/json'}, 
+                  body: JSON.stringify({...deal, stage: 'LEAD'}) 
+                });
+              }
+            }
+          } else if (contact) {
+            await fetch('/api/crm/deals', { 
+              method: 'POST', 
+              headers: {'Content-Type':'application/json'}, 
+              body: JSON.stringify({
+                title: contact.project || `${contact.name} - Deal`,
+                contactId: String(contact.id),
+                value: 0,
+                stage: 'LEAD',
+                closeDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0]
+              }) 
+            });
+          }
+
+          await loadData();
+          showFeedback("Lead moved back to Interested!");
         } catch(err) {
           showFeedback("Error updating status.");
         }
@@ -404,14 +480,24 @@ const CRMPage = () => {
     return true;
   };
 
+  const leadsOnly = contacts.filter(c => c.status !== 'Customer');
+  const interestedLeadsCount = leadsOnly.filter(c => c.status !== 'Not Interested').length;
+  const notInterestedLeadsCount = leadsOnly.filter(c => c.status === 'Not Interested').length;
+  const allLeadsCount = leadsOnly.length;
+
   const filteredContacts = contacts.filter((c) => {
     let tabMatch = true;
     if (activeTab === 'leads') {
-      tabMatch = ['Lead', 'Cold'].includes(c.status) || !c.status;
+      if (leadFilter === 'not_interested') {
+        tabMatch = c.status === 'Not Interested';
+      } else if (leadFilter === 'all') {
+        tabMatch = c.status !== 'Customer';
+      } else {
+        // "interested" (default)
+        tabMatch = c.status !== 'Customer' && c.status !== 'Not Interested';
+      }
     } else if (activeTab === 'customers') {
       tabMatch = c.status === 'Customer';
-    } else if (activeTab === 'not_interested') {
-      tabMatch = c.status === 'Not Interested';
     }
 
     const searchMatch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) || (c.project || "").toLowerCase().includes(searchTerm.toLowerCase()) || (c.tags && c.tags.join(" ").toLowerCase().includes(searchTerm.toLowerCase()));
@@ -475,7 +561,6 @@ const CRMPage = () => {
             {[
               { id: "leads", label: "Leads", icon: <User size={14} /> },
               { id: "customers", label: "Customers", icon: <User size={14} /> },
-              { id: "not_interested", label: "Not Interested", icon: <XCircle size={14} /> },
               { id: "pipeline", label: "Pipeline", icon: <Briefcase size={14} /> },
               { id: "site_surveys", label: "Site Surveys", icon: <MapPin size={14} /> },
               { id: "schedule", label: "Schedule", icon: <Calendar size={14} /> },
@@ -516,7 +601,7 @@ const CRMPage = () => {
 
           {/* ADD BUTTON (Right) */}
           <div className="flex w-full md:w-auto order-3 gap-3 items-center">
-            {activeTab !== "campaigns" && activeTab !== "telecalling" && activeTab !== "not_interested" && (
+            {activeTab !== "campaigns" && activeTab !== "telecalling" && (
               <button onClick={() => { if (activeTab === "leads" || activeTab === "customers") setEditContact({ status: 'Cold', tags: [] }); else if (activeTab === "pipeline") setEditDeal({ value: 0, contactId: contacts[0]?.id || '' }); else if (activeTab === "site_surveys") { setEditSiteMode('full'); setEditSiteSurvey({ name: '', clientName: '', address: '', status: 'Pre-Construction', startDate: new Date().toISOString().split('T')[0], surveyNotes: '' }); } else setEditActivity({ type: '', date: new Date().toISOString().split('T')[0], client: contacts[0]?.id || '', status: 'Pending' }); }} className="w-full md:w-auto flex-shrink-0 flex items-center justify-center gap-1.5 px-6 py-2.5 rounded-xl text-sm font-black transition-all duration-300 dark:bg-violet-700 bg-accent text-white shadow-lg dark:hover:bg-slate-800 hover:bg-accent-hover">
                 <Plus size={16} /> <span className="hidden sm:inline">Add New</span>
               </button>
@@ -613,13 +698,69 @@ const CRMPage = () => {
         )}
 
         {/* SECTION: CLIENTS */}
-        {(activeTab === "leads" || activeTab === "customers" || activeTab === "not_interested") && (
+        {(activeTab === "leads" || activeTab === "customers") && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="overflow-x-auto bg-transparent">
-            <div className="flex justify-between items-center p-6 border-b border-[var(--border-color)]">
-              <h2 className="text-lg font-black text-themed">
-                {activeTab === "leads" ? "Pre-Sales Leads" : activeTab === "customers" ? "Active Customers" : "Not Interested Leads"}
-              </h2>
-              <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-5 sm:p-6 border-b border-[var(--border-color)]">
+              <div>
+                <h2 className="text-lg font-black text-themed">
+                  {activeTab === "leads" 
+                    ? (leadFilter === "not_interested" ? "Not Interested Leads" : leadFilter === "all" ? "All Leads" : "Pre-Sales Leads") 
+                    : "Active Customers"}
+                </h2>
+                <p className="text-xs text-muted font-medium mt-0.5">
+                  {activeTab === "leads"
+                    ? `${filteredContacts.length} lead${filteredContacts.length === 1 ? '' : 's'} displayed`
+                    : `${filteredContacts.length} customer${filteredContacts.length === 1 ? '' : 's'} displayed`}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                {activeTab === "leads" && (
+                  <div className="flex bg-[var(--bg-surface)] p-1 rounded-xl border border-[var(--border-color)] text-xs font-bold shadow-inner">
+                    <button
+                      onClick={() => setLeadFilter("interested")}
+                      className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                        leadFilter === "interested"
+                          ? "dark:bg-violet-600 bg-accent text-white shadow-sm font-black"
+                          : "text-muted hover:text-themed hover:bg-[var(--bg-card-hover)]"
+                      }`}
+                    >
+                      <User size={12} />
+                      <span>Interested</span>
+                      <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-black ${leadFilter === "interested" ? "bg-white/20 text-white" : "bg-slate-500/10 text-muted"}`}>
+                        {interestedLeadsCount}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => setLeadFilter("not_interested")}
+                      className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                        leadFilter === "not_interested"
+                          ? "dark:bg-violet-600 bg-accent text-white shadow-sm font-black"
+                          : "text-muted hover:text-themed hover:bg-[var(--bg-card-hover)]"
+                      }`}
+                    >
+                      <XCircle size={12} />
+                      <span>Not Interested</span>
+                      <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-black ${leadFilter === "not_interested" ? "bg-white/20 text-white" : "bg-slate-500/10 text-muted"}`}>
+                        {notInterestedLeadsCount}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => setLeadFilter("all")}
+                      className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                        leadFilter === "all"
+                          ? "dark:bg-violet-600 bg-accent text-white shadow-sm font-black"
+                          : "text-muted hover:text-themed hover:bg-[var(--bg-card-hover)]"
+                      }`}
+                    >
+                      <span>All</span>
+                      <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-black ${leadFilter === "all" ? "bg-white/20 text-white" : "bg-slate-500/10 text-muted"}`}>
+                        {allLeadsCount}
+                      </span>
+                    </button>
+                  </div>
+                )}
+
                 <div className="flex bg-[var(--bg-surface)] p-1 rounded-xl border border-[var(--border-color)]">
                   <button onClick={() => setViewMode("list")} className={`p-1.5 rounded-lg transition-colors ${viewMode === "list" ? "bg-[var(--accent)] text-white shadow-sm" : "text-muted hover:text-themed"}`} title="List View"><List size={16}/></button>
                   <button onClick={() => setViewMode("card")} className={`p-1.5 rounded-lg transition-colors ${viewMode === "card" ? "bg-[var(--accent)] text-white shadow-sm" : "text-muted hover:text-themed"}`} title="Card View"><Grid size={16}/></button>
@@ -641,7 +782,7 @@ const CRMPage = () => {
               </thead>
               <tbody>
                 {filteredContacts.map((c) => (
-                  <tr key={c.id} className={`border-b border-[var(--border-color)] group transition-colors ${c.status === 'Not Interested' ? 'opacity-50 grayscale hover:opacity-100 hover:grayscale-0' : ''}`} style={{background: 'transparent'}}>
+                  <tr key={c.id} className={`border-b border-[var(--border-color)] group transition-colors ${c.status === 'Not Interested' && leadFilter !== 'not_interested' ? 'opacity-50 grayscale hover:opacity-100 hover:grayscale-0' : ''}`} style={{background: 'transparent'}}>
                     <td className="py-4 pl-8 pr-4">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black shadow-sm flex-shrink-0"
@@ -684,9 +825,22 @@ const CRMPage = () => {
                       <div className="flex justify-end items-center gap-2">
                         {activeTab === "leads" && (
                           <>
-                            {c.status !== 'Not Interested' && <button className="font-bold px-3 py-1.5 rounded-lg text-xs transition-all opacity-0 group-hover:opacity-100 border border-slate-500 text-slate-500 hover:bg-slate-500/10" onClick={() => handleMarkNotInterested(c.id, false)}>Not Interested</button>}
-                            <button className="font-bold px-3 py-1.5 rounded-lg text-xs transition-all opacity-0 group-hover:opacity-100 border border-blue-500 text-blue-500 hover:bg-blue-500/10" onClick={() => setEditActivity({ type: 'Follow-up Call', date: new Date().toISOString().split('T')[0], client: c.id, status: 'Pending' })}>Schedule Follow-up</button>
-                            <button className="font-bold px-3 py-1.5 rounded-lg text-xs transition-all opacity-0 group-hover:opacity-100 border border-accent text-accent hover:bg-accent/10" onClick={() => handleConvertToCustomer(c)}>Convert to Customer</button>
+                            {c.status === 'Not Interested' ? (
+                              <button
+                                className="font-bold px-3 py-1.5 rounded-lg text-xs transition-all border border-emerald-500/50 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 flex items-center gap-1.5 shadow-sm"
+                                onClick={() => handleMoveToInterested(c.id, false)}
+                                title="Move to Interested"
+                              >
+                                <RotateCcw size={12} />
+                                <span>Move to Interested</span>
+                              </button>
+                            ) : (
+                              <>
+                                <button className="font-bold px-3 py-1.5 rounded-lg text-xs transition-all opacity-0 group-hover:opacity-100 border border-slate-500 text-slate-500 hover:bg-slate-500/10" onClick={() => handleMarkNotInterested(c.id, false)}>Not Interested</button>
+                                <button className="font-bold px-3 py-1.5 rounded-lg text-xs transition-all opacity-0 group-hover:opacity-100 border border-blue-500 text-blue-500 hover:bg-blue-500/10" onClick={() => setEditActivity({ type: 'Follow-up Call', date: new Date().toISOString().split('T')[0], client: c.id, status: 'Pending' })}>Schedule Follow-up</button>
+                                <button className="font-bold px-3 py-1.5 rounded-lg text-xs transition-all opacity-0 group-hover:opacity-100 border border-accent text-accent hover:bg-accent/10" onClick={() => handleConvertToCustomer(c)}>Convert to Customer</button>
+                              </>
+                            )}
                           </>
                         )}
                         <button
@@ -706,7 +860,7 @@ const CRMPage = () => {
             ) : (
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" style={{background: 'transparent'}}>
               {filteredContacts.map((c) => (
-                <div key={c.id} className={`group relative p-5 rounded-2xl border transition-all hover:-translate-y-0.5 hover:shadow-lg ${c.status === 'Not Interested' ? 'opacity-60 grayscale hover:opacity-100 hover:grayscale-0' : ''}`}
+                <div key={c.id} className={`group relative p-5 rounded-2xl border transition-all hover:-translate-y-0.5 hover:shadow-lg ${c.status === 'Not Interested' && leadFilter !== 'not_interested' ? 'opacity-60 grayscale hover:opacity-100 hover:grayscale-0' : ''}`}
                   style={{background: 'var(--bg-card)', borderColor: 'var(--border-color)'}}>
                   {/* Accent top strip on hover */}
                   <div className="absolute inset-x-0 top-0 h-0.5 rounded-t-2xl opacity-0 group-hover:opacity-100 transition-opacity"
@@ -726,12 +880,25 @@ const CRMPage = () => {
                         <div className="text-[10px] font-semibold uppercase tracking-wider" style={{color: 'var(--text-muted)'}}>ID: {c.id}</div>
                       </div>
                     </div>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className={`flex gap-1 ${c.status === 'Not Interested' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
                       {activeTab === "leads" && (
                         <>
-                          {c.status !== 'Not Interested' && <button className="font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-slate-500 text-slate-500 hover:bg-slate-500/10" onClick={() => handleMarkNotInterested(c.id, false)} title="Not Interested"><XCircle size={12}/></button>}
-                          <button className="font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-blue-500 text-blue-500 hover:bg-blue-500/10" onClick={() => setEditActivity({ type: 'Follow-up Call', date: new Date().toISOString().split('T')[0], client: c.id, status: 'Pending' })} title="Schedule Follow-up"><Phone size={12}/></button>
-                          <button className="font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-accent text-accent hover:bg-accent/10" onClick={() => handleConvertToCustomer(c)}>Convert</button>
+                          {c.status === 'Not Interested' ? (
+                            <button
+                              className="font-bold px-2.5 py-1 rounded-lg text-xs transition-colors border border-emerald-500/50 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 flex items-center gap-1 shadow-sm"
+                              onClick={() => handleMoveToInterested(c.id, false)}
+                              title="Move to Interested"
+                            >
+                              <RotateCcw size={12} />
+                              <span className="hidden sm:inline">Move to Interested</span>
+                            </button>
+                          ) : (
+                            <>
+                              <button className="font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-slate-500 text-slate-500 hover:bg-slate-500/10" onClick={() => handleMarkNotInterested(c.id, false)} title="Not Interested"><XCircle size={12}/></button>
+                              <button className="font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-blue-500 text-blue-500 hover:bg-blue-500/10" onClick={() => setEditActivity({ type: 'Follow-up Call', date: new Date().toISOString().split('T')[0], client: c.id, status: 'Pending' })} title="Schedule Follow-up"><Phone size={12}/></button>
+                              <button className="font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-accent text-accent hover:bg-accent/10" onClick={() => handleConvertToCustomer(c)}>Convert</button>
+                            </>
+                          )}
                         </>
                       )}
                       <button
