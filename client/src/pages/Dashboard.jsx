@@ -306,8 +306,8 @@ const Dashboard = () => {
                 <span className="flex items-center gap-1.5"><span className="w-3 h-1.5 rounded-full inline-block" style={{background:expenseColor}}/>Expenses</span>
               </div>
             </div>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height={256} minWidth={1} minHeight={1}>
                 <AreaChart data={cashFlowData} margin={{top:4,right:4,left:0,bottom:0}}>
                   <defs>
                     <linearGradient id="gIncome" x1="0" y1="0" x2="0" y2="1">
@@ -339,14 +339,14 @@ const Dashboard = () => {
           <motion.div variants={fade} className={`xl:col-span-4 ${t.card} rounded-2xl p-6 flex flex-col`}>
             <h3 className={`font-black text-base mb-1 ${d?"text-white":"text-[var(--text-primary)]"}`}>Site Status</h3>
             <p className={`${t.muted} mb-4`}>Work order breakdown</p>
-            <div className="flex-1 min-h-[180px] relative">
+            <div className="flex-1 min-h-[200px] h-[200px] w-full relative">
               {siteStatusData.length > 0 ? (
                 <>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
                     <span className={t.label}>Total</span>
                     <span className={`text-xl font-black ${d?"text-white":"text-[var(--text-primary)]"}`}>{sites.length}</span>
                   </div>
-                  <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+                  <ResponsiveContainer width="100%" height={200} minWidth={1} minHeight={1}>
                     <PieChart>
                       <Pie data={siteStatusData} cx="50%" cy="50%" innerRadius={55} outerRadius={75}
                         paddingAngle={4} dataKey="value" stroke="none">
@@ -382,8 +382,8 @@ const Dashboard = () => {
             <h3 className={`font-black text-base mb-1 ${d?"text-white":"text-[var(--text-primary)]"}`}>Expense Categories</h3>
             <p className={`${t.muted} mb-5`}>Breakdown by classification (current period)</p>
             {expenseBreakdown.length > 0 ? (
-              <div className="h-48">
-                <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+              <div className="h-48 w-full">
+                <ResponsiveContainer width="100%" height={192} minWidth={1} minHeight={1}>
                   <BarChart data={expenseBreakdown} layout="vertical"
                     margin={{top:0,right:16,left:4,bottom:0}}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={t.chartGrid}/>

@@ -540,6 +540,15 @@ export default function QuotationPage() {
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify(newQuote)
         });
+        // If the quotation no longer exists on backend, create it as a fresh record
+        if (res.status === 404) {
+          setQuoteId(null);
+          res = await fetch('/api/quotations', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ ...newQuote, quoteNo: null })
+          });
+        }
       } else {
         res = await fetch('/api/quotations', {
           method: 'POST',
@@ -547,10 +556,15 @@ export default function QuotationPage() {
           body: JSON.stringify(newQuote)
         });
       }
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || `Failed to save quotation (${res.status})`);
+      }
       
       const saved = await res.json();
-      // Update displayed quote number with backend-assigned value
-      if (!quoteId && saved.id) {
+      // Update displayed quote ID and quote number
+      if (saved.id) {
         setQuoteId(saved.id);
       }
       if (saved.quoteNo) {

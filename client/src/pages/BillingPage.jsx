@@ -594,6 +594,15 @@ export default function BillingPage() {
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify(newQuote)
         });
+        // If the invoice no longer exists on backend, create it as a fresh record
+        if (res.status === 404) {
+          setInvoiceId(null);
+          res = await fetch('/api/finance/invoices', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ ...newQuote, invoiceNo: null })
+          });
+        }
       } else {
         res = await fetch('/api/finance/invoices', {
           method: 'POST',
@@ -601,10 +610,15 @@ export default function BillingPage() {
           body: JSON.stringify(newQuote)
         });
       }
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || `Failed to save invoice (${res.status})`);
+      }
       
       const saved = await res.json();
-      // Update displayed quote number with backend-assigned value
-      if (!invoiceId && saved.id) {
+      // Update displayed invoice ID and invoice number
+      if (saved.id) {
         setInvoiceId(saved.id);
       }
       if (saved.invoiceNo) {
