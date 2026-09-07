@@ -119,13 +119,22 @@ export default function QuotationPage() {
         ]);
         const historical = [];
         if (qRes.status === 'fulfilled' && Array.isArray(qRes.value)) {
-          qRes.value.forEach(q => {
+          const quotes = qRes.value;
+          quotes.forEach(q => {
             let its = q.items;
             if (typeof its === 'string') { try { its = JSON.parse(its); } catch {} }
             if (Array.isArray(its)) {
               its.forEach(it => { if (it.section?.trim()) historical.push(it.section.trim()); });
             }
           });
+          // Clean up stale quoteId in state and sessions if it no longer exists on server
+          setQuoteId(prev => (prev && !quotes.some(q => String(q.id) === String(prev)) ? null : prev));
+          setSessions(prev => prev.map(s => {
+            if (s.data?.quoteId && !quotes.some(q => String(q.id) === String(s.data.quoteId))) {
+              return { ...s, data: { ...s.data, quoteId: null } };
+            }
+            return s;
+          }));
         }
         if (iRes.status === 'fulfilled' && Array.isArray(iRes.value)) {
           iRes.value.forEach(inv => {

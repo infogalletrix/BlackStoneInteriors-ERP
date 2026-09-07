@@ -133,13 +133,22 @@ export default function BillingPage() {
           });
         }
         if (iRes.status === 'fulfilled' && Array.isArray(iRes.value)) {
-          iRes.value.forEach(inv => {
+          const invoices = iRes.value;
+          invoices.forEach(inv => {
             let its = inv.items;
             if (typeof its === 'string') { try { its = JSON.parse(its); } catch {} }
             if (Array.isArray(its)) {
               its.forEach(it => { if (it.section?.trim()) historical.push(it.section.trim()); });
             }
           });
+          // Clean up stale invoiceId in state and sessions if it no longer exists on server
+          setInvoiceId(prev => (prev && !invoices.some(inv => String(inv.id) === String(prev)) ? null : prev));
+          setSessions(prev => prev.map(s => {
+            if (s.data?.invoiceId && !invoices.some(inv => String(inv.id) === String(s.data.invoiceId))) {
+              return { ...s, data: { ...s.data, invoiceId: null } };
+            }
+            return s;
+          }));
         }
         if (historical.length > 0) {
           let existing = [];

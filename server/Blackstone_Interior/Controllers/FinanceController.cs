@@ -135,7 +135,11 @@ namespace Blackstone_Interior.Controllers
         public async Task<IActionResult> UpdateInvoice(int id, [FromBody] InvoiceDto dto)
         {
             var inv = await _db.Invoices.FindAsync(id);
-            if (inv == null) return NotFound();
+            if (inv == null)
+            {
+                // Auto-upsert: if invoice ID not found in database, create new record
+                return await CreateInvoice(dto);
+            }
 
             if (!string.IsNullOrEmpty(dto.InvoiceDate) && !dto.InvoiceDate.Contains("T")) {
                 if (!string.IsNullOrEmpty(inv.InvoiceDate) && inv.InvoiceDate.Contains("T")) {

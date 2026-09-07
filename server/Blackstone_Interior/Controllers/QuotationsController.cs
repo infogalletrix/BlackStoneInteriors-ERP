@@ -284,7 +284,11 @@ namespace Blackstone_Interior.Controllers
         public async Task<IActionResult> Update(int id, [FromBody] QuotationDto dto)
         {
             var q = await _db.Quotations.FindAsync(id);
-            if (q == null) return NotFound();
+            if (q == null)
+            {
+                // Auto-upsert: if quote ID not found in database, create new record
+                return await Create(dto);
+            }
 
             q.QuoteNo = dto.QuoteNo;
             q.ClientName = dto.ClientName;
