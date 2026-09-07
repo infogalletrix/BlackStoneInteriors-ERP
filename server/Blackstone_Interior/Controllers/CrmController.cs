@@ -46,8 +46,13 @@ namespace Blackstone_Interior.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateContact([FromBody] CrmContactDto dto)
         {
+            // The leads id must be the next number of the highest number; if 0 leads it starts from 1
+            int highestId = await _db.CrmContacts.Select(c => (int?)c.Id).MaxAsync() ?? 0;
+            int nextId = highestId + 1;
+
             var contact = new CrmContact
             {
+                Id = nextId,
                 Name = dto.Name,
                 OrganizationName = dto.OrganizationName ?? "",
                 Phone = dto.Phone,
@@ -61,6 +66,13 @@ namespace Blackstone_Interior.Controllers
             };
             _db.CrmContacts.Add(contact);
             await _db.SaveChangesAsync();
+
+            try
+            {
+                await _db.Database.ExecuteSqlInterpolatedAsync($"ALTER TABLE CrmContacts AUTO_INCREMENT = {nextId + 1};");
+            }
+            catch {}
+
             return Ok(new { id = contact.Id.ToString(), message = "Contact created" });
         }
 
@@ -107,6 +119,14 @@ namespace Blackstone_Interior.Controllers
 
             _db.CrmContacts.Remove(contact);
             await _db.SaveChangesAsync();
+
+            try
+            {
+                int remainingMaxId = await _db.CrmContacts.Select(c => (int?)c.Id).MaxAsync() ?? 0;
+                await _db.Database.ExecuteSqlInterpolatedAsync($"ALTER TABLE CrmContacts AUTO_INCREMENT = {remainingMaxId + 1};");
+            }
+            catch {}
+
             return Ok(new { message = "Contact deleted" });
         }
 

@@ -56,6 +56,10 @@ const CRMPage = () => {
   const [viewMode, setViewMode] = useState("list");
 
   const [contacts, setContacts] = useState([]);
+  const nextLeadId = useMemo(() => {
+    return contacts.reduce((max, c) => Math.max(max, parseInt(c.id, 10) || 0), 0) + 1;
+  }, [contacts]);
+
   const [pipeline, setPipeline] = useState({
     LEAD: { id: "LEAD", title: "LEADS", deals: [] },
     CONTACTED: { id: "CONTACTED", title: "CONTACTED", deals: [] },
@@ -1343,7 +1347,7 @@ const CRMPage = () => {
 
       {/* MODALS */}
       <Modal open={!!editContact} onClose={() => setEditContact(null)}>
-        {editContact && <EditContactForm contact={editContact} onSave={handleContactSave} onCancel={() => setEditContact(null)} />}
+        {editContact && <EditContactForm contact={editContact} nextLeadId={nextLeadId} onSave={handleContactSave} onCancel={() => setEditContact(null)} />}
       </Modal>
 
       <Modal open={!!editDeal} onClose={() => setEditDeal(null)}>
@@ -1431,7 +1435,7 @@ function EditCampaignForm({ campaign, onSave, onCancel }) {
 }
 
 // --- EXTENDED FORMS ---
-function EditContactForm({ contact, onSave, onCancel }) {
+function EditContactForm({ contact, nextLeadId, onSave, onCancel }) {
   const { showDialog } = useDialog();
   const [form, setForm] = useState(contact || { name: '', organizationName: '', project: '', phone: '', email: '', address: '', status: 'Cold', source: '', tags: [] });
   const [tagInput, setTagInput] = useState("");
@@ -1450,7 +1454,18 @@ function EditContactForm({ contact, onSave, onCancel }) {
       }
       onSave(form); 
     }} className="space-y-6">
-      <h2 className="font-black text-3xl mb-1 text-themed tracking-tight">Client Profile</h2>
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+        <h2 className="font-black text-3xl text-themed tracking-tight">Client Profile</h2>
+        {form.id ? (
+          <span className="text-xs px-2.5 py-1 rounded-lg bg-slate-500/10 text-muted font-bold border border-[var(--border-color)]">
+            Lead ID: #{form.id}
+          </span>
+        ) : (
+          <span className="text-xs px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/30">
+            Next Lead ID: #{nextLeadId}
+          </span>
+        )}
+      </div>
       <p className="text-muted font-medium text-sm mb-6 pb-4 border-b border-[var(--border-color)]">Comprehensive details for your design client.</p>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

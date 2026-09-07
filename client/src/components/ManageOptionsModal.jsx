@@ -93,8 +93,8 @@ export default function ManageOptionsModal({
         list: sectionsList,
         setList: setSectionsList,
         defaults: DEFAULT_SECTIONS,
-        label: "Section / Type",
-        placeholder: "Enter new section or room type (e.g., Living Room)..."
+        label: "Section",
+        placeholder: "Enter new section name (e.g., Living Room)..."
       };
     }
   };
@@ -237,7 +237,7 @@ export default function ManageOptionsModal({
                 : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5"
             }`}
           >
-            <span>Sections / Types</span>
+            <span>Sections</span>
             <span
               className={`px-1.5 py-0.5 rounded-md text-[10px] font-black ${
                 currentTab === "sections" ? "bg-white/20 text-white" : "bg-slate-500/10 text-slate-500"

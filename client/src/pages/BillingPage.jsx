@@ -97,6 +97,27 @@ export default function BillingPage() {
     localStorage.setItem("quote_sections", JSON.stringify(sectionsList));
   }, [sectionsList]);
 
+  // Derive suggestions for Section strictly from previously entered data (current items & saved history)
+  const previouslyEnteredSections = useMemo(() => {
+    const current = items.map(i => i.section?.trim()).filter(Boolean);
+    let history = [];
+    try {
+      history = JSON.parse(localStorage.getItem("bsi_entered_sections") || "[]");
+    } catch {}
+    return Array.from(new Set([...current, ...history]));
+  }, [items]);
+
+  const persistEnteredSections = (rows) => {
+    try {
+      const current = rows.map(i => i.section?.trim()).filter(Boolean);
+      if (current.length > 0) {
+        const history = JSON.parse(localStorage.getItem("bsi_entered_sections") || "[]");
+        const merged = Array.from(new Set([...history, ...current]));
+        localStorage.setItem("bsi_entered_sections", JSON.stringify(merged));
+      }
+    } catch {}
+  };
+
   const [isOptionsModalOpen, setIsOptionsModalOpen] = useState(false);
   const [activeOptionsTab, setActiveOptionsTab] = useState("products");
 
@@ -529,6 +550,7 @@ export default function BillingPage() {
       sgstPercent
     };
     try {
+      persistEnteredSections(items);
       let res;
       if (invoiceId) {
         res = await fetch(`/api/finance/invoices/${invoiceId}`, {
@@ -956,7 +978,7 @@ export default function BillingPage() {
                 S#
               </th>
               <th className="px-2 py-1 border-r border-gray-300 text-left w-28">
-                Section / Type
+                Section
               </th>
               <th className="px-2 py-1 border-r border-gray-300 text-left w-36">
                 Product
@@ -1004,8 +1026,9 @@ export default function BillingPage() {
                     list="billing-sections-datalist"
                     value={item.section || ""} 
                     onChange={e => handleItemChange(item.id, "section", e.target.value)} 
-                    placeholder="Section / Type" 
-                    className="w-full bg-transparent border-none outline-none text-themed text-xs px-1"
+                    placeholder="Section" 
+                    className="w-full bg-transparent border-none outline-none text-themed text-xs px-1 [&::-webkit-calendar-picker-indicator]:hidden"
+                    autoComplete="off"
                   />
                 </td>
                 <td className="px-1 py-1 border-r border-white/10">
@@ -1116,9 +1139,9 @@ export default function BillingPage() {
           </tbody>
         </table>
 
-        {/* Datalist for typing sections / types with autocomplete */}
+        {/* Datalist for typing sections with autocomplete suggestions from previously entered data */}
         <datalist id="billing-sections-datalist">
-          {sectionsList.map((sec, i) => (
+          {previouslyEnteredSections.map((sec, i) => (
             <option key={i} value={sec} />
           ))}
         </datalist>
