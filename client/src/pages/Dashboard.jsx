@@ -137,6 +137,8 @@ const Dashboard = () => {
     }
     return false;
   }).length;
+  const inProcessSites    = sites.filter(s => s.status === "In Progress" || s.status === "Currently working" || s.status === "Active").length;
+  const totalAdvances     = employees.reduce((s,e) => s+(Number(e.advanceBalance)||0), 0);
   const pendingWO         = sites.filter(s => s.status === "Pre-Construction" || s.status === "Pending").length;
   const presentToday      = attendance[today] ? Object.values(attendance[today]).filter(s => s==="Present"||s==="Half-Day").length : 0;
   const netProfit         = totalIncome - totalSpent;
