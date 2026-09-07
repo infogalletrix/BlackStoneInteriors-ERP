@@ -79,12 +79,9 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
 
           {/* Document Title & Meta Pill */}
           <div className="text-right">
-            <h2 className="text-2xl font-black text-[#0b1e36] tracking-tight uppercase">
+            <h2 className="text-2xl font-black text-[#0b1e36] tracking-tight uppercase mb-2">
               QUOTATION
             </h2>
-            <p className="text-[9px] text-[#0d5c63] font-bold uppercase tracking-widest -mt-0.5 mb-2">
-              Proforma Invoice
-            </p>
             <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 shadow-sm text-right space-y-1 min-w-[170px]">
               <div className="flex justify-between items-center gap-2">
                 <span className="text-slate-400 font-bold uppercase text-[8.5px]">Quote No:</span>
@@ -301,18 +298,19 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
               </ol>
             </div>
 
-            {/* Authorised Signatory Box (Inspired by Reference 2 & 3) */}
-            <div className="pt-2 flex justify-between items-end pr-4">
+            {/* Digital Verification & System Generated Note */}
+            <div className="pt-2 flex justify-between items-end pr-2 border-t border-slate-200/80 mt-2">
               <div className="text-[8px] text-slate-400 font-medium">
                 Thank you for choosing Black Stone Interiors!
               </div>
-              <div className="text-center w-36">
-                <div className="h-10 border-b border-slate-400 border-dashed mb-1 flex items-end justify-center pb-1">
-                  <span className="text-[8px] text-slate-300 uppercase tracking-widest font-bold">Seal / Signature</span>
+              <div className="text-right">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200/80 rounded-lg text-[8.5px] font-bold">
+                  <span>✓</span>
+                  <span>Digitally Approved by Authorised Signatory</span>
                 </div>
-                <span className="text-[8.5px] font-bold text-[#0b1e36] uppercase tracking-wider block">
-                  Authorised Signatory
-                </span>
+                <p className="text-[7.5px] text-slate-400 mt-1 italic">
+                  This is a computer-generated document and digitally approved by authorized signatory, hence no physical signature is required.
+                </p>
               </div>
             </div>
           </div>
