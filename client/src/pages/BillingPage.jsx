@@ -4,9 +4,14 @@ import { useNavigate, useLocation } from "react-router-dom";
 import PrintableInvoice from "../components/PrintableInvoice";
 import ManageOptionsModal, {
   DEFAULT_PRODUCTS,
-  DEFAULT_SPECIFICATIONS,
-  DEFAULT_SECTIONS
+  DEFAULT_SPECIFICATIONS
 } from "../components/ManageOptionsModal";
+import SectionInput from "../components/SectionInput";
+
+const formatINR = (val) => {
+  const num = Number(val) || 0;
+  return num.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
 import {
   Trash2,
   Printer,
@@ -69,7 +74,7 @@ export default function BillingPage() {
   const [quotations, setQuotations] = useState([]);
   const [sites, setSites] = useState([]);
 
-  // Dropdown Options Management (Products, Specifications, Sections / Types)
+  // Dropdown Options Management (Products, Specifications)
   const [productsList, setProductsList] = useState(() => {
     const saved = localStorage.getItem("quote_products");
     return saved ? JSON.parse(saved) : DEFAULT_PRODUCTS;
@@ -80,11 +85,6 @@ export default function BillingPage() {
     return saved ? JSON.parse(saved) : DEFAULT_SPECIFICATIONS;
   });
 
-  const [sectionsList, setSectionsList] = useState(() => {
-    const saved = localStorage.getItem("quote_sections");
-    return saved ? JSON.parse(saved) : DEFAULT_SECTIONS;
-  });
-
   useEffect(() => {
     localStorage.setItem("quote_products", JSON.stringify(productsList));
   }, [productsList]);
@@ -92,10 +92,6 @@ export default function BillingPage() {
   useEffect(() => {
     localStorage.setItem("quote_specifications", JSON.stringify(specificationsList));
   }, [specificationsList]);
-
-  useEffect(() => {
-    localStorage.setItem("quote_sections", JSON.stringify(sectionsList));
-  }, [sectionsList]);
 
   // Derive suggestions for Section strictly from previously entered data (current items & saved history)
   const previouslyEnteredSections = useMemo(() => {
@@ -118,6 +114,48 @@ export default function BillingPage() {
     } catch {}
   };
 
+  // Load historical sections from existing database records on mount
+  useEffect(() => {
+    const loadHistoricalSections = async () => {
+      try {
+        const [qRes, iRes] = await Promise.allSettled([
+          fetch('/api/quotations').then(r => r.ok ? r.json() : []),
+          fetch('/api/finance/invoices').then(r => r.ok ? r.json() : [])
+        ]);
+        const historical = [];
+        if (qRes.status === 'fulfilled' && Array.isArray(qRes.value)) {
+          qRes.value.forEach(q => {
+            let its = q.items;
+            if (typeof its === 'string') { try { its = JSON.parse(its); } catch {} }
+            if (Array.isArray(its)) {
+              its.forEach(it => { if (it.section?.trim()) historical.push(it.section.trim()); });
+            }
+          });
+        }
+        if (iRes.status === 'fulfilled' && Array.isArray(iRes.value)) {
+          iRes.value.forEach(inv => {
+            let its = inv.items;
+            if (typeof its === 'string') { try { its = JSON.parse(its); } catch {} }
+            if (Array.isArray(its)) {
+              its.forEach(it => { if (it.section?.trim()) historical.push(it.section.trim()); });
+            }
+          });
+        }
+        if (historical.length > 0) {
+          let existing = [];
+          try {
+            existing = JSON.parse(localStorage.getItem("bsi_entered_sections") || "[]");
+          } catch {}
+          const merged = Array.from(new Set([...existing, ...historical]));
+          localStorage.setItem("bsi_entered_sections", JSON.stringify(merged));
+        }
+      } catch (e) {
+        console.warn("Could not load historical sections", e);
+      }
+    };
+    loadHistoricalSections();
+  }, []);
+
   const [isOptionsModalOpen, setIsOptionsModalOpen] = useState(false);
   const [activeOptionsTab, setActiveOptionsTab] = useState("products");
 
@@ -127,9 +165,7 @@ export default function BillingPage() {
   };
 
   const handleRenameOption = (type, oldVal, newVal) => {
-    if (type === "sections") {
-      setItems(prev => prev.map(i => i.section === oldVal ? { ...i, section: newVal } : i));
-    } else if (type === "products") {
+    if (type === "products") {
       setItems(prev => prev.map(i => i.product === oldVal ? { ...i, product: newVal } : i));
     } else if (type === "specifications") {
       setItems(prev => prev.map(i => i.specification === oldVal ? { ...i, specification: newVal } : i));
@@ -961,7 +997,7 @@ export default function BillingPage() {
 
         <div className="md:col-span-2 flex flex-col md:items-end justify-start md:justify-end pb-0.5">
           <span className="text-[9px] font-bold text-amber-700 dark:text-[var(--accent)] uppercase tracking-widest">Sub Total</span>
-          <span className="text-sm font-black text-amber-700 dark:text-[var(--accent)]">₹{subTotal.toLocaleString()}</span>
+          <span className="text-sm font-black text-amber-700 dark:text-[var(--accent)]">₹{formatINR(subTotal)}</span>
         </div>
       </div>
 
@@ -1022,13 +1058,11 @@ export default function BillingPage() {
                   {idx + 1}
                 </td>
                 <td className="px-1 py-1 border-r border-white/10">
-                  <input 
-                    list="billing-sections-datalist"
-                    value={item.section || ""} 
-                    onChange={e => handleItemChange(item.id, "section", e.target.value)} 
-                    placeholder="Section" 
-                    className="w-full bg-transparent border-none outline-none text-themed text-xs px-1 [&::-webkit-calendar-picker-indicator]:hidden"
-                    autoComplete="off"
+                  <SectionInput
+                    value={item.section || ""}
+                    onChange={val => handleItemChange(item.id, "section", val)}
+                    suggestions={previouslyEnteredSections}
+                    placeholder="Section"
                   />
                 </td>
                 <td className="px-1 py-1 border-r border-white/10">
@@ -1122,7 +1156,7 @@ export default function BillingPage() {
                   )}
                 </td>
                 <td className="px-2 py-2 text-right font-black text-amber-700 dark:text-[var(--accent)]">
-                  {(item.amount || 0).toFixed(2)}
+                  {formatINR(item.amount || 0)}
                 </td>
               </tr>
             ))}
@@ -1139,12 +1173,7 @@ export default function BillingPage() {
           </tbody>
         </table>
 
-        {/* Datalist for typing sections with autocomplete suggestions from previously entered data */}
-        <datalist id="billing-sections-datalist">
-          {previouslyEnteredSections.map((sec, i) => (
-            <option key={i} value={sec} />
-          ))}
-        </datalist>
+
 
         <div className="p-2 border-b border-[var(--border-color)] flex justify-center gap-4">
           <button 
@@ -1197,7 +1226,7 @@ export default function BillingPage() {
               <div className="flex flex-col gap-1 bg-blue-500/5 dark:bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20">
                 <label className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase flex items-center justify-between gap-1">
                   <span>CGST (%)</span>
-                  <span className="text-[8px] opacity-80 font-bold">₹{cgstAmount.toFixed(2)}</span>
+                  <span className="text-[8px] opacity-80 font-bold">₹{formatINR(cgstAmount)}</span>
                 </label>
                 <input 
                   value={cgstPercent} 
@@ -1210,7 +1239,7 @@ export default function BillingPage() {
               <div className="flex flex-col gap-1 bg-blue-500/5 dark:bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20">
                 <label className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase flex items-center justify-between gap-1">
                   <span>SGST (%)</span>
-                  <span className="text-[8px] opacity-80 font-bold">₹{sgstAmount.toFixed(2)}</span>
+                  <span className="text-[8px] opacity-80 font-bold">₹{formatINR(sgstAmount)}</span>
                 </label>
                 <input 
                   value={sgstPercent} 
@@ -1231,11 +1260,11 @@ export default function BillingPage() {
               {billType === 'GST' ? "Grand Total (incl. GST)" : "Estimated Total"}
             </div>
             <div className="text-4xl font-black text-amber-700 dark:text-[var(--accent)] tracking-tighter">
-              {grandTotal.toFixed(2)}
+              {formatINR(grandTotal)}
             </div>
             {billType === 'GST' ? (
               <div className="text-[9px] font-bold text-blue-600 dark:text-blue-400 mt-0.5">
-                CGST ({cgstPercent || 0}%): ₹{cgstAmount.toFixed(2)} | SGST ({sgstPercent || 0}%): ₹{sgstAmount.toFixed(2)}
+                CGST ({cgstPercent || 0}%): ₹{formatINR(cgstAmount)} | SGST ({sgstPercent || 0}%): ₹{formatINR(sgstAmount)}
               </div>
             ) : (
               <div className="text-[9px] font-bold text-muted mt-0.5">
@@ -1293,8 +1322,6 @@ export default function BillingPage() {
         setProductsList={setProductsList}
         specificationsList={specificationsList}
         setSpecificationsList={setSpecificationsList}
-        sectionsList={sectionsList}
-        setSectionsList={setSectionsList}
         onRenameOption={handleRenameOption}
       />
 

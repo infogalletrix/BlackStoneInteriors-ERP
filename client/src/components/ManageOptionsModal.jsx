@@ -36,19 +36,6 @@ export const DEFAULT_SPECIFICATIONS = [
   "Standard Material & Hardware as per Site Specifications"
 ];
 
-export const DEFAULT_SECTIONS = [
-  "General",
-  "Living Room",
-  "Kitchen",
-  "M.B.R Dresser Wardrobe",
-  "Master Bedroom",
-  "Kids Bedroom",
-  "Guest Bedroom",
-  "Dining Area",
-  "Foyer",
-  "Balcony"
-];
-
 export default function ManageOptionsModal({
   isOpen,
   onClose,
@@ -58,8 +45,6 @@ export default function ManageOptionsModal({
   setProductsList,
   specificationsList,
   setSpecificationsList,
-  sectionsList,
-  setSectionsList,
   onRenameOption
 }) {
   const [newOptionText, setNewOptionText] = useState("");
@@ -69,18 +54,10 @@ export default function ManageOptionsModal({
 
   if (!isOpen) return null;
 
-  const currentTab = activeTab || "products";
+  const currentTab = activeTab === "specifications" ? "specifications" : "products";
 
   const getListAndSetter = () => {
-    if (currentTab === "products") {
-      return {
-        list: productsList,
-        setList: setProductsList,
-        defaults: DEFAULT_PRODUCTS,
-        label: "Product",
-        placeholder: "Enter new product (e.g., Shoe Rack, TV Unit)..."
-      };
-    } else if (currentTab === "specifications") {
+    if (currentTab === "specifications") {
       return {
         list: specificationsList,
         setList: setSpecificationsList,
@@ -90,11 +67,11 @@ export default function ManageOptionsModal({
       };
     } else {
       return {
-        list: sectionsList,
-        setList: setSectionsList,
-        defaults: DEFAULT_SECTIONS,
-        label: "Section",
-        placeholder: "Enter new section name (e.g., Living Room)..."
+        list: productsList,
+        setList: setProductsList,
+        defaults: DEFAULT_PRODUCTS,
+        label: "Product",
+        placeholder: "Enter new product (e.g., Shoe Rack, TV Unit)..."
       };
     }
   };
@@ -222,28 +199,6 @@ export default function ManageOptionsModal({
               }`}
             >
               {specificationsList.length}
-            </span>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab("sections");
-              setEditingIdx(null);
-              setSearchQuery("");
-            }}
-            className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
-              currentTab === "sections"
-                ? "bg-[var(--accent)] text-white shadow-sm"
-                : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5"
-            }`}
-          >
-            <span>Sections</span>
-            <span
-              className={`px-1.5 py-0.5 rounded-md text-[10px] font-black ${
-                currentTab === "sections" ? "bg-white/20 text-white" : "bg-slate-500/10 text-slate-500"
-              }`}
-            >
-              {sectionsList.length}
             </span>
           </button>
         </div>
