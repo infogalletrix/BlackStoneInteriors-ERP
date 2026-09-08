@@ -20,18 +20,27 @@ export default function SettingsModal({ isOpen, onClose, onLogout }) {
   const API_URL = import.meta.env.VITE_API_URL || '/api';
 
   useEffect(() => {
-    if (isOpen) {
-      fetch(`${API_URL}/auth/login-history`)
-        .then(res => res.json())
-        .then(data => setLoginHistory(data))
-        .catch(err => console.error(err));
+    if (!isOpen) return;
 
-      fetch(`${API_URL}/auth/activity-logs`)
-        .then(res => res.json())
-        .then(data => setActivityLogs(data))
-        .catch(err => console.error(err));
-    }
-  }, [isOpen]);
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    fetch(`${API_URL}/auth/login-history`)
+      .then(res => res.json())
+      .then(data => setLoginHistory(data))
+      .catch(err => console.error(err));
+
+    fetch(`${API_URL}/auth/activity-logs`)
+      .then(res => res.json())
+      .then(data => setActivityLogs(data))
+      .catch(err => console.error(err));
+
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -62,19 +71,35 @@ export default function SettingsModal({ isOpen, onClose, onLogout }) {
   };
 
   const modalContent = (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className={`w-full max-w-4xl rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row min-h-[600px] ${t.isDark ? "bg-slate-900" : "bg-white"}`}>
-        
+    <div 
+      className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200"
+      onClick={onClose}
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        className={`w-full max-w-4xl max-h-[90vh] rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row relative border ${t.isDark ? "bg-slate-900 border-white/10" : "bg-white border-slate-200"}`}
+      >
+        {/* Always visible Close Button - fixed in top right of modal, never scrolls off */}
+        <button 
+          onClick={onClose} 
+          className={`absolute top-4 right-4 z-50 p-2.5 rounded-full transition-all shadow-md flex items-center justify-center cursor-pointer ${
+            t.isDark 
+              ? "bg-slate-800/95 text-slate-300 hover:text-white hover:bg-rose-600 border border-white/10 backdrop-blur-sm" 
+              : "bg-white/95 text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 backdrop-blur-sm"
+          }`}
+          title="Close Settings (Esc)"
+          aria-label="Close Settings"
+        >
+          <X size={20} strokeWidth={2.5} />
+        </button>
+
         {/* Settings Sidebar */}
-        <div className={`w-full md:w-64 p-6 border-b md:border-b-0 md:border-r flex flex-col ${t.isDark ? "bg-slate-800/50 border-white/10" : "bg-slate-50 border-slate-200"}`}>
-          <div className="flex justify-between items-center mb-8">
+        <div className={`w-full md:w-64 p-6 border-b md:border-b-0 md:border-r flex flex-col shrink-0 ${t.isDark ? "bg-slate-800/50 border-white/10" : "bg-slate-50 border-slate-200"}`}>
+          <div className="flex justify-between items-center mb-6 md:mb-8">
             <h2 className={`text-xl font-black flex items-center gap-2 ${t.isDark ? "text-white" : "text-slate-900"}`}>
               <Shield className="text-accent" size={24} />
               Settings
             </h2>
-            <button onClick={onClose} className="md:hidden p-1 text-slate-400 hover:text-red-500 transition-colors">
-              <X size={20} />
-            </button>
           </div>
 
           <div className="flex flex-col gap-2 flex-1">
@@ -90,7 +115,7 @@ export default function SettingsModal({ isOpen, onClose, onLogout }) {
           </div>
 
           {/* Preferences and Logout */}
-          <div className="mt-8 flex flex-col gap-2 pt-6 border-t border-inherit">
+          <div className="mt-6 md:mt-8 flex flex-col gap-2 pt-6 border-t border-inherit">
             <button
               onClick={toggleTheme}
               className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all ${t.isDark ? "bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700" : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 shadow-sm border border-slate-200"}`}
@@ -114,10 +139,8 @@ export default function SettingsModal({ isOpen, onClose, onLogout }) {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 p-8 relative overflow-y-auto custom-scrollbar">
-          <button onClick={onClose} className="hidden md:block absolute top-6 right-6 p-2 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-full transition-colors">
-            <X size={24} />
-          </button>
+        <div className="flex-1 p-6 sm:p-8 pr-14 sm:pr-16 relative overflow-y-auto custom-scrollbar">
+
 
           {activeTab === 'account' && (
             <div className="animate-in slide-in-from-right-4 duration-300">
