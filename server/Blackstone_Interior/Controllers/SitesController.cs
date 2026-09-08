@@ -81,6 +81,12 @@ namespace Blackstone_Interior.Controllers
                 SurveyDate = dto.SurveyDate ?? ""
             };
             _db.Sites.Add(site);
+            _db.SystemActivityLogs.Add(new SystemActivityLog
+            {
+                Action = $"Created Project / Work Order '{site.Name}' ({site.ClientName})",
+                Icon = "Briefcase",
+                Timestamp = DateTime.UtcNow
+            });
             await _db.SaveChangesAsync();
             return Ok(new { id = site.Id, message = "Site created" });
         }
@@ -171,6 +177,13 @@ namespace Blackstone_Interior.Controllers
             if (dto.SurveyDate != null)
                 site.SurveyDate = dto.SurveyDate;
                 
+            _db.SystemActivityLogs.Add(new SystemActivityLog
+            {
+                Action = $"Updated Project '{site.Name}' (Status: {dto.Status ?? site.Status})",
+                Icon = "Briefcase",
+                Timestamp = DateTime.UtcNow
+            });
+
             await _db.SaveChangesAsync();
             return Ok(new { message = "Site updated" });
         }
@@ -242,6 +255,12 @@ namespace Blackstone_Interior.Controllers
             }
 
             _db.Sites.Remove(site);
+            _db.SystemActivityLogs.Add(new SystemActivityLog
+            {
+                Action = $"Deleted Project '{site.Name}'",
+                Icon = "Trash2",
+                Timestamp = DateTime.UtcNow
+            });
             await _db.SaveChangesAsync();
             return Ok(new { message = "Site deleted" });
         }

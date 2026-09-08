@@ -275,6 +275,12 @@ namespace Blackstone_Interior.Controllers
                 AdditionalDiscount = dto.AdditionalDiscount ?? 0
             };
             _db.Quotations.Add(q);
+            _db.SystemActivityLogs.Add(new SystemActivityLog
+            {
+                Action = $"Created Quotation {assignedNo} for {dto.ClientName ?? "Client"} (₹{dto.Total:N0})",
+                Icon = "FileText",
+                Timestamp = DateTime.UtcNow
+            });
             await _db.SaveChangesAsync();
             return Ok(new { id = q.Id.ToString(), quoteNo = q.QuoteNo, message = "Quotation saved" });
         }
@@ -329,6 +335,13 @@ namespace Blackstone_Interior.Controllers
                 }
             }
 
+            _db.SystemActivityLogs.Add(new SystemActivityLog
+            {
+                Action = $"Updated Quotation {dto.QuoteNo} ({dto.ClientName ?? "Client"})",
+                Icon = "FileText",
+                Timestamp = DateTime.UtcNow
+            });
+
             await _db.SaveChangesAsync();
             return Ok(new { id = q.Id.ToString(), quoteNo = q.QuoteNo, message = "Quotation updated" });
         }
@@ -360,6 +373,12 @@ namespace Blackstone_Interior.Controllers
             }
 
             _db.Quotations.Remove(q);
+            _db.SystemActivityLogs.Add(new SystemActivityLog
+            {
+                Action = $"Deleted Quotation {q.QuoteNo}",
+                Icon = "Trash2",
+                Timestamp = DateTime.UtcNow
+            });
             await _db.SaveChangesAsync();
             return Ok(new { message = "Quotation deleted" });
         }

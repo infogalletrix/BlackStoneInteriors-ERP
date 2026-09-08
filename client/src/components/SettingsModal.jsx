@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Moon, Sun, LogOut, Key, Activity, Clock, Shield, User } from 'lucide-react';
+import { X, Moon, Sun, LogOut, Key, Activity, Clock, Shield, User, FileText, Receipt, DollarSign, Briefcase, Users, Trash2, CheckCircle, RefreshCw } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useThemeClasses } from '../hooks/useThemeClasses';
 
@@ -16,8 +16,25 @@ export default function SettingsModal({ isOpen, onClose, onLogout }) {
 
   const [loginHistory, setLoginHistory] = useState([]);
   const [activityLogs, setActivityLogs] = useState([]);
+  const [loadingActivity, setLoadingActivity] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL || '/api';
+
+  const fetchActivityLogs = useCallback(() => {
+    setLoadingActivity(true);
+    fetch(`${API_URL}/auth/activity-logs`)
+      .then(res => res.json())
+      .then(data => setActivityLogs(Array.isArray(data) ? data : []))
+      .catch(err => console.error(err))
+      .finally(() => setLoadingActivity(false));
+  }, [API_URL]);
+
+  const fetchLoginHistory = useCallback(() => {
+    fetch(`${API_URL}/auth/login-history`)
+      .then(res => res.json())
+      .then(data => setLoginHistory(Array.isArray(data) ? data : []))
+      .catch(err => console.error(err));
+  }, [API_URL]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -29,18 +46,11 @@ export default function SettingsModal({ isOpen, onClose, onLogout }) {
     };
     window.addEventListener('keydown', handleKeyDown);
 
-    fetch(`${API_URL}/auth/login-history`)
-      .then(res => res.json())
-      .then(data => setLoginHistory(data))
-      .catch(err => console.error(err));
-
-    fetch(`${API_URL}/auth/activity-logs`)
-      .then(res => res.json())
-      .then(data => setActivityLogs(data))
-      .catch(err => console.error(err));
+    fetchLoginHistory();
+    fetchActivityLogs();
 
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, fetchActivityLogs, fetchLoginHistory]);
 
   if (!isOpen) return null;
 
@@ -64,10 +74,71 @@ export default function SettingsModal({ isOpen, onClose, onLogout }) {
     setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
+
+    // Log password change to activity log
+    fetch(`${API_URL}/auth/log-activity`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'Admin changed password in Settings', icon: 'Key' })
+    }).then(() => fetchActivityLogs()).catch(() => {});
     
     setTimeout(() => {
       setPasswordMessage({ text: '', type: '' });
     }, 3000);
+  };
+
+  const renderActivityIcon = (icon) => {
+    switch (icon) {
+      case 'FileText':
+        return (
+          <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-500 border border-blue-500/20 shrink-0">
+            <FileText size={18} />
+          </div>
+        );
+      case 'Receipt':
+        return (
+          <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shrink-0">
+            <Receipt size={18} />
+          </div>
+        );
+      case 'DollarSign':
+        return (
+          <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20 shrink-0">
+            <DollarSign size={18} />
+          </div>
+        );
+      case 'Briefcase':
+        return (
+          <div className="p-2.5 rounded-xl bg-violet-500/10 text-violet-500 border border-violet-500/20 shrink-0">
+            <Briefcase size={18} />
+          </div>
+        );
+      case 'User':
+      case 'Users':
+        return (
+          <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-500 border border-indigo-500/20 shrink-0">
+            <Users size={18} />
+          </div>
+        );
+      case 'Trash2':
+        return (
+          <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-500 border border-rose-500/20 shrink-0">
+            <Trash2 size={18} />
+          </div>
+        );
+      case 'Key':
+        return (
+          <div className="p-2.5 rounded-xl bg-amber-400/10 text-amber-500 border border-amber-400/20 shrink-0">
+            <Key size={18} />
+          </div>
+        );
+      default:
+        return (
+          <div className="p-2.5 rounded-xl bg-purple-500/10 text-accent border border-purple-500/20 shrink-0">
+            <Activity size={18} />
+          </div>
+        );
+    }
   };
 
   const modalContent = (
@@ -176,23 +247,35 @@ export default function SettingsModal({ isOpen, onClose, onLogout }) {
 
           {activeTab === 'activity' && (
             <div className="animate-in slide-in-from-right-4 duration-300">
-              <h3 className={`text-2xl font-black mb-1 ${t.isDark ? "text-white" : "text-slate-900"}`}>Recent Activity</h3>
-              <p className="text-muted text-sm font-medium mb-8">Audit trail of actions performed within the ERP.</p>
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h3 className={`text-2xl font-black mb-1 ${t.isDark ? "text-white" : "text-slate-900"}`}>Activity Log</h3>
+                  <p className="text-muted text-sm font-medium">Audit trail of operational business events and system actions.</p>
+                </div>
+                <button
+                  onClick={fetchActivityLogs}
+                  disabled={loadingActivity}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-500 hover:text-accent bg-black/5 dark:bg-white/5 transition-all disabled:opacity-50"
+                  title="Refresh activity logs"
+                >
+                  <RefreshCw size={14} className={loadingActivity ? "animate-spin" : ""} />
+                  Refresh
+                </button>
+              </div>
               
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {activityLogs.length > 0 ? activityLogs.map(act => (
-                  <div key={act.id} className={`flex items-center gap-4 p-4 rounded-2xl border ${t.isDark ? "border-white/5 bg-white/5" : "border-slate-100 bg-white shadow-sm"}`}>
-                    <div className={`p-3 rounded-xl ${t.isDark ? "bg-black/20" : "bg-slate-50"}`}>
-                      {act.icon === 'Key' ? <Key size={20} className="text-accent" /> : <Activity size={20} className="text-accent" />}
-                    </div>
-                    <div>
-                      <h4 className={`font-bold text-sm ${t.isDark ? "text-white" : "text-slate-900"}`}>{act.action}</h4>
-                      <p className="text-xs text-muted font-medium mt-0.5">{new Date(act.timestamp).toLocaleString()}</p>
+                  <div key={act.id} className={`flex items-start gap-3.5 p-3.5 rounded-2xl border transition-all ${t.isDark ? "border-white/5 bg-white/5 hover:bg-white/10" : "border-slate-100 bg-white shadow-sm hover:shadow-md"}`}>
+                    {renderActivityIcon(act.icon)}
+                    <div className="flex-1 min-w-0">
+                      <h4 className={`font-bold text-sm leading-snug ${t.isDark ? "text-white" : "text-slate-900"}`}>{act.action}</h4>
+                      <p className="text-xs text-muted font-medium mt-1">{new Date(act.timestamp).toLocaleString("en-IN", { dateStyle: 'medium', timeStyle: 'short' })}</p>
                     </div>
                   </div>
                 )) : (
-                  <div className="p-8 text-center border border-dashed border-[var(--border-color)] rounded-2xl">
-                    <p className="text-muted text-sm font-bold">No recent activity recorded.</p>
+                  <div className="p-12 text-center border border-dashed border-[var(--border-color)] rounded-2xl">
+                    <Activity size={32} className="mx-auto text-muted mb-2 opacity-50" />
+                    <p className="text-muted text-sm font-bold">No recent business activities recorded.</p>
                   </div>
                 )}
               </div>

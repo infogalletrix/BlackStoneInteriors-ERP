@@ -153,6 +153,16 @@ namespace Blackstone_Interior.Controllers
             var logs = await _context.SystemActivityLogs.OrderByDescending(l => l.Timestamp).Take(50).ToListAsync();
             return Ok(logs);
         }
+
+        [HttpPost("log-activity")]
+        public async Task<IActionResult> LogActivity([FromBody] SystemActivityLog log)
+        {
+            if (string.IsNullOrWhiteSpace(log.Action)) return BadRequest(new { message = "Action cannot be empty." });
+            log.Timestamp = DateTime.UtcNow;
+            _context.SystemActivityLogs.Add(log);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Activity logged." });
+        }
     }
 
     public class LoginRequest

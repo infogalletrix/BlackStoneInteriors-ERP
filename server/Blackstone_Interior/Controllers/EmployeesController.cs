@@ -118,6 +118,12 @@ namespace Blackstone_Interior.Controllers
                 WorkerId = assignedId
             };
             _db.Employees.Add(emp);
+            _db.SystemActivityLogs.Add(new SystemActivityLog
+            {
+                Action = $"Added Employee '{emp.WorkerId} - {emp.Name}' ({emp.Role})",
+                Icon = "User",
+                Timestamp = DateTime.UtcNow
+            });
             await _db.SaveChangesAsync();
             return Ok(new { id = emp.Id, message = "Employee added" });
         }
@@ -144,6 +150,13 @@ namespace Blackstone_Interior.Controllers
             emp.SalaryType = dto.SalaryType ?? "Monthly";
             emp.WorkerId = dto.WorkerId ?? "";
 
+            _db.SystemActivityLogs.Add(new SystemActivityLog
+            {
+                Action = $"Updated Employee '{emp.WorkerId} - {emp.Name}'",
+                Icon = "User",
+                Timestamp = DateTime.UtcNow
+            });
+
             await _db.SaveChangesAsync();
             return Ok(new { message = "Employee updated" });
         }
@@ -155,6 +168,12 @@ namespace Blackstone_Interior.Controllers
             var emp = await _db.Employees.FindAsync(id);
             if (emp == null) return NotFound();
             _db.Employees.Remove(emp);
+            _db.SystemActivityLogs.Add(new SystemActivityLog
+            {
+                Action = $"Removed Employee '{emp.WorkerId} - {emp.Name}'",
+                Icon = "Trash2",
+                Timestamp = DateTime.UtcNow
+            });
             await _db.SaveChangesAsync();
             return Ok(new { message = "Employee deleted" });
         }

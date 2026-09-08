@@ -126,6 +126,12 @@ namespace Blackstone_Interior.Controllers
                 AdditionalDiscount = dto.AdditionalDiscount ?? 0
             };
             _db.Invoices.Add(inv);
+            _db.SystemActivityLogs.Add(new SystemActivityLog
+            {
+                Action = $"Created Invoice {assignedNo} for {dto.ClientName ?? "Client"}",
+                Icon = "FileText",
+                Timestamp = DateTime.UtcNow
+            });
             await _db.SaveChangesAsync();
             return Ok(new { id = inv.Id.ToString(), invoiceNo = inv.InvoiceNo, message = "Invoice saved" });
         }
@@ -166,11 +172,18 @@ namespace Blackstone_Interior.Controllers
             if (dto.DeliveryLoading.HasValue) inv.DeliveryLoading = dto.DeliveryLoading.Value;
             if (dto.AdditionalDiscount.HasValue) inv.AdditionalDiscount = dto.AdditionalDiscount.Value;
 
+            _db.SystemActivityLogs.Add(new SystemActivityLog
+            {
+                Action = $"Updated Invoice {dto.InvoiceNo} ({dto.ClientName ?? "Client"})",
+                Icon = "FileText",
+                Timestamp = DateTime.UtcNow
+            });
+
             await _db.SaveChangesAsync();
             return Ok(new { message = "Invoice updated" });
         }
 
-        // PATCH /api/finance/invoices/{id}/status Ã¢â‚¬â€ update payment status only
+        // PATCH /api/finance/invoices/{id}/status — update payment status only
         [HttpPatch("invoices/{id}/status")]
         public async Task<IActionResult> UpdateInvoiceStatus(int id, [FromBody] JsonElement body)
         {
@@ -191,11 +204,17 @@ namespace Blackstone_Interior.Controllers
             var inv = await _db.Invoices.FindAsync(id);
             if (inv == null) return NotFound();
             _db.Invoices.Remove(inv);
+            _db.SystemActivityLogs.Add(new SystemActivityLog
+            {
+                Action = $"Deleted Invoice {inv.InvoiceNo}",
+                Icon = "Trash2",
+                Timestamp = DateTime.UtcNow
+            });
             await _db.SaveChangesAsync();
             return Ok(new { message = "Invoice deleted" });
         }
 
-        // Ã¢â€â‚¬Ã¢â€â‚¬ EXPENSES Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+        // ————— EXPENSES ——————————————————————————————————
 
         // GET /api/finance/expenses
         [HttpGet("expenses")]
@@ -234,6 +253,12 @@ namespace Blackstone_Interior.Controllers
                 Type = dto.Type
             };
             _db.Expenses.Add(exp);
+            _db.SystemActivityLogs.Add(new SystemActivityLog
+            {
+                Action = $"Recorded Expense ({dto.Category}): {dto.Description} (₹{dto.Amount:N0})",
+                Icon = "DollarSign",
+                Timestamp = DateTime.UtcNow
+            });
             await _db.SaveChangesAsync();
             return Ok(new { id = exp.Id.ToString(), message = "Expense recorded" });
         }
@@ -271,6 +296,12 @@ namespace Blackstone_Interior.Controllers
             var exp = await _db.Expenses.FindAsync(id);
             if (exp == null) return NotFound();
             _db.Expenses.Remove(exp);
+            _db.SystemActivityLogs.Add(new SystemActivityLog
+            {
+                Action = $"Deleted Expense ({exp.Category}): {exp.Description}",
+                Icon = "Trash2",
+                Timestamp = DateTime.UtcNow
+            });
             await _db.SaveChangesAsync();
             return Ok(new { message = "Expense deleted" });
         }
@@ -325,6 +356,12 @@ namespace Blackstone_Interior.Controllers
                     : "{}"
             };
             _db.PayrollRecords.Add(record);
+            _db.SystemActivityLogs.Add(new SystemActivityLog
+            {
+                Action = $"Processed Payroll for {dto.Month} {dto.Year} (₹{dto.NetPay:N0})",
+                Icon = "Users",
+                Timestamp = DateTime.UtcNow
+            });
             await _db.SaveChangesAsync();
             return Ok(new { id = record.Id.ToString(), message = "Payroll entry saved" });
         }
@@ -407,6 +444,13 @@ namespace Blackstone_Interior.Controllers
             if (emp != null) {
                 emp.AdvanceBalance = emp.AdvanceBalance + advToRefund;
             }
+
+            _db.SystemActivityLogs.Add(new SystemActivityLog
+            {
+                Action = $"Reversed Payroll record #{record.Id} ({record.Month} {record.Year})",
+                Icon = "Users",
+                Timestamp = DateTime.UtcNow
+            });
 
             await _db.SaveChangesAsync();
             return Ok(new { message = "Payroll reversed" });
@@ -500,6 +544,12 @@ namespace Blackstone_Interior.Controllers
                 PaymentMode = dto.PaymentMode
             };
             _db.PaymentReceipts.Add(r);
+            _db.SystemActivityLogs.Add(new SystemActivityLog
+            {
+                Action = $"Issued Payment Receipt {assignedNo} for {dto.ClientName ?? "Client"} (₹{dto.AmountPaid:N0})",
+                Icon = "Receipt",
+                Timestamp = DateTime.UtcNow
+            });
             await _db.SaveChangesAsync();
             return Ok(new { id = r.Id.ToString(), message = "Receipt saved" });
         }
@@ -531,6 +581,13 @@ namespace Blackstone_Interior.Controllers
             r.Comments = dto.Comments;
             r.PaymentMode = dto.PaymentMode;
 
+            _db.SystemActivityLogs.Add(new SystemActivityLog
+            {
+                Action = $"Updated Payment Receipt {dto.ReceiptNo} ({dto.ClientName ?? "Client"})",
+                Icon = "Receipt",
+                Timestamp = DateTime.UtcNow
+            });
+
             await _db.SaveChangesAsync();
             return Ok(new { message = "Receipt updated" });
         }
@@ -541,6 +598,12 @@ namespace Blackstone_Interior.Controllers
             var r = await _db.PaymentReceipts.FindAsync(id);
             if (r == null) return NotFound();
             _db.PaymentReceipts.Remove(r);
+            _db.SystemActivityLogs.Add(new SystemActivityLog
+            {
+                Action = $"Deleted Payment Receipt {r.ReceiptNo}",
+                Icon = "Trash2",
+                Timestamp = DateTime.UtcNow
+            });
             await _db.SaveChangesAsync();
             return Ok(new { message = "Receipt deleted" });
         }
