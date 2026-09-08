@@ -23,7 +23,7 @@ const FinalSettlementSheet = forwardRef(({ site, receipts }, ref) => {
         <div className="flex items-center gap-4 mb-4 border-b border-black pb-4">
           <img src="/logo.png" alt="Logo" className="w-16 h-16 object-contain rounded-lg" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} />
           <div>
-            <h1 className="text-2xl font-black uppercase tracking-tighter text-gray-900">Black Stone Interiorss</h1>
+            <h1 className="text-2xl font-black uppercase tracking-tighter text-gray-900">Black Stone Interiors</h1>
             <p className="font-bold text-gray-600 text-[10px] mt-1">Phone: +91 9599174996, +91 9315157200</p>
             <p className="font-bold text-gray-600 text-[9px] mt-0.5">Email: Nakul.blackstoneinteriors@gmail.com | GSTIN: 06ABFFB6382G1ZF</p>
             <p className="font-bold text-gray-600 text-[9px] leading-tight mt-0.5">Address: Plot No 72 sector 6 IMT Manesar, Gurgaon Haryana 122050</p>
@@ -153,52 +153,72 @@ const FinalSettlementSheet = forwardRef(({ site, receipts }, ref) => {
             {/* List Receipts */}
             {receipts && receipts.length > 0 ? receipts.map((r, i) => (
               <tr key={r.id || i}>
-                <td className="border border-black p-1 pl-2 uppercase">By {r.paymentMode || "Bank"}</td>
-                <td className="border border-black p-1 text-center">{new Date(r.date).toLocaleDateString("en-GB")}</td>
-                <td className="border border-black p-1 pr-2 text-right">{parseFloat(r.amountPaid || 0)}</td>
+                <td className="border border-black p-1 pl-2 uppercase">
+                  By {r.paymentMode || "Bank"} {r.receiptNo ? `(${r.receiptNo})` : ""}
+                </td>
+                <td className="border border-black p-1 text-center">
+                  {new Date(r.date).toLocaleDateString("en-GB")}
+                </td>
+                <td className="border border-black p-1 pr-2 text-right">
+                  ₹ {parseFloat(r.amountPaid || 0).toLocaleString("en-IN")}
+                </td>
               </tr>
             )) : (
               <tr>
-                <td className="border border-black p-1 italic text-gray-500 text-center" colSpan="3">No receipts found</td>
+                <td className="border border-black p-1 italic text-gray-500 text-center" colSpan="3">
+                  No receipts recorded
+                </td>
               </tr>
             )}
 
             {/* Pad receipts to ensure consistent height */}
-            {[...Array(Math.max(0, 5 - (receipts?.length || 0)))].map((_, i) => (
+            {[...Array(Math.max(0, 3 - (receipts?.length || 0)))].map((_, i) => (
               <tr key={`pad3-${i}`}>
                 <td className="border border-black p-1 h-5"></td>
                 <td className="border border-black p-1"></td>
                 <td className="border border-black p-1"></td>
               </tr>
             ))}
-
-            <tr className="bg-purple-800 text-white font-bold">
-              <td colSpan="2" className="border border-black p-1 pl-2 uppercase">Total Payment Received</td>
-              <td className="border border-black p-1 pr-2 text-right">{totalReceived}</td>
-            </tr>
-
-            <tr className="font-bold">
-              <td className="border border-black p-1 pl-2 uppercase">Balance Receivable</td>
-              <td className="border border-black p-1 text-center">0</td>
-              <td className={`border border-black p-1 pr-2 text-right ${balance > 0 ? "bg-pink-300 text-red-900" : ""}`}>
-                {balance}
-              </td>
-            </tr>
-
-            <tr className="font-bold">
-              <td colSpan="2" className="border border-black p-1 text-center uppercase">Grand Total</td>
-              <td className="border border-black p-1 pr-2 text-right">{grandTotal}</td>
-            </tr>
           </tbody>
         </table>
 
-        {/* Footer Signatures */}
-        <div className="flex justify-between items-end mt-auto pt-16 font-bold text-[10px] uppercase">
-          <div className="w-1/3 text-left">
-            AUTHORIZED SIGNATORY
-          </div>
-          <div className="w-1/3 text-right">
-            CUSTOMER
+        {/* Footer Section: Total Payment Received & Balance Receivable */}
+        <div className="mt-auto pt-4 space-y-4">
+          <table className="w-full border-collapse border border-black text-xs font-bold">
+            <tbody>
+              <tr className="bg-purple-800 text-white">
+                <td className="border border-black p-2 pl-3 uppercase w-2/3 tracking-wider">
+                  TOTAL PAYMENT RECEIVED
+                </td>
+                <td className="border border-black p-2 pr-3 text-right w-1/3 text-sm font-black">
+                  ₹ {totalReceived.toLocaleString("en-IN")}
+                </td>
+              </tr>
+              <tr className={balance > 0 ? "bg-red-50 text-red-950" : "bg-emerald-50 text-emerald-950"}>
+                <td className="border border-black p-2 pl-3 uppercase w-2/3 tracking-wider">
+                  BALANCE RECEIVABLE
+                </td>
+                <td className={`border border-black p-2 pr-3 text-right w-1/3 text-sm font-black ${balance > 0 ? "text-red-600" : "text-emerald-700"}`}>
+                  ₹ {balance.toLocaleString("en-IN")}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          {/* Footer Approval & Customer Acknowledgement */}
+          <div className="flex justify-between items-end pt-3 border-t border-gray-300 font-bold text-[10px] uppercase">
+            <div className="text-left">
+              <p className="text-gray-900 font-black tracking-wider">
+                ✓ APPROVED &amp; COMPUTER GENERATED
+              </p>
+              <p className="text-gray-500 font-normal lowercase first-letter:uppercase text-[9px] mt-0.5">
+                This document is approved and computer generated. No physical authorized signature is required.
+              </p>
+            </div>
+            <div className="text-right">
+              <div className="border-b border-black w-36 mb-1 ml-auto"></div>
+              <p className="text-gray-700">CUSTOMER</p>
+            </div>
           </div>
         </div>
       </div>

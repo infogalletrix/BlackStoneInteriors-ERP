@@ -147,7 +147,7 @@ const ReportsPage = () => {
     <div className={`p-4 md:p-6 ${t.page}`}>
 
       {/* HEADER */}
-      <div className="relative z-10 mb-6 flex justify-between items-start">
+      <div className="relative z-30 mb-6 flex justify-between items-start">
         <div>
           <motion.h1 initial={{ opacity:0, x:-20 }} animate={{ opacity:1, x:0 }}
             className={`text-xl font-black tracking-tight flex items-center gap-2 ${t.heading}`}>
@@ -162,7 +162,7 @@ const ReportsPage = () => {
       </div>
 
       {!dashboardData.loading && (
-        <div className="relative z-10">
+        <div className="relative z-0">
           {/* KPI ROW */}
           <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

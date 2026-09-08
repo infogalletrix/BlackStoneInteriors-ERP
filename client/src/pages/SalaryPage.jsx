@@ -551,7 +551,7 @@ export default function SalaryPage() {
       <motion.div 
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4"
+        className="relative z-30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4"
       >
         <div>
           <h1 className="text-xl font-black text-themed flex items-center gap-2 tracking-tight">
@@ -596,7 +596,7 @@ export default function SalaryPage() {
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 relative z-10">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 relative z-0">
         {/* LEFT: Employee Roster + Actions */}
         <div className="xl:col-span-5 space-y-6 h-[calc(100vh-180px)] flex flex-col">
           

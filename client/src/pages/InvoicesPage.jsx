@@ -2,10 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import { useReactToPrint } from "react-to-print";
 import PrintableInvoice from "../components/PrintableInvoice";
 import PrintableQuotation from "../components/PrintableQuotation";
+import PrintableReceipt from "../components/PrintableReceipt";
+import ReceiptPreviewModal from "../components/ReceiptPreviewModal";
 import {
   FileText, Search, Eye, Printer, CheckCircle2, Clock, AlertCircle,
   IndianRupee, TrendingUp, Calendar, X, Filter, Edit2, Trash2,
-  History, FileCheck,
+  History, FileCheck, Receipt, Plus
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useDialog } from "../contexts/DialogContext";
@@ -28,12 +30,22 @@ export default function HistoryPage() {
   const [activeTab, setActiveTab] = useState(location.state?.activeTab || "invoices");
   const [savedInvoices, setSavedInvoices] = useState([]);
   const [quotations, setQuotations] = useState([]);
+  const [receipts, setReceipts] = useState([]);
+  const [sites, setSites] = useState([]);
   const [isLoadingInvoices, setIsLoadingInvoices] = useState(true);
   const [isLoadingQuotes, setIsLoadingQuotes] = useState(true);
+  const [isLoadingReceipts, setIsLoadingReceipts] = useState(true);
+  const [receiptsFilter, setReceiptsFilter] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [previewInvoice, setPreviewInvoice] = useState(null);
+  const [previewReceipt, setPreviewReceipt] = useState(null);
+  const [receiptPrintData, setReceiptPrintData] = useState([]);
+
   const componentRef = useRef();
   const handlePrint = useReactToPrint({ contentRef: componentRef });
+
+  const receiptComponentRef = useRef();
+  const handleReceiptPrint = useReactToPrint({ contentRef: receiptComponentRef });
 
   const fetchInvoices = async () => {
     setIsLoadingInvoices(true);
@@ -74,6 +86,26 @@ export default function HistoryPage() {
     finally { setIsLoadingQuotes(false); }
   };
 
+  const fetchReceipts = async () => {
+    setIsLoadingReceipts(true);
+    try {
+      const res = await fetch("/api/finance/receipts");
+      const data = await res.json();
+      setReceipts(Array.isArray(data) ? data : []);
+    } catch (err) { console.error(err); }
+    finally { setIsLoadingReceipts(false); }
+  };
+
+  const fetchSites = async () => {
+    try {
+      const res = await fetch("/api/sites");
+      if (res.ok) {
+        const data = await res.json();
+        setSites(Array.isArray(data) ? data : []);
+      }
+    } catch (err) { console.error(err); }
+  };
+
   const updateQuotationStatus = async (q, newStatus) => {
     try {
       await fetch(`/api/quotations/${q.id || q.quoteNo}`, {
@@ -90,6 +122,8 @@ export default function HistoryPage() {
   useEffect(() => {
     fetchInvoices();
     fetchQuotations();
+    fetchReceipts();
+    fetchSites();
   }, []);
 
   const deleteInvoice = async (id) => {
@@ -120,6 +154,35 @@ export default function HistoryPage() {
     });
   };
 
+  const deleteReceipt = async (id) => {
+    showDialog({
+      title: "Delete Payment Receipt",
+      message: "Are you sure you want to delete this payment receipt?",
+      type: "confirm",
+      onConfirm: async () => {
+        try {
+          await fetch(`/api/finance/receipts/${id}`, { method: "DELETE" });
+          fetchReceipts();
+        } catch (err) { console.error(err); }
+      }
+    });
+  };
+
+  const printPastReceipt = (receipt) => {
+    if (receipt.status === "Draft") {
+      showDialog({
+        title: "Cannot Print",
+        message: "Drafts cannot be printed. Please complete the receipt first.",
+        type: "alert"
+      });
+      return;
+    }
+    setReceiptPrintData([receipt]);
+    setTimeout(() => {
+      handleReceiptPrint();
+    }, 100);
+  };
+
   const filteredInvoices = savedInvoices.filter((inv) => {
     const q = searchTerm.toLowerCase();
     const match = inv.clientName?.toLowerCase().includes(q) || inv.invoiceNo?.toLowerCase().includes(q);
@@ -131,9 +194,31 @@ export default function HistoryPage() {
     return q.clientName?.toLowerCase().includes(s) || q.quoteNo?.toLowerCase().includes(s);
   });
 
+  const filteredReceipts = receipts.filter((r) => {
+    const s = searchTerm.toLowerCase();
+    const matchSearch =
+      !s ||
+      r.clientName?.toLowerCase().includes(s) ||
+      r.organizationName?.toLowerCase().includes(s) ||
+      r.receiptNo?.toLowerCase().includes(s) ||
+      r.description?.toLowerCase().includes(s) ||
+      (r.siteId && `wo: ${r.siteId}`.includes(s)) ||
+      (r.siteId && `wo ${r.siteId}`.includes(s));
+
+    const matchFilter = receiptsFilter === "All" || r.status === receiptsFilter;
+    return matchSearch && matchFilter;
+  });
+
   const totalInvoiced = savedInvoices.reduce((s, i) => s + parseFloat(i.grandTotal || 0), 0);
   const totalCollected = savedInvoices.reduce((s, i) => s + parseFloat(i.advanceAmount || 0) + parseFloat(i.receivedAmount || 0), 0);
   const totalOutstanding = savedInvoices.reduce((s, i) => s + Math.max(0, parseFloat(i.balanceAmount || 0)), 0);
+
+  const totalReceiptsAmount = receipts.reduce(
+    (sum, r) => sum + parseFloat(r.amountPaid || r.totalAmount || 0),
+    0
+  );
+  const completedReceiptsCount = receipts.filter((r) => r.status === "Completed").length;
+  const draftReceiptsCount = receipts.filter((r) => r.status === "Draft").length;
 
   return (
     <div className="p-4 md:p-6 page-wrapper">
@@ -143,7 +228,7 @@ export default function HistoryPage() {
           <h1 className="text-xl font-black text-themed flex items-center gap-2">
             <History className="text-accent" size={18} /> Transaction History
           </h1>
-          <p className="text-muted text-xs mt-0.5 font-medium">All invoices and quotations in one place.</p>
+          <p className="text-muted text-xs mt-0.5 font-medium">All invoices, quotations, and payment receipts in one place.</p>
         </div>
         {/* Tab Buttons */}
         <div className="flex gap-3 items-center">
@@ -167,6 +252,16 @@ export default function HistoryPage() {
               }`}
             >
               <FileCheck size={16} /> Quotations
+            </button>
+            <button
+              onClick={() => { setActiveTab("receipts"); setSearchTerm(""); }}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-sm transition-all shadow-sm ${
+                activeTab === "receipts"
+                  ? "bg-emerald-600 text-white shadow-emerald-200 shadow-md"
+                  : "bg-white/5 text-muted border border-[var(--border-color)] hover:bg-white/10"
+              }`}
+            >
+              <Receipt size={16} /> Payment Receipts
             </button>
           </div>
           <NotificationWidget />
@@ -368,6 +463,214 @@ export default function HistoryPage() {
         </>
       )}
 
+      {/* ── PAYMENT RECEIPTS TAB ── */}
+      {activeTab === "receipts" && (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-8">
+            <div className="bg-emerald-600 text-white p-7 rounded-3xl shadow-xl">
+              <p className="text-emerald-200 text-[10px] font-black uppercase tracking-widest mb-2 flex items-center gap-2">
+                <IndianRupee size={12} /> Total Received
+              </p>
+              <h2 className="text-4xl font-black tracking-tighter">₹{totalReceiptsAmount.toLocaleString()}</h2>
+              <p className="text-emerald-200 text-xs mt-2 font-medium">{receipts.length} receipt{receipts.length !== 1 ? "s" : ""} recorded</p>
+            </div>
+            <div className="themed-card p-7 rounded-3xl flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-black text-muted uppercase tracking-widest mb-1">Completed Receipts</p>
+                <h2 className="text-3xl font-black text-emerald-600">{completedReceiptsCount}</h2>
+              </div>
+              <div className="p-4 bg-emerald-500/10 rounded-3xl text-emerald-500"><CheckCircle2 size={28} /></div>
+            </div>
+            <div className="themed-card p-7 rounded-3xl flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-black text-muted uppercase tracking-widest mb-1">Draft Receipts</p>
+                <h2 className="text-3xl font-black text-themed">{draftReceiptsCount}</h2>
+              </div>
+              <div className="p-4 bg-[var(--accent-soft)] rounded-3xl text-muted"><Clock size={28} /></div>
+            </div>
+          </div>
+
+          <div className="themed-card shadow-2xl rounded-[32px] overflow-hidden">
+            <div className="p-5 border-b border-[var(--border-color)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex gap-2">
+                {["All", "Completed", "Draft"].map((filter) => (
+                  <button
+                    key={filter}
+                    onClick={() => setReceiptsFilter(filter)}
+                    className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition ${
+                      receiptsFilter === filter
+                        ? "bg-emerald-600 text-white shadow-md"
+                        : "themed-card text-muted border border-[var(--border-color)] hover:bg-white/5"
+                    }`}
+                  >
+                    {filter}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <div className="relative flex-1 sm:flex-initial">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={16} />
+                  <input
+                    type="text"
+                    placeholder="Search receipts, client, WO..."
+                    className="pl-9 pr-4 py-2.5 themed-input rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500 font-medium w-full sm:w-72"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <button
+                  onClick={() => navigate("/receipts")}
+                  className="px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white transition flex items-center gap-1.5 shadow-md shrink-0"
+                >
+                  <Plus size={14} /> New
+                </button>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="text-[10px] font-black text-muted uppercase tracking-widest border-b border-[var(--border-color)] themed-thead">
+                    <th className="px-8 py-4">Receipt No.</th>
+                    <th className="px-8 py-4">Date</th>
+                    <th className="px-8 py-4">Work Order</th>
+                    <th className="px-8 py-4">Client</th>
+                    <th className="px-8 py-4">Category & Mode</th>
+                    <th className="px-8 py-4 text-right">Amount Received</th>
+                    <th className="px-8 py-4 text-center">Status</th>
+                    <th className="px-8 py-4 text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y themed-divider">
+                  {filteredReceipts.map((r) => {
+                    const site = sites.find((s) => s.id?.toString() === r.siteId?.toString());
+                    return (
+                      <tr
+                        key={r.id}
+                        className="themed-row cursor-pointer hover:bg-white/5 transition"
+                        onClick={(e) => {
+                          if (e.target.tagName !== "BUTTON" && !e.target.closest("button")) {
+                            setPreviewReceipt(r);
+                          }
+                        }}
+                      >
+                        <td className="px-8 py-5">
+                          <span className="font-black text-emerald-600 text-sm">{r.receiptNo}</span>
+                        </td>
+                        <td className="px-8 py-5 text-sm text-muted font-medium">
+                          <span className="flex items-center gap-2">
+                            <Calendar size={13} className="text-muted" />
+                            {r.date ? new Date(r.date).toLocaleDateString("en-IN") : "—"}
+                          </span>
+                        </td>
+                        <td className="px-8 py-5">
+                          {r.siteId ? (
+                            <div>
+                              <span className="inline-flex items-center gap-1 bg-slate-500/10 text-themed px-2 py-0.5 rounded-md font-bold text-xs">
+                                WO #{r.siteId}
+                              </span>
+                              {site && <p className="text-xs text-muted font-medium mt-0.5 truncate max-w-[140px]">{site.name}</p>}
+                            </div>
+                          ) : (
+                            <span className="text-muted text-xs">—</span>
+                          )}
+                        </td>
+                        <td className="px-8 py-5">
+                          <p className="font-black text-themed text-sm">{r.clientName || "—"}</p>
+                          {r.organizationName && (
+                            <p className="text-xs text-muted font-medium mt-0.5">{r.organizationName}</p>
+                          )}
+                        </td>
+                        <td className="px-8 py-5">
+                          <p className="font-bold text-themed text-xs">{r.category || "Payment"}</p>
+                          <p className="text-[11px] text-muted font-medium mt-0.5">{r.paymentMode || "Cash"}</p>
+                        </td>
+                        <td className="px-8 py-5 text-right font-black text-emerald-600 text-base whitespace-nowrap">
+                          ₹ {parseFloat(r.amountPaid || r.totalAmount || 0).toLocaleString("en-IN")}
+                        </td>
+                        <td className="px-8 py-5 text-center">
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                            r.status === "Completed"
+                              ? "bg-emerald-500/15 text-emerald-500 border-emerald-500/30"
+                              : "bg-slate-500/15 text-slate-400 border-slate-500/30"
+                          }`}>
+                            {r.status || "Completed"}
+                          </span>
+                        </td>
+                        <td className="px-8 py-5" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => setPreviewReceipt(r)}
+                              className="p-2 bg-blue-500/10 text-blue-500 rounded-xl hover:bg-blue-500/20 transition"
+                              title="View Receipt (In-place)"
+                            >
+                              <Eye size={16} />
+                            </button>
+                            <button
+                              onClick={() => printPastReceipt(r)}
+                              className={`p-2 rounded-xl transition ${
+                                r.status === "Draft"
+                                  ? "bg-slate-500/10 text-slate-400 opacity-40 cursor-not-allowed"
+                                  : "bg-teal-500/10 text-teal-500 hover:bg-teal-500/20"
+                              }`}
+                              title="Print Receipt"
+                            >
+                              <Printer size={16} />
+                            </button>
+                            <button
+                              onClick={() =>
+                                navigate("/receipts", {
+                                  state: {
+                                    autoFill: {
+                                      siteId: r.siteId,
+                                      name: r.clientName,
+                                      organizationName: r.organizationName,
+                                      amountPaid: r.amountPaid || r.totalAmount,
+                                      category: r.category,
+                                      desc: r.description
+                                    }
+                                  }
+                                })
+                              }
+                              className="p-2 bg-violet-500/10 text-violet-500 rounded-xl hover:bg-violet-500/20 transition"
+                              title="Edit in Receipts"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              onClick={() => deleteReceipt(r.id)}
+                              className="p-2 bg-rose-500/10 text-rose-500 rounded-xl hover:bg-rose-500/20 transition"
+                              title="Delete"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {isLoadingReceipts ? (
+              <div className="py-20 flex justify-center items-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+              </div>
+            ) : filteredReceipts.length === 0 && (
+              <div className="py-20 text-center">
+                <Filter className="mx-auto text-slate-200 mb-3" size={40} />
+                <p className="text-slate-400 font-bold uppercase text-xs tracking-widest">
+                  {receipts.length === 0
+                    ? "No payment receipts yet. Generate from the Payment Receipts page."
+                    : "No receipts match your search."}
+                </p>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
       {/* Preview Modal */}
       {previewInvoice && (() => {
         const isQuote = !!previewInvoice.quoteNo;
@@ -470,6 +773,30 @@ export default function HistoryPage() {
         );
       })()}
 
+      {/* ── INLINE RECEIPT PREVIEW MODAL ("view that in that itself") ── */}
+      {previewReceipt && (
+        <ReceiptPreviewModal
+          receipt={previewReceipt}
+          onClose={() => setPreviewReceipt(null)}
+          onPrint={printPastReceipt}
+          onEdit={(r) =>
+            navigate("/receipts", {
+              state: {
+                autoFill: {
+                  siteId: r.siteId,
+                  name: r.clientName,
+                  organizationName: r.organizationName,
+                  amountPaid: r.amountPaid || r.totalAmount,
+                  category: r.category,
+                  desc: r.description
+                }
+              }
+            })
+          }
+        />
+      )}
+
+      {/* Hidden Invoice / Quotation Print Content */}
       {previewInvoice && (() => {
         const isQuote = !!previewInvoice.quoteNo;
         const docTypeName = isQuote ? "Quotation" : "Invoice";
@@ -528,6 +855,13 @@ export default function HistoryPage() {
         </div>
         );
       })()}
+
+      {/* Hidden Receipt Print Content */}
+      <div style={{ display: "none" }}>
+        {receiptPrintData.length > 0 && (
+          <PrintableReceipt ref={receiptComponentRef} receipts={receiptPrintData} />
+        )}
+      </div>
     </div>
   );
 }

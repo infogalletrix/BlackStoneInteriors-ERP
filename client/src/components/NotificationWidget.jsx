@@ -143,7 +143,7 @@ export default function NotificationWidget({ compact = false }) {
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative z-50" ref={dropdownRef}>
       {/* Bell Button */}
       <button 
         onClick={toggleOpen}

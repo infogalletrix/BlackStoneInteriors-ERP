@@ -776,6 +776,95 @@ export default function BillingPage() {
           <NotificationWidget compact={true} />
         </div>
       </div>
+
+      {/* ── WORK ORDER + LOAD FROM QUOTE BAR ── */}
+      <div className="themed-card p-4 md:p-2 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-2 border-b border-[var(--border-color)] items-end bg-blue-500/5">
+        <div className="md:col-span-5">
+          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Link Work Order (Site)</label>
+          <select
+            value={workOrderId}
+            onChange={(e) => {
+              const siteId = e.target.value;
+              setWorkOrderId(siteId);
+              const site = sites.find(s => s.id?.toString() === siteId);
+              if (site) {
+                if (site.clientName) {
+                  setClientName(site.clientName);
+                  const matchedClient = crmClients.find(c => c.name.toLowerCase() === site.clientName.toLowerCase());
+                  if (matchedClient) {
+                    setOrganizationName(matchedClient.organizationName || "");
+                    setEmailId(matchedClient.email || "");
+                    setMobileNo(matchedClient.phone || "");
+                    if (!site.address) setClientAddress(matchedClient.address || "");
+                  }
+                }
+                if (site.address) setClientAddress(site.address);
+                if (site.name) setProjectTitle(site.name);
+              }
+            }}
+            className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none focus:border-amber-400 bg-[var(--bg-card)]"
+          >
+            <option value="">— Select Work Order / Site —</option>
+            {sites.map(s => (
+              <option key={s.id} value={s.id}>
+                {s.name || "Unnamed"} {s.clientName ? `| ${s.clientName}` : ""} {s.status ? `(${s.status})` : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="md:col-span-5">
+          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Load Items from Quote</label>
+          <select
+            value={sourceQuoteId}
+            onChange={(e) => {
+              const qId = e.target.value;
+              setSourceQuoteId(qId);
+              if (!qId) return;
+              const q = quotations.find(qt => qt.id?.toString() === qId);
+              if (q) {
+                if (q.items && q.items.length > 0) setItems(q.items.map(i => ({ ...i, id: Date.now() + Math.random() })));
+                if (q.clientName) setClientName(q.clientName);
+                if (q.organizationName) setOrganizationName(q.organizationName);
+                if (q.clientAddress) setClientAddress(q.clientAddress);
+                if (q.projectTitle) setProjectTitle(q.projectTitle);
+                if (q.emailId) setEmailId(q.emailId);
+                if (q.mobileNo) setMobileNo(q.mobileNo);
+                if (q.customerGst) setCustomerGst(q.customerGst);
+                if (q.deliveryTimeline) setDeliveryTimeline(q.deliveryTimeline);
+                if (q.installationMaterial) setInstallationMaterial(q.installationMaterial);
+                if (q.deliveryLoading) setDeliveryLoading(q.deliveryLoading);
+                if (q.additionalDiscount) setAdditionalDiscount(q.additionalDiscount);
+                if (q.billType) setBillType(q.billType);
+              }
+            }}
+            className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none focus:border-amber-400 bg-[var(--bg-card)]"
+          >
+            <option value="">— Select Quotation to Import —</option>
+            {quotations.map(q => (
+              <option key={q.id} value={q.id}>
+                {q.quoteNo || `#${q.id}`} | {q.clientName || "No Client"} {q.projectTitle ? `— ${q.projectTitle}` : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="md:col-span-2 flex flex-row md:flex-col items-center md:items-end justify-start md:justify-end gap-2 md:gap-1 pb-0.5">
+          {workOrderId && (
+            <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+              Work Order Linked
+            </span>
+          )}
+          {sourceQuoteId && (
+            <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
+              Quote Loaded
+            </span>
+          )}
+        </div>
+      </div>
+
       {/* ── TOP INFO BAR ── */}
       <div className="themed-card p-4 md:p-2 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-2 border-b border-[var(--border-color)] items-end">
         <div className="md:col-span-2">
@@ -815,18 +904,6 @@ export default function BillingPage() {
               className={`flex-1 py-1 text-[10px] font-black uppercase rounded transition ${billType === "Non-GST" ? "bg-rose-600 text-white" : "text-slate-500 hover:text-slate-700"}`}
             >Non-GST</button>
           </div>
-          {billType === "GST" && (
-            <button
-              onClick={() => setIsInterState(v => !v)}
-              className={`mt-1 w-full py-0.5 text-[9px] font-black uppercase rounded border transition ${
-                isInterState
-                  ? "bg-blue-600 text-white border-blue-600"
-                  : "bg-transparent text-slate-500 border-slate-300 hover:border-blue-400 hover:text-blue-500"
-              }`}
-            >
-              {isInterState ? "✓ IGST (Inter-State)" : "IGST Inter-State?"}
-            </button>
-          )}
         </div>
 
         <div className="md:col-span-3">
@@ -920,80 +997,7 @@ export default function BillingPage() {
         </div>
       </div>
 
-      {/* ── WORK ORDER + LOAD FROM QUOTE BAR ── */}
-      <div className="themed-card p-4 md:p-2 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-2 border-b border-[var(--border-color)] items-end bg-blue-500/5">
-        <div className="md:col-span-5">
-          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Link Work Order (Site)</label>
-          <select
-            value={workOrderId}
-            onChange={(e) => {
-              const siteId = e.target.value;
-              setWorkOrderId(siteId);
-              const site = sites.find(s => s.id?.toString() === siteId);
-              if (site) {
-                if (!clientName && site.clientName) setClientName(site.clientName);
-                if (!clientAddress && site.address) setClientAddress(site.address);
-                if (!projectTitle && site.name) setProjectTitle(site.name);
-              }
-            }}
-            className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none focus:border-amber-400 bg-[var(--bg-card)]"
-          >
-            <option value="">— Select Work Order / Site —</option>
-            {sites.map(s => (
-              <option key={s.id} value={s.id}>
-                {s.name || "Unnamed"} {s.clientName ? `| ${s.clientName}` : ""} {s.status ? `(${s.status})` : ""}
-              </option>
-            ))}
-          </select>
-        </div>
 
-        <div className="md:col-span-5">
-          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Load Items from Quote</label>
-          <select
-            value={sourceQuoteId}
-            onChange={(e) => {
-              const qId = e.target.value;
-              setSourceQuoteId(qId);
-              if (!qId) return;
-              const q = quotations.find(qt => qt.id?.toString() === qId);
-              if (q) {
-                if (q.items && q.items.length > 0) setItems(q.items.map(i => ({ ...i, id: Date.now() + Math.random() })));
-                if (!clientName && q.clientName) setClientName(q.clientName);
-                if (!organizationName && q.organizationName) setOrganizationName(q.organizationName);
-                if (!clientAddress && q.clientAddress) setClientAddress(q.clientAddress);
-                if (!projectTitle && q.projectTitle) setProjectTitle(q.projectTitle);
-                if (q.installationMaterial) setInstallationMaterial(q.installationMaterial);
-                if (q.deliveryLoading) setDeliveryLoading(q.deliveryLoading);
-                if (q.additionalDiscount) setAdditionalDiscount(q.additionalDiscount);
-                if (q.billType) setBillType(q.billType);
-              }
-            }}
-            className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none focus:border-amber-400 bg-[var(--bg-card)]"
-          >
-            <option value="">— Select Quotation to Import —</option>
-            {quotations.map(q => (
-              <option key={q.id} value={q.id}>
-                {q.quoteNo || `#${q.id}`} | {q.clientName || "No Client"} {q.projectTitle ? `— ${q.projectTitle}` : ""}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="md:col-span-2 flex flex-row md:flex-col items-center md:items-end justify-start md:justify-end gap-2 md:gap-1 pb-0.5">
-          {workOrderId && (
-            <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-              Work Order Linked
-            </span>
-          )}
-          {sourceQuoteId && (
-            <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
-              Quote Loaded
-            </span>
-          )}
-        </div>
-      </div>
 
       <div className="themed-card p-4 md:p-2 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-2 border-b border-[var(--border-color)] items-end">
         <div className="md:col-span-5">
