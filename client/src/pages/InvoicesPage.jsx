@@ -237,8 +237,8 @@ export default function HistoryPage() {
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left">
-                <thead>
-                  <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-white/10 bg-black/20">
+                <thead className="bg-white dark:bg-slate-900">
+                  <tr className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider border-b border-[var(--border-color)]">
                     <th className="px-8 py-4">Quote No.</th>
                     <th className="px-8 py-4">Date</th>
                     <th className="px-8 py-4">Client</th>
@@ -372,8 +372,8 @@ export default function HistoryPage() {
 
             <div className="overflow-x-auto">
               <table className="w-full text-left">
-                <thead>
-                  <tr className="text-[10px] font-black text-muted uppercase tracking-widest border-b border-[var(--border-color)] themed-thead">
+                <thead className="bg-white dark:bg-slate-900">
+                  <tr className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider border-b border-[var(--border-color)]">
                     <th className="px-8 py-4">Receipt No.</th>
                     <th className="px-8 py-4">Date</th>
                     <th className="px-8 py-4">Work Order</th>
