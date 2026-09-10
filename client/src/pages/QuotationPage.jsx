@@ -579,7 +579,7 @@ export default function QuotationPage() {
   return (
     <div className="page-wrapper min-h-screen font-sans flex flex-col text-sm">
       {/* Sessions Tab Bar */}
-      <div className="bg-[var(--bg-surface)] px-4 pt-2.5 flex items-center justify-between border-b border-[var(--border-color)] relative z-10">
+      <div className="bg-[var(--bg-surface)] px-4 pt-2.5 flex items-center justify-between border-b border-[var(--border-color)] relative z-30">
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar flex-1">
           {sessions.map(s => (
             <div
@@ -609,7 +609,7 @@ export default function QuotationPage() {
             <Plus size={18} strokeWidth={3} />
           </button>
         </div>
-        <div className="pb-1.5 pl-3 shrink-0">
+        <div className="pb-1.5 pl-3 shrink-0 relative z-50">
           <NotificationWidget compact={true} />
         </div>
       </div>
