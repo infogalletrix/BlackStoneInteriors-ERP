@@ -577,52 +577,52 @@ export default function QuotationPage() {
   };
 
   return (
-    <div className="page-wrapper min-h-screen font-sans flex flex-col">
+    <div className="page-wrapper min-h-screen font-sans flex flex-col text-sm">
       {/* Sessions Tab Bar */}
-      <div className="bg-[var(--bg-surface)] px-2 pt-2 flex items-center justify-between border-b border-[var(--border-color)] relative z-10">
-        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar flex-1">
+      <div className="bg-[var(--bg-surface)] px-4 pt-2.5 flex items-center justify-between border-b border-[var(--border-color)] relative z-10">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar flex-1">
           {sessions.map(s => (
             <div
               key={s.id}
               onClick={() => setActiveSessionId(s.id)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-t-lg text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-t-xl text-xs font-bold uppercase tracking-wider cursor-pointer transition-all ${
                 activeSessionId === s.id 
                 ? "bg-[var(--bg-card)] text-[var(--text-primary)] border border-b-0 border-[var(--border-color)] shadow-sm" 
                 : "bg-[var(--bg-surface)] text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-primary)]"
               }`}
             >
-              <FileText size={12} className={activeSessionId === s.id ? "text-[var(--accent)]" : "opacity-40"} />
-              <span className="max-w-[100px] truncate">{s.title}</span>
+              <FileText size={14} className={activeSessionId === s.id ? "text-[var(--accent)]" : "opacity-40"} />
+              <span className="max-w-[140px] truncate">{s.title}</span>
               <button 
                 onClick={(e) => closeSession(s.id, e)}
-                className={`p-0.5 rounded-full hover:bg-black/10 transition ${activeSessionId === s.id ? "text-slate-400 hover:text-red-500" : "text-slate-500 hover:text-white"}`}
+                className={`p-1 rounded-full hover:bg-black/10 transition ${activeSessionId === s.id ? "text-slate-400 hover:text-red-500" : "text-slate-500 hover:text-white"}`}
               >
-                <X size={10} />
+                <X size={12} />
               </button>
             </div>
           ))}
           <button 
             onClick={createNewSession}
-            className="p-1.5 text-[var(--accent)] hover:opacity-70 transition hover:bg-[var(--accent-soft)] rounded-full mb-1"
+            className="p-2 text-[var(--accent)] hover:opacity-70 transition hover:bg-[var(--accent-soft)] rounded-full mb-1"
             title="New Quotation Session"
           >
-            <Plus size={16} strokeWidth={3} />
+            <Plus size={18} strokeWidth={3} />
           </button>
         </div>
-        <div className="pb-1 pl-2 shrink-0">
+        <div className="pb-1.5 pl-3 shrink-0">
           <NotificationWidget compact={true} />
         </div>
       </div>
       {/* ── TOP INFO BAR ── */}
-      <div className="themed-card p-4 md:p-2 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-2 border-b border-[var(--border-color)] items-end">
+      <div className="themed-card p-4 md:p-3.5 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-3.5 border-b border-[var(--border-color)] items-end">
         <div className="md:col-span-2">
-          <label className="block text-[10px] font-bold text-muted uppercase">Quotation Number</label>
+          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Quotation Number</label>
           <input disabled value={quoteNo}
-            className="w-full bg-[var(--accent-soft)] border border-[var(--accent)]/30 text-amber-800 dark:text-[var(--accent)] px-2 py-1 text-sm font-bold outline-none rounded" />
+            className="w-full bg-[var(--accent-soft)] border border-[var(--accent)]/30 text-amber-800 dark:text-[var(--accent)] px-3 py-2 text-sm font-bold outline-none rounded-lg" />
         </div>
 
         <div className="md:col-span-2">
-          <label className="block text-[10px] font-bold text-muted uppercase">Date</label>
+          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Date</label>
           <input 
             type="date" 
             value={quoteDate}
@@ -636,26 +636,26 @@ export default function QuotationPage() {
                   .catch(() => setQuoteNo(""));
               }
             }}
-            className="w-full bg-[var(--accent-soft)] border border-[var(--accent)]/30 text-amber-800 dark:text-[var(--accent)] px-2 py-1 text-sm font-bold rounded" />
+            className="w-full bg-[var(--accent-soft)] border border-[var(--accent)]/30 text-amber-800 dark:text-[var(--accent)] px-3 py-2 text-sm font-bold rounded-lg" />
         </div>
 
         {/* Bill Type Toggle */}
         <div className="md:col-span-2">
-          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Bill Type</label>
-          <div className="flex bg-white/10 rounded p-0.5 gap-0.5">
+          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Bill Type</label>
+          <div className="flex bg-white/10 dark:bg-black/20 rounded-lg p-1 gap-1 border border-[var(--border-color)]">
             <button
               onClick={() => setBillType("GST")}
-              className={`flex-1 py-1 text-[10px] font-black uppercase rounded transition ${billType === "GST" ? "bg-amber-600 text-white" : "text-slate-500 hover:text-slate-700"}`}
+              className={`flex-1 py-1.5 text-xs font-black uppercase rounded-md transition ${billType === "GST" ? "bg-amber-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
             >GST</button>
             <button
               onClick={() => setBillType("Non-GST")}
-              className={`flex-1 py-1 text-[10px] font-black uppercase rounded transition ${billType === "Non-GST" ? "bg-rose-600 text-white" : "text-slate-500 hover:text-slate-700"}`}
+              className={`flex-1 py-1.5 text-xs font-black uppercase rounded-md transition ${billType === "Non-GST" ? "bg-rose-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
             >Non-GST</button>
           </div>
         </div>
 
         <div className="md:col-span-3">
-          <label className="block text-[10px] font-bold text-slate-500 uppercase">
+          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
             Client Name
           </label>
           <input
@@ -673,7 +673,7 @@ export default function QuotationPage() {
                 setClientAddress(matchedClient.address || "");
               }
             }}
-            className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none focus:border-amber-400"
+            className="w-full themed-input border border-[var(--border-color)] px-3 py-2 text-sm rounded-lg outline-none focus:border-amber-400 transition"
           />
           <datalist id="crm-clients-list-quotation">
             {crmClients.map(c => (
@@ -683,142 +683,142 @@ export default function QuotationPage() {
         </div>
 
         <div className="md:col-span-3">
-          <label className="block text-[10px] font-bold text-slate-500 uppercase">
+          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
             Email ID
           </label>
           <input
             placeholder="client@example.com"
             value={emailId}
             onChange={(e) => setEmailId(e.target.value)}
-            className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none focus:border-amber-400"
+            className="w-full themed-input border border-[var(--border-color)] px-3 py-2 text-sm rounded-lg outline-none focus:border-amber-400 transition"
           />
         </div>
       </div>
 
-      <div className="themed-card p-4 md:p-2 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-2 border-b border-[var(--border-color)] items-end">
+      <div className="themed-card p-4 md:p-3.5 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-3.5 border-b border-[var(--border-color)] items-end">
         <div className="md:col-span-3">
-          <label className="block text-[10px] font-bold text-slate-500 uppercase">
+          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
             Mobile No
           </label>
           <input
             placeholder="+91..."
             value={mobileNo}
             onChange={(e) => setMobileNo(e.target.value)}
-            className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none focus:border-amber-400"
+            className="w-full themed-input border border-[var(--border-color)] px-3 py-2 text-sm rounded-lg outline-none focus:border-amber-400 transition"
           />
         </div>
         
         <div className="md:col-span-3">
-          <label className="block text-[10px] font-bold text-slate-500 uppercase">
+          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
             Customer GST
           </label>
           <input
             placeholder="GSTIN..."
             value={customerGst}
             onChange={(e) => setCustomerGst(e.target.value)}
-            className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none focus:border-amber-400"
+            className="w-full themed-input border border-[var(--border-color)] px-3 py-2 text-sm rounded-lg outline-none focus:border-amber-400 transition"
           />
         </div>
         
         <div className="md:col-span-3">
-          <label className="block text-[10px] font-bold text-slate-500 uppercase">
+          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
             Delivery Timeline
           </label>
           <input
             placeholder="3 to 4 Weeks"
             value={deliveryTimeline}
             onChange={(e) => setDeliveryTimeline(e.target.value)}
-            className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none focus:border-amber-400"
+            className="w-full themed-input border border-[var(--border-color)] px-3 py-2 text-sm rounded-lg outline-none focus:border-amber-400 transition"
           />
         </div>
 
         <div className="md:col-span-3">
-          <label className="block text-[10px] font-bold text-slate-500 uppercase">
+          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
             Organization Name (Optional)
           </label>
           <input
             placeholder="e.g. Acme Corporation"
             value={organizationName}
             onChange={(e) => setOrganizationName(e.target.value)}
-            className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none focus:border-amber-400"
+            className="w-full themed-input border border-[var(--border-color)] px-3 py-2 text-sm rounded-lg outline-none focus:border-amber-400 transition"
           />
         </div>
       </div>
 
-      <div className="themed-card p-4 md:p-2 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-2 border-b border-[var(--border-color)] items-end">
+      <div className="themed-card p-4 md:p-3.5 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-3.5 border-b border-[var(--border-color)] items-end">
         <div className="md:col-span-5">
-          <label className="block text-[10px] font-bold text-slate-500 uppercase">
+          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
             Site Address
           </label>
           <input
             placeholder="Work site / project address..."
             value={clientAddress}
             onChange={(e) => setClientAddress(e.target.value)}
-            className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none focus:border-amber-400"
+            className="w-full themed-input border border-[var(--border-color)] px-3 py-2 text-sm rounded-lg outline-none focus:border-amber-400 transition"
           />
         </div>
 
         <div className="md:col-span-5">
-          <label className="block text-[10px] font-bold text-slate-500 uppercase">Project Title</label>
+          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Project Title</label>
           <input 
             placeholder="e.g. 3BHK Apartment Interior" 
             value={projectTitle}
             onChange={(e) => setProjectTitle(e.target.value)}
-            className="w-full themed-input border border-[var(--border-color)] px-2 py-1 text-sm outline-none focus:border-amber-500 font-bold" 
+            className="w-full themed-input border border-[var(--border-color)] px-3 py-2 text-sm rounded-lg outline-none focus:border-amber-500 font-bold transition" 
           />
         </div>
 
-        <div className="md:col-span-2 flex flex-col md:items-end justify-start md:justify-end pb-0.5">
-          <span className="text-[9px] font-bold text-amber-700 dark:text-[var(--accent)] uppercase tracking-widest">Sub Total</span>
-          <span className="text-sm font-black text-amber-700 dark:text-[var(--accent)]">₹{formatINR(subTotal)}</span>
+        <div className="md:col-span-2 flex flex-col md:items-end justify-start md:justify-end pb-1">
+          <span className="text-xs font-bold text-amber-700 dark:text-[var(--accent)] uppercase tracking-wider mb-0.5">Sub Total</span>
+          <span className="text-lg font-black text-amber-700 dark:text-[var(--accent)]">₹{formatINR(subTotal)}</span>
         </div>
       </div>
 
 
       {/* ── MAIN TABLE ── */}
       <div className="flex-grow bg-[var(--bg-surface)] overflow-x-auto overflow-y-auto">
-        <table className="w-full text-xs min-w-[950px] border-collapse">
+        <table className="w-full text-sm min-w-[1050px] border-collapse">
           <thead className="themed-thead border-b-2 border-[var(--border-color)] sticky top-0 bg-[var(--bg-surface)] z-10 shadow-sm">
             <tr className="uppercase text-slate-900 dark:text-white font-black text-xs tracking-wider">
-              <th className="px-3 py-3 text-center w-12 font-black">#</th>
-              <th className="px-3 py-3 text-left w-48 font-black">Product / Category</th>
-              <th className="px-3 py-3 text-left font-black">Specification & Material</th>
-              <th className="px-3 py-3 text-left w-28 font-black">Section</th>
-              <th className="px-3 py-3 text-center w-16 font-black">Qty</th>
-              <th className="px-3 py-3 text-center w-16 font-black">Unit</th>
-              <th className="px-3 py-3 text-right w-24 font-black">Rate (₹)</th>
-              <th className="px-3 py-3 text-right w-20 font-black">Discount</th>
-              <th className="px-3 py-3 text-right w-28 font-black">Amount (₹)</th>
-              <th className="px-3 py-3 text-center w-20 font-black">Actions</th>
+              <th className="px-3.5 py-3.5 text-center w-12 font-black">#</th>
+              <th className="px-3.5 py-3.5 text-left w-52 font-black">Product / Category</th>
+              <th className="px-3.5 py-3.5 text-left font-black">Specification & Material</th>
+              <th className="px-3.5 py-3.5 text-left w-32 font-black">Section</th>
+              <th className="px-3.5 py-3.5 text-center w-16 font-black">Qty</th>
+              <th className="px-3.5 py-3.5 text-center w-16 font-black">Unit</th>
+              <th className="px-3.5 py-3.5 text-right w-28 font-black">Rate (₹)</th>
+              <th className="px-3.5 py-3.5 text-right w-24 font-black">Discount</th>
+              <th className="px-3.5 py-3.5 text-right w-32 font-black">Amount (₹)</th>
+              <th className="px-3.5 py-3.5 text-center w-24 font-black">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--border-color)]">
             {items.map((item, idx) => (
               <tr key={item.id} className="themed-row hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
-                <td className="px-3 py-2.5 text-center font-bold text-muted">
+                <td className="px-3.5 py-3.5 text-center font-bold text-muted text-sm">
                   {idx + 1}
                 </td>
-                <td className="px-3 py-2.5 font-bold text-themed">
+                <td className="px-3.5 py-3.5 font-bold text-themed text-sm">
                   {item.product || "—"}
                 </td>
-                <td className="px-3 py-2.5 text-muted leading-relaxed whitespace-pre-wrap max-w-md">
+                <td className="px-3.5 py-3.5 text-muted leading-relaxed whitespace-pre-wrap max-w-md text-sm">
                   {item.specification || "—"}
                 </td>
-                <td className="px-3 py-2.5">
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-[var(--accent)] border border-amber-500/20">
+                <td className="px-3.5 py-3.5">
+                  <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-amber-500/10 text-amber-700 dark:text-[var(--accent)] border border-amber-500/20">
                     {item.section || "General"}
                   </span>
                 </td>
-                <td className="px-3 py-2.5 text-center font-black text-themed">
+                <td className="px-3.5 py-3.5 text-center font-black text-themed text-sm">
                   {item.qty}
                 </td>
-                <td className="px-3 py-2.5 text-center text-muted font-medium">
+                <td className="px-3.5 py-3.5 text-center text-muted font-medium text-sm">
                   {item.unit || "Sq.Ft"}
                 </td>
-                <td className="px-3 py-2.5 text-right font-bold text-themed">
+                <td className="px-3.5 py-3.5 text-right font-bold text-themed text-sm">
                   {formatINR(item.rate)}
                 </td>
-                <td className="px-3 py-2.5 text-right text-muted font-semibold">
+                <td className="px-3.5 py-3.5 text-right text-muted font-semibold text-sm">
                   {item.discountType === 'price' && item.discountPrice && parseFloat(item.discountPrice) > 0 ? (
                     <span className="text-blue-500 font-bold">₹{formatINR(item.discountPrice)}</span>
                   ) : item.discountPercent && parseFloat(item.discountPercent) > 0 ? (
@@ -827,26 +827,26 @@ export default function QuotationPage() {
                     "—"
                   )}
                 </td>
-                <td className="px-3 py-2.5 text-right font-black text-amber-700 dark:text-[var(--accent)]">
+                <td className="px-3.5 py-3.5 text-right font-black text-amber-700 dark:text-[var(--accent)] text-base">
                   {formatINR(item.amount || 0)}
                 </td>
-                <td className="px-3 py-2.5 text-center">
-                  <div className="flex items-center justify-center gap-1">
+                <td className="px-3.5 py-3.5 text-center">
+                  <div className="flex items-center justify-center gap-1.5">
                     <button
                       type="button"
                       onClick={() => openEditItemModal(item)}
-                      className="p-1.5 text-blue-600 hover:text-blue-800 dark:text-blue-400 hover:bg-blue-500/10 rounded-lg transition"
+                      className="p-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 hover:bg-blue-500/10 rounded-lg transition"
                       title="Edit Item"
                     >
-                      <Edit3 size={15} />
+                      <Edit3 size={16} />
                     </button>
                     <button
                       type="button"
                       onClick={() => removeItem(item.id)}
-                      className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-500/10 rounded-lg transition"
+                      className="p-2 text-red-500 hover:text-red-700 hover:bg-red-500/10 rounded-lg transition"
                       title="Delete Item"
                     >
-                      <Trash2 size={15} />
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 </td>
@@ -856,17 +856,17 @@ export default function QuotationPage() {
               <tr>
                 <td
                   colSpan="10"
-                  className="py-16 text-center text-muted"
+                  className="py-20 text-center text-muted"
                 >
                   <div className="flex flex-col items-center justify-center gap-3">
-                    <FileText size={36} className="opacity-30" />
-                    <span className="text-xs font-bold uppercase tracking-wider">No items added to quotation</span>
+                    <FileText size={42} className="opacity-30" />
+                    <span className="text-sm font-bold uppercase tracking-wider">No items added to quotation</span>
                     <button
                       type="button"
                       onClick={openAddItemModal}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md transition"
+                      className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-md transition"
                     >
-                      <Plus size={15} strokeWidth={3} /> Add First Item
+                      <Plus size={16} strokeWidth={3} /> Add First Item
                     </button>
                   </div>
                 </td>
@@ -876,28 +876,28 @@ export default function QuotationPage() {
         </table>
 
         {/* Action button below table */}
-        <div className="p-3 border-t border-[var(--border-color)] bg-[var(--bg-card)] flex flex-wrap items-center justify-between gap-4">
+        <div className="p-4 border-t border-[var(--border-color)] bg-[var(--bg-card)] flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <button 
               onClick={openAddItemModal}
-              className="flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-md hover:shadow-lg transition-all"
+              className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition-all"
             >
-              <Plus size={16} strokeWidth={3} /> + Add
+              <Plus size={18} strokeWidth={3} /> + Add
             </button>
             <button 
               onClick={() => openOptionsModal("products")}
-              className="flex items-center gap-1.5 px-3 py-2 bg-[var(--bg-surface)] text-slate-600 dark:text-slate-300 rounded-xl font-bold text-xs hover:bg-black/5 dark:hover:bg-white/5 transition border border-[var(--border-color)]"
+              className="flex items-center gap-2 px-4 py-2.5 bg-[var(--bg-surface)] text-slate-700 dark:text-slate-200 rounded-xl font-bold text-sm hover:bg-black/5 dark:hover:bg-white/5 transition border border-[var(--border-color)]"
             >
-              <Settings size={13} /> Manage Options
+              <Settings size={15} /> Manage Options
             </button>
           </div>
 
-          <div className="flex items-center gap-6 text-xs">
+          <div className="flex items-center gap-6 text-sm">
             <span className="font-bold text-muted">
-              Total Items: <strong className="text-themed">{items.length}</strong>
+              Total Items: <strong className="text-themed font-black text-base">{items.length}</strong>
             </span>
             <span className="font-bold text-muted">
-              Sub Total: <strong className="text-amber-700 dark:text-[var(--accent)] font-black">₹{formatINR(subTotal)}</strong>
+              Sub Total: <strong className="text-amber-700 dark:text-[var(--accent)] font-black text-base">₹{formatINR(subTotal)}</strong>
             </span>
           </div>
         </div>
@@ -905,60 +905,60 @@ export default function QuotationPage() {
       </div>
 
       {/* ── FOOTER ── */}
-      <div className="bg-[var(--bg-surface)] p-2 border-t border-[var(--border-color)] flex flex-wrap justify-between items-center gap-4">
+      <div className="bg-[var(--bg-surface)] p-4 border-t border-[var(--border-color)] flex flex-wrap justify-between items-center gap-4">
         {/* Stats and Extra Charges */}
-        <div className="flex flex-wrap gap-3 items-center">
-          <div className="bg-[var(--accent-soft)] border border-[var(--accent)]/30 px-3 py-1 flex gap-2 items-center rounded">
-            <span className="text-[10px] font-bold text-amber-800 dark:text-[var(--accent)] uppercase">Total Qty:</span>
-            <span className="text-sm font-bold text-[var(--text-primary)]">{items.reduce((s, i) => s + parseFloat(i.qty || 0), 0)}</span>
+        <div className="flex flex-wrap gap-4 items-center">
+          <div className="bg-[var(--accent-soft)] border border-[var(--accent)]/30 px-4 py-2 flex gap-2.5 items-center rounded-xl">
+            <span className="text-xs font-bold text-amber-800 dark:text-[var(--accent)] uppercase">Total Qty:</span>
+            <span className="text-base font-black text-[var(--text-primary)]">{items.reduce((s, i) => s + parseFloat(i.qty || 0), 0)}</span>
           </div>
           
-          <div className="flex flex-col gap-1">
-             <label className="text-[9px] font-bold text-slate-500 uppercase">Delivery (₹)</label>
-             <input value={deliveryLoading} onChange={e=>setDeliveryLoading(e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0.00" className="w-24 themed-input px-1.5 py-0.5 text-xs text-right border border-[var(--border-color)] rounded font-semibold" />
+          <div className="flex flex-col gap-1.5">
+             <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Delivery (₹)</label>
+             <input value={deliveryLoading} onChange={e=>setDeliveryLoading(e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0.00" className="w-28 themed-input px-3 py-1.5 text-sm text-right border border-[var(--border-color)] rounded-lg font-bold outline-none focus:border-amber-400" />
           </div>
 
-          <div className="flex flex-col gap-1">
-             <label className="text-[9px] font-bold text-slate-500 uppercase">Transport (₹)</label>
-             <input value={transportationCharges} onChange={e=>setTransportationCharges(e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0.00" className="w-24 themed-input px-1.5 py-0.5 text-xs text-right border border-[var(--border-color)] rounded font-semibold" />
+          <div className="flex flex-col gap-1.5">
+             <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Transport (₹)</label>
+             <input value={transportationCharges} onChange={e=>setTransportationCharges(e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0.00" className="w-28 themed-input px-3 py-1.5 text-sm text-right border border-[var(--border-color)] rounded-lg font-bold outline-none focus:border-amber-400" />
           </div>
 
-          <div className="flex flex-col gap-1">
-             <label className="text-[9px] font-bold text-slate-500 uppercase">Discount (₹)</label>
-             <input value={additionalDiscount} onChange={e=>setAdditionalDiscount(e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0.00" className="w-24 themed-input px-1.5 py-0.5 text-xs text-right border border-[var(--border-color)] rounded font-semibold" />
+          <div className="flex flex-col gap-1.5">
+             <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Discount (₹)</label>
+             <input value={additionalDiscount} onChange={e=>setAdditionalDiscount(e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0.00" className="w-28 themed-input px-3 py-1.5 text-sm text-right border border-[var(--border-color)] rounded-lg font-bold outline-none focus:border-amber-400" />
           </div>
 
-          <div className="flex flex-col gap-1">
-             <label className="text-[9px] font-bold text-slate-500 uppercase">Instal. Mat. (₹)</label>
-             <input value={installationMaterial} onChange={e=>setInstallationMaterial(e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0.00" className="w-24 themed-input px-1.5 py-0.5 text-xs text-right border border-[var(--border-color)] rounded font-semibold" />
+          <div className="flex flex-col gap-1.5">
+             <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Instal. Mat. (₹)</label>
+             <input value={installationMaterial} onChange={e=>setInstallationMaterial(e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0.00" className="w-28 themed-input px-3 py-1.5 text-sm text-right border border-[var(--border-color)] rounded-lg font-bold outline-none focus:border-amber-400" />
           </div>
 
           {/* CGST and SGST text boxes ONLY appear for GST */}
           {billType === 'GST' && (
             <>
-              <div className="flex flex-col gap-1 bg-blue-500/5 dark:bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20">
-                <label className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase flex items-center justify-between gap-1">
+              <div className="flex flex-col gap-1.5 bg-blue-500/5 dark:bg-blue-500/10 px-3 py-1.5 rounded-xl border border-blue-500/20">
+                <label className="text-[11px] font-black text-blue-600 dark:text-blue-400 uppercase flex items-center justify-between gap-2">
                   <span>CGST (%)</span>
-                  <span className="text-[8px] opacity-80 font-bold">₹{formatINR(cgstAmount)}</span>
+                  <span className="text-[10px] opacity-80 font-bold">₹{formatINR(cgstAmount)}</span>
                 </label>
                 <input 
                   value={cgstPercent} 
                   onChange={e => setCgstPercent(e.target.value.replace(/[^0-9.]/g, ''))} 
                   placeholder="9" 
-                  className="w-20 themed-input px-1.5 py-0.5 text-xs text-right border border-blue-500/30 rounded font-bold text-blue-600 dark:text-blue-400" 
+                  className="w-24 themed-input px-2.5 py-1.5 text-sm text-right border border-blue-500/30 rounded-lg font-bold text-blue-600 dark:text-blue-400 outline-none focus:border-blue-500" 
                 />
               </div>
 
-              <div className="flex flex-col gap-1 bg-blue-500/5 dark:bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20">
-                <label className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase flex items-center justify-between gap-1">
+              <div className="flex flex-col gap-1.5 bg-blue-500/5 dark:bg-blue-500/10 px-3 py-1.5 rounded-xl border border-blue-500/20">
+                <label className="text-[11px] font-black text-blue-600 dark:text-blue-400 uppercase flex items-center justify-between gap-2">
                   <span>SGST (%)</span>
-                  <span className="text-[8px] opacity-80 font-bold">₹{formatINR(sgstAmount)}</span>
+                  <span className="text-[10px] opacity-80 font-bold">₹{formatINR(sgstAmount)}</span>
                 </label>
                 <input 
                   value={sgstPercent} 
                   onChange={e => setSgstPercent(e.target.value.replace(/[^0-9.]/g, ''))} 
                   placeholder="9" 
-                  className="w-20 themed-input px-1.5 py-0.5 text-xs text-right border border-blue-500/30 rounded font-bold text-blue-600 dark:text-blue-400" 
+                  className="w-24 themed-input px-2.5 py-1.5 text-sm text-right border border-blue-500/30 rounded-lg font-bold text-blue-600 dark:text-blue-400 outline-none focus:border-blue-500" 
                 />
               </div>
             </>
@@ -968,19 +968,19 @@ export default function QuotationPage() {
         {/* Grand Total */}
         <div className="flex items-center gap-4">
           <div className="text-4xl text-amber-700 dark:text-[var(--accent)] font-light">₹</div>
-          <div className="themed-card border border-[var(--border-color)] px-8 py-2 rounded-xl shadow-inner text-right min-w-[220px]">
-            <div className="text-[10px] font-bold text-amber-700 dark:text-[var(--accent)] uppercase -mb-1">
+          <div className="themed-card border border-[var(--border-color)] px-8 py-3 rounded-2xl shadow-inner text-right min-w-[240px]">
+            <div className="text-xs font-bold text-amber-700 dark:text-[var(--accent)] uppercase mb-0.5">
               {billType === 'GST' ? "Grand Total (incl. GST)" : "Estimated Total"}
             </div>
-            <div className="text-4xl font-black text-amber-700 dark:text-[var(--accent)] tracking-tighter">
+            <div className="text-4xl md:text-5xl font-black text-amber-700 dark:text-[var(--accent)] tracking-tight">
               {formatINR(grandTotal)}
             </div>
             {billType === 'GST' ? (
-              <div className="text-[9px] font-bold text-blue-600 dark:text-blue-400 mt-0.5">
+              <div className="text-[11px] font-bold text-blue-600 dark:text-blue-400 mt-1">
                 CGST ({cgstPercent || 0}%): ₹{formatINR(cgstAmount)} | SGST ({sgstPercent || 0}%): ₹{formatINR(sgstAmount)}
               </div>
             ) : (
-              <div className="text-[9px] font-bold text-muted mt-0.5">
+              <div className="text-[11px] font-bold text-muted mt-1">
                 Non-GST Quotation
               </div>
             )}
@@ -989,38 +989,38 @@ export default function QuotationPage() {
       </div>
 
       {/* ── BOTTOM ACTION BAR ── */}
-      <div className="bg-[var(--bg-surface)] p-1 flex justify-center gap-1 border-t border-[var(--border-color)]">
+      <div className="bg-[var(--bg-surface)] p-3.5 flex flex-wrap justify-center gap-3 border-t border-[var(--border-color)] shadow-md">
         <button
           onClick={clearForm}
-          className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-1.5 rounded flex items-center gap-2 text-xs font-bold transition shadow-sm"
+          className="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 text-sm font-bold transition shadow-sm hover:shadow"
         >
-          <RotateCcw size={14} /> Clear
+          <RotateCcw size={16} /> Clear
         </button>
         <button
           onClick={() => navigate("/invoices", { state: { activeTab: "quotations" } })}
-          className="bg-slate-600 hover:bg-slate-700 text-white px-4 py-1.5 rounded flex items-center gap-2 text-xs font-bold transition shadow-sm"
+          className="bg-slate-600 hover:bg-slate-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 text-sm font-bold transition shadow-sm hover:shadow"
         >
-          <History size={14} /> Quotations
+          <History size={16} /> Quotations
         </button>
         <button
           onClick={async () => { await saveQuotation(); handlePrint(); }}
           disabled={items.length === 0}
-          className="bg-teal-500 hover:bg-teal-600 disabled:opacity-50 text-white px-4 py-1.5 rounded flex items-center gap-2 text-xs font-bold transition shadow-sm"
+          className="bg-teal-500 hover:bg-teal-600 disabled:opacity-50 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 text-sm font-bold transition shadow-sm hover:shadow"
         >
-          <Printer size={14} /> Generate & Print
+          <Printer size={16} /> Generate & Print
         </button>
         <button
           onClick={saveQuotation}
-          className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-1.5 rounded flex items-center gap-2 text-xs font-bold transition shadow-sm"
+          className="bg-amber-600 hover:bg-amber-700 text-white px-7 py-2.5 rounded-xl flex items-center gap-2 text-sm font-bold transition shadow-sm hover:shadow"
         >
-          <Save size={14} /> Generate
+          <Save size={16} /> Generate
         </button>
 
         <button
           onClick={convertToWorkOrder}
-          className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-1.5 rounded flex items-center gap-2 text-xs font-bold transition shadow-sm"
+          className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2.5 rounded-xl flex items-center gap-2 text-sm font-bold transition shadow-sm hover:shadow"
         >
-          <ArrowRight size={14} /> Convert to Work Order
+          <ArrowRight size={16} /> Convert to Work Order
         </button>
       </div>
 
