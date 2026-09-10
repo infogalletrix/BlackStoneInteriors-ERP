@@ -5,7 +5,7 @@ import {
   TrendingUp, TrendingDown, Wallet,
   FileText, Building, ChevronDown, ArrowRight,
   HardHat, ClipboardCheck, Banknote, CalendarCheck, IndianRupee,
-  Users, Award
+  Users, Award, CheckCircle2
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -262,22 +262,107 @@ const Dashboard = () => {
 
       <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-6">
 
-        {/* ── Operations, Sales & CRM KPIs ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3.5">
-          <KpiCard label="Work Order Revenue" value={fmt(totalWOValue)} icon={Building} color={accentMain}
-            sub={`${sites.length} total projects`}/>
-          <KpiCard label="In-Process Sites" value={inProcessSites} icon={HardHat} color={d?"#8b5cf6":"#3D5A8A"}
-            sub="Active site execution"/>
-          <KpiCard label="Pending Work Orders" value={pendingWO} icon={ClipboardCheck} color={d?"#38bdf8":"#0ea5e9"}
-            sub="Pre-construction"/>
-          <KpiCard label="Pending Quotations" value={pendingQuotes} icon={FileText} color={d?"#fb923c":"#9E8B6E"}
-            sub="Awaiting client approval"/>
-          <KpiCard label="Completed Sites" value={sites.filter(s=>s.status==="Completed").length} icon={Building} color={incomeColor}
-            sub="Successfully delivered"/>
-          <KpiCard label="Number of Leads" value={totalLeadsCount} icon={Users} color={d?"#a855f7":"#b45309"}
-            sub={`${activeLeadsCount} active in pipeline`}/>
-          <KpiCard label="Number of Customers" value={customersCount} icon={Award} color={d?"#10b981":"#059669"}
-            sub="Active verified clients"/>
+        {/* ── Executive KPI Cards (Structured Two-Tier Grid) ── */}
+        <div className="space-y-6">
+          {/* Section 1: Projects & Operations Performance */}
+          <div>
+            <div className="flex items-center justify-between mb-3 px-1">
+              <h2 className={`text-xs font-black uppercase tracking-wider flex items-center gap-2 ${d ? "text-slate-400" : "text-slate-500"}`}>
+                <Building size={14} className="opacity-70 text-blue-500" /> Projects & Operations Performance
+              </h2>
+              <span className={`text-[11px] font-bold ${d ? "text-slate-500" : "text-slate-400"}`}>
+                {sites.length} Total Projects
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <KpiCard 
+                label="Work Order Revenue" 
+                value={fmt(totalWOValue)} 
+                icon={IndianRupee} 
+                color={accentMain}
+                badge="Revenue"
+                sub={`${sites.length} total contracted projects`}
+                onClick={() => navigate("/sites")}
+              />
+              <KpiCard 
+                label="Total Collections" 
+                value={fmt(receiptIncome)} 
+                icon={Wallet} 
+                color={incomeColor}
+                badge="Received"
+                sub={`${receipts.filter(r => inRange(r.date)).length} receipts in period`}
+                onClick={() => navigate("/receipts")}
+              />
+              <KpiCard 
+                label="In-Process Sites" 
+                value={inProcessSites} 
+                icon={HardHat} 
+                color={d ? "#8b5cf6" : "#3D5A8A"}
+                badge="Active"
+                sub="Under active execution"
+                onClick={() => navigate("/sites")}
+              />
+              <KpiCard 
+                label="Completed Sites" 
+                value={sites.filter(s => s.status === "Completed").length} 
+                icon={CheckCircle2} 
+                color={d ? "#10b981" : "#059669"}
+                badge="Delivered"
+                sub="Successfully completed"
+                onClick={() => navigate("/sites")}
+              />
+            </div>
+          </div>
+
+          {/* Section 2: Pipeline, Quotations & CRM */}
+          <div>
+            <div className="flex items-center justify-between mb-3 px-1">
+              <h2 className={`text-xs font-black uppercase tracking-wider flex items-center gap-2 ${d ? "text-slate-400" : "text-slate-500"}`}>
+                <Users size={14} className="opacity-70 text-purple-500" /> Sales, Pipeline & CRM
+              </h2>
+              <span className={`text-[11px] font-bold ${d ? "text-slate-500" : "text-slate-400"}`}>
+                {crm.length} Total CRM Contacts
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <KpiCard 
+                label="Pending Work Orders" 
+                value={pendingWO} 
+                icon={ClipboardCheck} 
+                color={d ? "#38bdf8" : "#0ea5e9"}
+                badge="Pre-Site"
+                sub="Pre-construction kickoff"
+                onClick={() => navigate("/sites")}
+              />
+              <KpiCard 
+                label="Pending Quotations" 
+                value={pendingQuotes} 
+                icon={FileText} 
+                color={d ? "#fb923c" : "#9E8B6E"}
+                badge="Quotations"
+                sub="Awaiting client decision"
+                onClick={() => navigate("/invoices")}
+              />
+              <KpiCard 
+                label="Active Leads" 
+                value={totalLeadsCount} 
+                icon={Users} 
+                color={d ? "#a855f7" : "#b45309"}
+                badge="Pipeline"
+                sub={`${activeLeadsCount} active in sales pipeline`}
+                onClick={() => navigate("/crm/leads")}
+              />
+              <KpiCard 
+                label="Verified Customers" 
+                value={customersCount} 
+                icon={Award} 
+                color={d ? "#10b981" : "#059669"}
+                badge="Customers"
+                sub="Active verified clients"
+                onClick={() => navigate("/crm/customers")}
+              />
+            </div>
+          </div>
         </div>
 
         {/* ── Main Operations Section ── */}

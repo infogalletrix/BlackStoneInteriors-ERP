@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Check, Settings, Tag, Layers, FileText, Hash } from "lucide-react";
 import SectionInput from "./SectionInput";
+import ComboboxSelect from "./ComboboxSelect";
 
 export default function QuotationItemModal({
   isOpen,
@@ -195,11 +196,11 @@ export default function QuotationItemModal({
             </div>
           </div>
 
-          {/* Row 2: Product Name */}
+          {/* Row 2: Product / Category */}
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="text-[11px] font-bold text-slate-500 uppercase">
-                Product / Category <span className="text-red-500">*</span>
+              <label className="text-[11px] font-bold text-slate-500 uppercase flex items-center gap-1">
+                <Layers size={12} /> Product / Category <span className="text-red-500">*</span>
               </label>
               {onOpenManageOptions && (
                 <button
@@ -207,79 +208,46 @@ export default function QuotationItemModal({
                   onClick={() => onOpenManageOptions("products")}
                   className="text-[10px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition"
                 >
-                  <Settings size={11} /> Manage Options
+                  <Settings size={11} /> Manage Products
                 </button>
               )}
             </div>
-            <div className="flex gap-2">
-              <select
-                value={product}
-                onChange={(e) => {
-                  if (e.target.value === "__MANAGE__") {
-                    if (onOpenManageOptions) onOpenManageOptions("products");
-                  } else {
-                    setProduct(e.target.value);
-                  }
-                }}
-                className="w-full themed-input border border-[var(--border-color)] px-3 py-2 rounded-xl text-sm font-bold outline-none focus:border-blue-500 cursor-pointer transition [&>option]:bg-[var(--bg-surface)]"
-              >
-                <option value="">-- Select Product or Type Below --</option>
-                {productsList.map((p, idx) => (
-                  <option key={idx} value={p}>
-                    {p}
-                  </option>
-                ))}
-                {product && !productsList.includes(product) && (
-                  <option value={product}>{product}</option>
-                )}
-                <option value="__MANAGE__" className="text-blue-600 font-bold">
-                  ⚙️ Manage Products...
-                </option>
-              </select>
-            </div>
-            <input
-              type="text"
+            <ComboboxSelect
               value={product}
-              onChange={(e) => setProduct(e.target.value)}
-              placeholder="Or enter custom product name..."
-              className="mt-1.5 w-full themed-input border border-[var(--border-color)] px-3 py-1.5 rounded-lg text-xs outline-none focus:border-blue-500 text-slate-600 dark:text-slate-300"
+              onChange={(val) => setProduct(val)}
+              options={productsList}
+              placeholder="Search or type product (e.g. Wardrobe, Kitchen Cabinets)..."
+              onOpenManage={onOpenManageOptions ? () => onOpenManageOptions("products") : null}
+              manageLabel="Manage Products"
+              required
             />
           </div>
 
-          {/* Row 3: Specification / Material Description */}
+          {/* Row 3: Specification & Material Details */}
           <div>
             <div className="flex justify-between items-center mb-1">
               <label className="text-[11px] font-bold text-slate-500 uppercase flex items-center gap-1">
-                <FileText size={12} /> Specification & Material Details
+                <FileText size={12} /> Specification & Material
               </label>
-              {specificationsList.length > 0 && (
-                <select
-                  value=""
-                  onChange={(e) => {
-                    if (e.target.value === "__MANAGE__") {
-                      if (onOpenManageOptions) onOpenManageOptions("specifications");
-                    } else if (e.target.value) {
-                      setSpecification(e.target.value);
-                    }
-                  }}
-                  className="text-[10px] font-bold bg-transparent border border-[var(--border-color)] px-2 py-0.5 rounded text-blue-600 cursor-pointer outline-none max-w-[200px] truncate [&>option]:bg-[var(--bg-surface)]"
+              {onOpenManageOptions && (
+                <button
+                  type="button"
+                  onClick={() => onOpenManageOptions("specifications")}
+                  className="text-[10px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition"
                 >
-                  <option value="">Choose preset spec...</option>
-                  {specificationsList.map((s, i) => (
-                    <option key={i} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                  <option value="__MANAGE__">⚙️ Manage Presets...</option>
-                </select>
+                  <Settings size={11} /> Manage Specifications
+                </button>
               )}
             </div>
-            <textarea
-              rows={3}
+            <ComboboxSelect
               value={specification}
-              onChange={(e) => setSpecification(e.target.value)}
-              placeholder="e.g. 18mm (BWR) Boiling Water Resistant Ply with 1mm Internal Laminate, soft-close hinges, etc."
-              className="w-full themed-input border border-[var(--border-color)] p-3 rounded-xl text-xs outline-none focus:border-blue-500 resize-y transition"
+              onChange={(val) => setSpecification(val)}
+              options={specificationsList}
+              placeholder="Search preset or type specification (e.g. 18mm BWR Ply with Laminate, soft-close hardware)..."
+              isTextArea={true}
+              rows={3}
+              onOpenManage={onOpenManageOptions ? () => onOpenManageOptions("specifications") : null}
+              manageLabel="Manage Specifications"
             />
           </div>
 

@@ -135,7 +135,7 @@ export default function ManageOptionsModal({
   );
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] backdrop-blur-sm p-4 animate-in fade-in duration-150">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[200] backdrop-blur-sm p-4 animate-in fade-in duration-150">
       <div className="bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-2xl w-full max-w-xl shadow-2xl flex flex-col overflow-hidden max-h-[88vh]">
         {/* Header */}
         <div className="flex justify-between items-center px-5 py-4 border-b border-[var(--border-color)] bg-[var(--bg-card)]">
