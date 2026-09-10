@@ -781,7 +781,6 @@ export default function QuotationPage() {
           <thead className="themed-thead border-b border-[var(--border-color)] sticky top-0 bg-[var(--bg-surface)] z-10">
             <tr className="uppercase text-muted font-bold text-[10px] tracking-wider">
               <th className="px-3 py-2.5 text-center w-12">#</th>
-              <th className="px-3 py-2.5 text-left w-20">Code</th>
               <th className="px-3 py-2.5 text-left w-48">Product / Category</th>
               <th className="px-3 py-2.5 text-left">Specification & Material</th>
               <th className="px-3 py-2.5 text-left w-28">Section</th>
@@ -798,11 +797,6 @@ export default function QuotationPage() {
               <tr key={item.id} className="themed-row hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
                 <td className="px-3 py-2.5 text-center font-bold text-muted">
                   {idx + 1}
-                </td>
-                <td className="px-3 py-2.5">
-                  <span className="px-2 py-0.5 rounded text-[10px] font-black bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                    {item.code || `P${String(idx + 1).padStart(2, '0')}`}
-                  </span>
                 </td>
                 <td className="px-3 py-2.5 font-bold text-themed">
                   {item.product || "—"}
@@ -861,7 +855,7 @@ export default function QuotationPage() {
             {items.length === 0 && (
               <tr>
                 <td
-                  colSpan="11"
+                  colSpan="10"
                   className="py-16 text-center text-muted"
                 >
                   <div className="flex flex-col items-center justify-center gap-3">

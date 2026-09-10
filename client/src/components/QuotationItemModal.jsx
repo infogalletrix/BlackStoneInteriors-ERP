@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Check, Settings, Tag, Layers, FileText, Hash } from "lucide-react";
+import { X, Check, Settings, Tag, Layers, FileText } from "lucide-react";
 import SectionInput from "./SectionInput";
 import ComboboxSelect from "./ComboboxSelect";
 
@@ -13,7 +13,6 @@ export default function QuotationItemModal({
   sectionSuggestions = [],
   onOpenManageOptions
 }) {
-  const [code, setCode] = useState("");
   const [section, setSection] = useState("General");
   const [product, setProduct] = useState("");
   const [specification, setSpecification] = useState("");
@@ -27,7 +26,6 @@ export default function QuotationItemModal({
   useEffect(() => {
     if (isOpen) {
       if (editingItem) {
-        setCode(editingItem.code || "");
         setSection(editingItem.section || "General");
         setProduct(editingItem.product || "");
         setSpecification(editingItem.specification || "");
@@ -38,7 +36,6 @@ export default function QuotationItemModal({
         setDiscountPercent(editingItem.discountPercent || "");
         setDiscountPrice(editingItem.discountPrice || "");
       } else {
-        setCode("");
         setSection("General");
         setProduct(productsList[0] || "");
         setSpecification("");
@@ -124,7 +121,7 @@ export default function QuotationItemModal({
 
     onSave({
       id: editingItem ? editingItem.id : Date.now() + Math.random(),
-      code: code.trim(),
+      code: editingItem?.code || "",
       section: section.trim() || "General",
       product: product.trim(),
       specification: specification.trim(),
@@ -168,32 +165,17 @@ export default function QuotationItemModal({
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-4 text-sm flex-1">
-          {/* Row 1: Code & Section */}
-          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-            <div className="sm:col-span-4">
-              <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1 flex items-center gap-1">
-                <Hash size={12} /> Item Code / Tag (Opt.)
-              </label>
-              <input
-                type="text"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                placeholder="e.g. P01, P40"
-                className="w-full themed-input border border-[var(--border-color)] px-3 py-2 rounded-xl text-sm font-semibold outline-none focus:border-blue-500 transition"
-              />
-            </div>
-
-            <div className="sm:col-span-8">
-              <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1 flex items-center gap-1">
-                <Tag size={12} /> Section / Area
-              </label>
-              <SectionInput
-                value={section}
-                onChange={(val) => setSection(val)}
-                suggestions={sectionSuggestions}
-                placeholder="e.g. Living Room, Master Bedroom, Kitchen"
-              />
-            </div>
+          {/* Section / Area */}
+          <div>
+            <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1 flex items-center gap-1">
+              <Tag size={12} /> Section / Area
+            </label>
+            <SectionInput
+              value={section}
+              onChange={(val) => setSection(val)}
+              suggestions={sectionSuggestions}
+              placeholder="e.g. Living Room, Master Bedroom, Kitchen"
+            />
           </div>
 
           {/* Row 2: Product / Category */}
