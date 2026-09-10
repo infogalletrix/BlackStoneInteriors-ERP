@@ -114,7 +114,15 @@ const CRMPage = () => {
           return;
         }
         if(newPipe[stage]) {
-          newPipe[stage].deals.push({ id: d.id, contactId: d.contact_id, title: d.title, value: Number(d.value), closeDate: d.close_date ? d.close_date.split('T')[0] : '' });
+          const contact = cRes.find(c => String(c.id) === String(d.contact_id));
+          const dealDate = d.close_date ? d.close_date.split('T')[0] : (contact?.date ? contact.date.split('T')[0] : new Date().toISOString().split('T')[0]);
+          newPipe[stage].deals.push({ 
+            id: d.id, 
+            contactId: d.contact_id, 
+            title: d.title, 
+            value: Number(d.value), 
+            closeDate: dealDate 
+          });
         }
       });
       setPipeline(newPipe);
@@ -147,7 +155,7 @@ const CRMPage = () => {
                  contactId: String(createdContactId),
                  value: 0,
                  stage: 'LEAD',
-                 closeDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0]
+                 closeDate: updated.date || new Date().toISOString().split('T')[0]
                }) 
              });
            }
@@ -304,7 +312,7 @@ const CRMPage = () => {
                 contactId: String(contact.id),
                 value: 0,
                 stage: 'LEAD',
-                closeDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0]
+                closeDate: contact.date || new Date().toISOString().split('T')[0]
               }) 
             });
           }
@@ -446,17 +454,45 @@ const CRMPage = () => {
     showFeedback("PDF Report Exported!");
   };
 
+  // Safe date parser to avoid timezone shifts
+  const parseDateParts = (dateString) => {
+    if (!dateString) return null;
+    const clean = String(dateString).split('T')[0];
+    const parts = clean.split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1; // 0-indexed
+      const day = parseInt(parts[2], 10);
+      if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+        return { year, month, day };
+      }
+    }
+    const d = new Date(dateString);
+    if (!isNaN(d.getTime())) {
+      return { year: d.getFullYear(), month: d.getMonth(), day: d.getDate() };
+    }
+    return null;
+  };
+
+  const formatDealDate = (dateString) => {
+    if (!dateString) return '—';
+    const parsed = parseDateParts(dateString);
+    if (!parsed) return dateString;
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${parsed.day} ${months[parsed.month] || ''}`;
+  };
+
   // Filters
   const checkMonth = (dateString) => {
     if (monthFilter === "All" || !dateString) return true;
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return true;
+    const parsed = parseDateParts(dateString);
+    if (!parsed) return true;
     
     const today = new Date();
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
-    const dMonth = date.getMonth();
-    const dYear = date.getFullYear();
+    const dMonth = parsed.month;
+    const dYear = parsed.year;
 
     if (monthFilter === "Current") {
       return dMonth === currentMonth && dYear === currentYear;
@@ -473,11 +509,10 @@ const CRMPage = () => {
     }
     if (monthFilter === "Custom") {
       if (!customDateRange.start && !customDateRange.end) return true;
-      const start = customDateRange.start ? new Date(customDateRange.start) : new Date('1970-01-01');
-      const end = customDateRange.end ? new Date(customDateRange.end) : new Date('2099-12-31');
-      start.setHours(0,0,0,0);
-      end.setHours(23,59,59,999);
-      return date >= start && date <= end;
+      const clean = String(dateString).split('T')[0];
+      const start = customDateRange.start ? String(customDateRange.start).split('T')[0] : '1970-01-01';
+      const end = customDateRange.end ? String(customDateRange.end).split('T')[0] : '2099-12-31';
+      return clean >= start && clean <= end;
     }
     return true;
   };
@@ -642,7 +677,7 @@ const CRMPage = () => {
                           </div>
                           <div className="text-xs sm:text-sm font-black text-emerald-400 mb-3 bg-emerald-500/10 w-max px-2 py-0.5 rounded-md border border-emerald-500/20">₹{(deal.value/100000).toFixed(2)}L</div>
                           <div className="pt-2 border-t border-[var(--border-color)] flex justify-between items-center">
-                            <span className="flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-slate-500 truncate"><Clock size={10} /> {new Date(deal.closeDate).toLocaleDateString('en-GB', {day:'numeric', month:'short'})}</span>
+                            <span className="flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-slate-500 truncate"><Clock size={10} /> {formatDealDate(deal.closeDate)}</span>
                           </div>
                         </div>
                       );
@@ -671,7 +706,7 @@ const CRMPage = () => {
                                     <div className="text-xs sm:text-sm font-black text-emerald-400 mb-3 bg-emerald-500/10 w-max px-2 py-0.5 rounded-md border border-emerald-500/20">₹{(deal.value/100000).toFixed(2)}L</div>
                                     
                                     <div className="pt-2 border-t border-[var(--border-color)] flex justify-between items-center">
-                                      <span className="flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-slate-500 truncate"><Clock size={10} /> {new Date(deal.closeDate).toLocaleDateString('en-GB', {day:'numeric', month:'short'})}</span>
+                                      <span className="flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-slate-500 truncate"><Clock size={10} /> {formatDealDate(deal.closeDate)}</span>
                                       <div className="flex gap-1">
                                         <button className="text-[9px] sm:text-[10px] font-bold text-slate-500 hover:text-slate-400 px-2 py-1 themed-card rounded-md transition-colors hover:bg-slate-500/20" onClick={() => handleMarkNotInterested(deal.id, true)}>Not Interested</button>
                                         <button className="text-[9px] sm:text-[10px] font-bold text-muted hover:text-themed px-2 py-1 themed-card rounded-md transition-colors hover:bg-violet-600/30" onClick={() => setEditDeal({ ...deal })}>Edit</button>
@@ -1558,6 +1593,15 @@ function EditDealForm({ deal, contacts, onSave, onCancel }) {
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold">₹</span>
             <input className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 pl-9 text-sm font-bold outline-none focus:border-violet-500 transition-all" value={form.value} onChange={e => setForm({ ...form, value: e.target.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1') })} type="text" inputMode="decimal" pattern="^\d*\.?\d*$" required min="0" />
           </div>
+        </div>
+        <div>
+          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Date</label>
+          <input 
+            type="date" 
+            className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" 
+            value={form.closeDate ? form.closeDate.split('T')[0] : ''} 
+            onChange={e => setForm({ ...form, closeDate: e.target.value })} 
+          />
         </div>
       </div>
 

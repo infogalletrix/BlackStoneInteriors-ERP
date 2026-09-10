@@ -202,6 +202,8 @@ namespace Blackstone_Interior.Controllers
                 .OrderByDescending(d => d.Id)
                 .FirstOrDefaultAsync();
 
+            string quoteDate = !string.IsNullOrWhiteSpace(dto.Date) ? dto.Date : DateTime.Now.ToString("yyyy-MM-dd");
+
             Deal deal;
             if (existingDeal != null)
             {
@@ -210,7 +212,7 @@ namespace Blackstone_Interior.Controllers
                 deal.Title = dealTitle;
                 deal.Value = dto.Total;
                 deal.Stage = "PROPOSAL";
-                deal.CloseDate = DateTime.Now.AddDays(30).ToString("yyyy-MM-dd");
+                deal.CloseDate = quoteDate;
             }
             else
             {
@@ -225,7 +227,7 @@ namespace Blackstone_Interior.Controllers
                     deal = unlinkedProposalDeal;
                     deal.Title = dealTitle;
                     deal.Value = dto.Total;
-                    deal.CloseDate = DateTime.Now.AddDays(30).ToString("yyyy-MM-dd");
+                    deal.CloseDate = quoteDate;
                 }
                 else
                 {
@@ -235,7 +237,7 @@ namespace Blackstone_Interior.Controllers
                         Value = dto.Total,
                         ContactId = contact.Id,
                         Stage = "PROPOSAL",
-                        CloseDate = DateTime.Now.AddDays(30).ToString("yyyy-MM-dd")
+                        CloseDate = quoteDate
                     };
                     _db.Deals.Add(deal);
                 }

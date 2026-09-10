@@ -160,15 +160,35 @@ namespace Blackstone_Interior.Controllers
                 }
             }
 
+            var quotations = await _db.Quotations.ToListAsync();
+            var contacts = await _db.CrmContacts.ToListAsync();
             var deals = await _db.Deals.ToListAsync();
-            var result = deals.Select(d => new
+            var result = deals.Select(d =>
             {
-                id = d.Id.ToString(),
-                title = d.Title,
-                value = d.Value,
-                contact_id = d.ContactId.ToString(),
-                stage = d.Stage,
-                close_date = d.CloseDate
+                string closeDate = d.CloseDate;
+                var linkedQuote = quotations.FirstOrDefault(q => q.DealId == d.Id);
+                if (linkedQuote != null && !string.IsNullOrWhiteSpace(linkedQuote.Date))
+                {
+                    closeDate = linkedQuote.Date;
+                }
+                else if (string.IsNullOrWhiteSpace(closeDate))
+                {
+                    var linkedContact = contacts.FirstOrDefault(c => c.Id == d.ContactId);
+                    if (linkedContact != null && !string.IsNullOrWhiteSpace(linkedContact.Date))
+                    {
+                        closeDate = linkedContact.Date;
+                    }
+                }
+
+                return new
+                {
+                    id = d.Id.ToString(),
+                    title = d.Title,
+                    value = d.Value,
+                    contact_id = d.ContactId.ToString(),
+                    stage = d.Stage,
+                    close_date = closeDate
+                };
             });
             return Ok(result);
         }
@@ -189,6 +209,8 @@ namespace Blackstone_Interior.Controllers
                 }
             }
 
+            string dealDate = !string.IsNullOrWhiteSpace(dto.CloseDate) ? dto.CloseDate : DateTime.Now.ToString("yyyy-MM-dd");
+
             // Prevent duplicate initial zero-value lead deals for the same contact
             if (contactId > 0 && (dto.Stage ?? "LEAD") == "LEAD" && dto.Value == 0)
             {
@@ -197,7 +219,7 @@ namespace Blackstone_Interior.Controllers
                 if (existingEmptyDeal != null)
                 {
                     existingEmptyDeal.Title = dto.Title ?? existingEmptyDeal.Title;
-                    existingEmptyDeal.CloseDate = dto.CloseDate ?? existingEmptyDeal.CloseDate;
+                    existingEmptyDeal.CloseDate = dealDate;
                     await _db.SaveChangesAsync();
                     return Ok(new { id = existingEmptyDeal.Id.ToString(), message = "Deal updated" });
                 }
@@ -209,7 +231,7 @@ namespace Blackstone_Interior.Controllers
                 Value = dto.Value,
                 ContactId = contactId,
                 Stage = dto.Stage ?? "LEAD",
-                CloseDate = dto.CloseDate
+                CloseDate = dealDate
             };
             _db.Deals.Add(deal);
             await _db.SaveChangesAsync();
