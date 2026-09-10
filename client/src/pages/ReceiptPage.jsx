@@ -396,7 +396,7 @@ export default function ReceiptPage() {
   const currentSite = sites.find((s) => s.id === selectedSiteId);
 
   return (
-    <div className="p-4 md:p-6 page-wrapper h-full flex flex-col font-sans relative">
+    <div className="p-4 md:p-6 page-wrapper min-h-screen bg-white dark:bg-slate-950 h-full flex flex-col font-sans relative">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 shrink-0 relative z-10">
         <div>
@@ -425,8 +425,8 @@ export default function ReceiptPage() {
               }}
               className={`w-full text-left p-3.5 rounded-2xl transition border flex items-center justify-between ${
                 isAllWorkOrders
-                  ? "bg-[var(--accent)]/15 border-[var(--accent)] shadow-sm text-themed"
-                  : "bg-white dark:bg-slate-800/60 border-[var(--border-color)] hover:bg-slate-50 dark:hover:bg-white/5"
+                  ? "bg-amber-500/10 border-amber-500/40 shadow-sm text-themed"
+                  : "bg-white dark:bg-slate-800 border-[var(--border-color)] hover:bg-slate-50 dark:hover:bg-slate-700"
               }`}
             >
               <div className="flex items-center gap-3">
@@ -453,14 +453,14 @@ export default function ReceiptPage() {
               <input
                 type="text"
                 placeholder="Search Work Orders..."
-                className="w-full pl-9 pr-3 py-2 rounded-xl border border-[var(--border-color)] themed-input text-xs font-bold outline-none transition-all"
+                className="w-full pl-9 pr-3 py-2 rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-800 text-themed text-xs font-bold outline-none transition-all"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar bg-white dark:bg-slate-900">
             {sites
               .filter((s) => {
                 if (
@@ -488,8 +488,8 @@ export default function ReceiptPage() {
                     }}
                     className={`w-full text-left p-3.5 rounded-2xl transition border flex items-start justify-between gap-2 ${
                       isSelected
-                        ? "bg-[var(--accent)]/10 border-[var(--accent)] shadow-sm"
-                        : "bg-white dark:bg-slate-800/60 border-[var(--border-color)] hover:bg-slate-50 dark:hover:bg-white/5"
+                        ? "bg-amber-500/10 border-amber-500/40 shadow-sm"
+                        : "bg-white dark:bg-slate-800 border-[var(--border-color)] hover:bg-slate-50 dark:hover:bg-slate-700"
                     }`}
                   >
                     <div className="flex-1 min-w-0">
@@ -613,8 +613,8 @@ export default function ReceiptPage() {
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto custom-scrollbar">
-                  <table className="w-full text-left text-xs">
+                <div className="flex-1 overflow-y-auto custom-scrollbar bg-white dark:bg-slate-900">
+                  <table className="w-full text-left text-xs bg-white dark:bg-slate-900">
                     <thead className="sticky top-0 z-10 bg-white dark:bg-slate-900 shadow-sm">
                       <tr className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider border-b border-[var(--border-color)] bg-white dark:bg-slate-900">
                         <th className="px-4 py-3 w-8 bg-white dark:bg-slate-900"></th>
@@ -628,7 +628,7 @@ export default function ReceiptPage() {
                         <th className="px-4 py-3 text-center bg-white dark:bg-slate-900">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y themed-divider">
+                    <tbody className="divide-y divide-[var(--border-color)] bg-white dark:bg-slate-900">
                       {filteredReceipts.map((r) => {
                         const site = sites.find(
                           (s) => s.id?.toString() === r.siteId?.toString()
@@ -636,7 +636,7 @@ export default function ReceiptPage() {
                         return (
                           <tr
                             key={r.id}
-                            className="themed-row cursor-pointer hover:bg-white/5 transition"
+                            className="themed-row bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
                             onClick={(e) => {
                               if (e.target.tagName !== "INPUT" && e.target.tagName !== "BUTTON" && !e.target.closest("button")) {
                                 setPreviewReceipt(r);
@@ -734,7 +734,7 @@ export default function ReceiptPage() {
                       })}
                       {filteredReceipts.length === 0 && (
                         <tr>
-                          <td colSpan="9" className="py-20 text-center text-slate-400 font-bold uppercase text-xs tracking-wider">
+                          <td colSpan="9" className="py-20 text-center text-slate-400 font-bold uppercase text-xs tracking-wider bg-white dark:bg-slate-900">
                             {receipts.length === 0
                               ? "No payment receipts generated yet."
                               : "No receipts match your search."}
@@ -981,8 +981,8 @@ export default function ReceiptPage() {
                       />
                     </div>
                   </div>
-                  <div className="flex-1 overflow-y-auto custom-scrollbar">
-                    <table className="w-full text-left text-xs">
+                  <div className="flex-1 overflow-y-auto custom-scrollbar bg-white dark:bg-slate-900">
+                    <table className="w-full text-left text-xs bg-white dark:bg-slate-900">
                       <thead className="sticky top-0 z-10 bg-white dark:bg-slate-900 shadow-sm">
                         <tr className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider border-b border-[var(--border-color)] bg-white dark:bg-slate-900">
                           <th className="px-4 py-3 w-8 bg-white dark:bg-slate-900"></th>
@@ -992,11 +992,11 @@ export default function ReceiptPage() {
                           <th className="px-4 py-3 text-right bg-white dark:bg-slate-900">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y themed-divider">
+                      <tbody className="divide-y divide-[var(--border-color)] bg-white dark:bg-slate-900">
                         {filteredReceipts.map((r) => (
                           <tr
                             key={r.id}
-                            className="themed-row cursor-pointer hover:bg-white/5 transition"
+                            className="themed-row bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
                             onClick={(e) => {
                               if (e.target.tagName !== "INPUT" && e.target.tagName !== "BUTTON" && !e.target.closest("button")) {
                                 setPreviewReceipt(r);
@@ -1068,7 +1068,7 @@ export default function ReceiptPage() {
                         ))}
                         {filteredReceipts.length === 0 && (
                           <tr>
-                            <td colSpan="5" className="py-20 text-center text-slate-300 font-bold uppercase text-xs">
+                            <td colSpan="5" className="py-20 text-center text-slate-300 font-bold uppercase text-xs bg-white dark:bg-slate-900">
                               No receipts found for this project
                             </td>
                           </tr>

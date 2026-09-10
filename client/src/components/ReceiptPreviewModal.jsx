@@ -27,7 +27,7 @@ export default function ReceiptPreviewModal({ receipt, onClose, onPrint, onEdit 
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 md:p-6 z-50 animate-fadeIn">
-      <div className="themed-modal rounded-[32px] w-full max-w-2xl shadow-2xl overflow-hidden border border-[var(--border-color)] flex flex-col max-h-[90vh]">
+      <div className="bg-white dark:bg-slate-900 text-themed rounded-[32px] w-full max-w-2xl shadow-2xl overflow-hidden border border-[var(--border-color)] flex flex-col max-h-[90vh]">
         {/* Modal Header */}
         <div className="bg-slate-900 text-white p-5 px-6 flex justify-between items-center border-b border-slate-800 shrink-0">
           <div className="flex items-center gap-3">
@@ -118,7 +118,7 @@ export default function ReceiptPreviewModal({ receipt, onClose, onPrint, onEdit 
           {/* Key Details Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Client Info */}
-            <div className="themed-card p-4 rounded-2xl border border-[var(--border-color)]">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[var(--border-color)] shadow-sm">
               <p className="text-[10px] font-black uppercase tracking-widest text-muted flex items-center gap-1.5 mb-1.5">
                 <User size={12} className="text-[var(--accent)]" /> Received From
               </p>
@@ -136,7 +136,7 @@ export default function ReceiptPreviewModal({ receipt, onClose, onPrint, onEdit 
             </div>
 
             {/* Payment Mode & Category */}
-            <div className="themed-card p-4 rounded-2xl border border-[var(--border-color)]">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[var(--border-color)] shadow-sm">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-muted flex items-center gap-1.5 mb-1.5">
@@ -160,7 +160,7 @@ export default function ReceiptPreviewModal({ receipt, onClose, onPrint, onEdit 
           </div>
 
           {/* Description & Remarks */}
-          <div className="themed-card p-4 rounded-2xl border border-[var(--border-color)] space-y-3">
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[var(--border-color)] space-y-3 shadow-sm">
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-1">
                 Towards (Description)

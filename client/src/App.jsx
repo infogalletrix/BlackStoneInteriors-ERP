@@ -70,15 +70,15 @@ function App() {
     <ThemeProvider>
       <DialogProvider>
         <Router>
-          <div className="flex h-screen bg-[var(--bg)] dark:bg-slate-950 text-[var(--text-primary)] dark:text-white overflow-hidden transition-colors duration-300">
+          <div className="flex h-screen bg-white dark:bg-slate-950 text-[var(--text-primary)] dark:text-white overflow-hidden transition-colors duration-300">
             <Sidebar
               isOpen={isSidebarOpen}
               toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
               onLogout={handleLogout}
             />
-            <main className="flex-1 overflow-y-auto relative flex flex-col items-center">
+            <main className="flex-1 overflow-y-auto relative flex flex-col items-center bg-white dark:bg-slate-950 w-full">
               {/* Mobile Header */}
-              <div className="md:hidden flex items-center justify-between p-4 border-b border-black/5 dark:border-white/10 w-full bg-[var(--bg)] dark:bg-slate-950 z-30 sticky top-0 shadow-sm">
+              <div className="md:hidden flex items-center justify-between p-4 border-b border-black/5 dark:border-white/10 w-full bg-white dark:bg-slate-950 z-30 sticky top-0 shadow-sm">
                 <div className="flex items-center gap-3">
                   <img src="/logo.png" alt="Logo" className="w-8 h-8 rounded-md shadow-sm" onError={(e) => { e.target.style.display = 'none'; }} />
                   <span className="font-black text-lg tracking-tight">Black Stone</span>

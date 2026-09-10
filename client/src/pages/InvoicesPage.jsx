@@ -164,7 +164,7 @@ export default function HistoryPage() {
   const draftReceiptsCount = receipts.filter((r) => r.status === "Draft").length;
 
   return (
-    <div className="p-4 md:p-6 page-wrapper">
+    <div className="p-4 md:p-6 page-wrapper min-h-screen bg-white dark:bg-slate-950">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 relative z-10">
         <div>
@@ -181,7 +181,7 @@ export default function HistoryPage() {
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-sm transition-all shadow-sm ${
                 activeTab === "quotations"
                   ? "bg-amber-500 text-white shadow-amber-200 shadow-md"
-                  : "bg-white/5 text-muted border border-[var(--border-color)] hover:bg-white/10"
+                  : "bg-white dark:bg-slate-800 text-muted border border-[var(--border-color)] hover:bg-slate-50 dark:hover:bg-slate-700"
               }`}
             >
               <FileCheck size={16} /> Quotations
@@ -191,7 +191,7 @@ export default function HistoryPage() {
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-sm transition-all shadow-sm ${
                 activeTab === "receipts"
                   ? "bg-emerald-600 text-white shadow-emerald-200 shadow-md"
-                  : "bg-white/5 text-muted border border-[var(--border-color)] hover:bg-white/10"
+                  : "bg-white dark:bg-slate-800 text-muted border border-[var(--border-color)] hover:bg-slate-50 dark:hover:bg-slate-700"
               }`}
             >
               <Receipt size={16} /> Payment Receipts
@@ -210,14 +210,14 @@ export default function HistoryPage() {
               <h2 className="text-4xl font-black tracking-tighter">{quotations.length}</h2>
               <p className="text-amber-300 text-xs mt-2 font-medium">All time</p>
             </div>
-            <div className="themed-card p-7 rounded-3xl flex items-center justify-between">
+            <div className="bg-white dark:bg-slate-900 border border-[var(--border-color)] p-7 rounded-3xl flex items-center justify-between shadow-sm">
               <div>
                 <p className="text-[10px] font-black text-muted uppercase tracking-widest mb-1">Total Value</p>
                 <h2 className="text-3xl font-black text-amber-600">₹{quotations.reduce((s, q) => s + parseFloat(q.total || 0), 0).toLocaleString()}</h2>
               </div>
               <div className="p-4 bg-amber-500/10 rounded-3xl text-amber-500"><FileCheck size={28} /></div>
             </div>
-            <div className="themed-card p-7 rounded-3xl flex items-center justify-between">
+            <div className="bg-white dark:bg-slate-900 border border-[var(--border-color)] p-7 rounded-3xl flex items-center justify-between shadow-sm">
               <div>
                 <p className="text-[10px] font-black text-muted uppercase tracking-widest mb-1">Pending/Negotiating</p>
                 <h2 className="text-3xl font-black text-themed">{quotations.filter(q => (q.status || "Pending") === "Pending" || q.status === "Negotiating").length}</h2>
@@ -226,32 +226,32 @@ export default function HistoryPage() {
             </div>
           </div>
 
-          <div className="themed-card shadow-2xl rounded-[32px] overflow-hidden">
-            <div className="p-5 border-b border-[var(--border-color)] flex justify-end">
+          <div className="bg-white dark:bg-slate-900 border border-[var(--border-color)] shadow-sm rounded-[32px] overflow-hidden">
+            <div className="p-5 border-b border-[var(--border-color)] flex justify-end bg-white dark:bg-slate-900">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={16} />
                 <input type="text" placeholder="Search by client or quote no..."
-                  className="pl-9 pr-4 py-2.5 themed-input rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-400 font-medium w-72"
+                  className="pl-9 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-[var(--border-color)] text-themed rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-400 font-medium w-72"
                   value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
               </div>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
+            <div className="overflow-x-auto bg-white dark:bg-slate-900">
+              <table className="w-full text-left bg-white dark:bg-slate-900">
                 <thead className="bg-white dark:bg-slate-900">
-                  <tr className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider border-b border-[var(--border-color)]">
-                    <th className="px-8 py-4">Quote No.</th>
-                    <th className="px-8 py-4">Date</th>
-                    <th className="px-8 py-4">Client</th>
-                    <th className="px-8 py-4 text-right">Total</th>
-                    <th className="px-8 py-4 text-center">Status</th>
-                    <th className="px-8 py-4 text-center">Actions</th>
+                  <tr className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider border-b border-[var(--border-color)] bg-white dark:bg-slate-900">
+                    <th className="px-8 py-4 bg-white dark:bg-slate-900">Quote No.</th>
+                    <th className="px-8 py-4 bg-white dark:bg-slate-900">Date</th>
+                    <th className="px-8 py-4 bg-white dark:bg-slate-900">Client</th>
+                    <th className="px-8 py-4 text-right bg-white dark:bg-slate-900">Total</th>
+                    <th className="px-8 py-4 text-center bg-white dark:bg-slate-900">Status</th>
+                    <th className="px-8 py-4 text-center bg-white dark:bg-slate-900">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y themed-divider">
+                <tbody className="divide-y divide-[var(--border-color)] bg-white dark:bg-slate-900">
                   {filteredQuotations.map((q) => {
                     const { label, color, icon: StatusIcon } = getQuoteStatus(q);
                     return (
-                      <tr key={q.id || q.quoteNo} className="themed-row">
+                      <tr key={q.id || q.quoteNo} className="themed-row bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                         <td className="px-8 py-5"><span className="font-black text-amber-500 text-sm">{q.quoteNo}</span></td>
                         <td className="px-8 py-5 text-sm text-muted font-medium">
                           <span className="flex items-center gap-2"><Calendar size={13} className="text-muted" />{q.date}</span>
@@ -291,11 +291,11 @@ export default function HistoryPage() {
               </table>
             </div>
             {isLoadingQuotes ? (
-              <div className="py-20 flex justify-center items-center">
+              <div className="py-20 flex justify-center items-center bg-white dark:bg-slate-900">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
               </div>
             ) : filteredQuotations.length === 0 && (
-              <div className="py-20 text-center">
+              <div className="py-20 text-center bg-white dark:bg-slate-900">
                 <Filter className="mx-auto text-slate-200 mb-3" size={40} />
                 <p className="text-slate-400 font-bold uppercase text-xs tracking-widest">
                   {quotations.length === 0 ? "No quotations yet. Generate from the Quotation page." : "No quotations match your search."}
@@ -317,14 +317,14 @@ export default function HistoryPage() {
               <h2 className="text-4xl font-black tracking-tighter">₹{totalReceiptsAmount.toLocaleString()}</h2>
               <p className="text-emerald-200 text-xs mt-2 font-medium">{receipts.length} receipt{receipts.length !== 1 ? "s" : ""} recorded</p>
             </div>
-            <div className="themed-card p-7 rounded-3xl flex items-center justify-between">
+            <div className="bg-white dark:bg-slate-900 border border-[var(--border-color)] p-7 rounded-3xl flex items-center justify-between shadow-sm">
               <div>
                 <p className="text-[10px] font-black text-muted uppercase tracking-widest mb-1">Completed Receipts</p>
                 <h2 className="text-3xl font-black text-emerald-600">{completedReceiptsCount}</h2>
               </div>
               <div className="p-4 bg-emerald-500/10 rounded-3xl text-emerald-500"><CheckCircle2 size={28} /></div>
             </div>
-            <div className="themed-card p-7 rounded-3xl flex items-center justify-between">
+            <div className="bg-white dark:bg-slate-900 border border-[var(--border-color)] p-7 rounded-3xl flex items-center justify-between shadow-sm">
               <div>
                 <p className="text-[10px] font-black text-muted uppercase tracking-widest mb-1">Draft Receipts</p>
                 <h2 className="text-3xl font-black text-themed">{draftReceiptsCount}</h2>
@@ -333,8 +333,8 @@ export default function HistoryPage() {
             </div>
           </div>
 
-          <div className="themed-card shadow-2xl rounded-[32px] overflow-hidden">
-            <div className="p-5 border-b border-[var(--border-color)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="bg-white dark:bg-slate-900 border border-[var(--border-color)] shadow-sm rounded-[32px] overflow-hidden">
+            <div className="p-5 border-b border-[var(--border-color)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white dark:bg-slate-900">
               <div className="flex gap-2">
                 {["All", "Completed", "Draft"].map((filter) => (
                   <button
@@ -343,7 +343,7 @@ export default function HistoryPage() {
                     className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition ${
                       receiptsFilter === filter
                         ? "bg-emerald-600 text-white shadow-md"
-                        : "themed-card text-muted border border-[var(--border-color)] hover:bg-white/5"
+                        : "bg-white dark:bg-slate-800 text-muted border border-[var(--border-color)] hover:bg-slate-50 dark:hover:bg-slate-700"
                     }`}
                   >
                     {filter}
@@ -356,7 +356,7 @@ export default function HistoryPage() {
                   <input
                     type="text"
                     placeholder="Search receipts, client, WO..."
-                    className="pl-9 pr-4 py-2.5 themed-input rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500 font-medium w-full sm:w-72"
+                    className="pl-9 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-[var(--border-color)] text-themed rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500 font-medium w-full sm:w-72"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -370,27 +370,27 @@ export default function HistoryPage() {
               </div>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
+            <div className="overflow-x-auto bg-white dark:bg-slate-900">
+              <table className="w-full text-left bg-white dark:bg-slate-900">
                 <thead className="bg-white dark:bg-slate-900">
-                  <tr className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider border-b border-[var(--border-color)]">
-                    <th className="px-8 py-4">Receipt No.</th>
-                    <th className="px-8 py-4">Date</th>
-                    <th className="px-8 py-4">Work Order</th>
-                    <th className="px-8 py-4">Client</th>
-                    <th className="px-8 py-4">Category & Mode</th>
-                    <th className="px-8 py-4 text-right">Amount Received</th>
-                    <th className="px-8 py-4 text-center">Status</th>
-                    <th className="px-8 py-4 text-center">Actions</th>
+                  <tr className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider border-b border-[var(--border-color)] bg-white dark:bg-slate-900">
+                    <th className="px-8 py-4 bg-white dark:bg-slate-900">Receipt No.</th>
+                    <th className="px-8 py-4 bg-white dark:bg-slate-900">Date</th>
+                    <th className="px-8 py-4 bg-white dark:bg-slate-900">Work Order</th>
+                    <th className="px-8 py-4 bg-white dark:bg-slate-900">Client</th>
+                    <th className="px-8 py-4 bg-white dark:bg-slate-900">Category & Mode</th>
+                    <th className="px-8 py-4 text-right bg-white dark:bg-slate-900">Amount Received</th>
+                    <th className="px-8 py-4 text-center bg-white dark:bg-slate-900">Status</th>
+                    <th className="px-8 py-4 text-center bg-white dark:bg-slate-900">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y themed-divider">
+                <tbody className="divide-y divide-[var(--border-color)] bg-white dark:bg-slate-900">
                   {filteredReceipts.map((r) => {
                     const site = sites.find((s) => s.id?.toString() === r.siteId?.toString());
                     return (
                       <tr
                         key={r.id}
-                        className="themed-row cursor-pointer hover:bg-white/5 transition"
+                        className="themed-row bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
                         onClick={(e) => {
                           if (e.target.tagName !== "BUTTON" && !e.target.closest("button")) {
                             setPreviewReceipt(r);
