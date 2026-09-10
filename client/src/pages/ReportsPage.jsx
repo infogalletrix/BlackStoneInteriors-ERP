@@ -15,9 +15,9 @@ import { useDialog } from "../contexts/DialogContext";
 import { useThemeClasses } from "../hooks/useThemeClasses";
 import NotificationWidget from "../components/NotificationWidget";
 
-// Original Amber / Gold / Warm theme colors
+// Secondary Gold theme colors matching project palette (#C9A227)
 const DARK_COLORS  = ['#8b5cf6', '#10b981', '#f59e0b', '#f43f5e', '#3b82f6', '#ec4899'];
-const LIGHT_COLORS = ['#f97316', '#10b981', '#eab308', '#ef4444', '#3b82f6', '#ec4899'];
+const LIGHT_COLORS = ['#C9A227', '#10b981', '#B8911F', '#ef4444', '#3b82f6', '#ec4899'];
 
 const formatINR = (val) => {
   const num = Number(val) || 0;
@@ -401,8 +401,8 @@ const ReportsPage = () => {
       }
       
       const doc = new jsPDF('landscape');
-      // Original Amber / Orange theme: [249, 115, 22] in light mode, [79, 70, 229] in dark mode
-      const primaryColor = t.isDark ? [79, 70, 229] : [249, 115, 22];
+      // Secondary Gold theme: [201, 162, 39] (#C9A227) in light mode, [79, 70, 229] in dark mode
+      const primaryColor = t.isDark ? [79, 70, 229] : [201, 162, 39];
 
       // Top Company Accent Header Banner
       doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
@@ -431,8 +431,8 @@ const ReportsPage = () => {
       // When exporting Sales Report: Embed Executive KPIs and Visual Charts!
       if (isSalesReport) {
         // Executive Summary Metrics Box
-        doc.setFillColor(254, 243, 199); // warm amber-50 background
-        doc.setDrawColor(245, 158, 11);
+        doc.setFillColor(253, 243, 208); // soft gold background (#FDF3D0)
+        doc.setDrawColor(201, 162, 39); // gold border (#C9A227)
         doc.roundedRect(14, currentY, 269, 19, 2, 2, 'FD');
 
         const kpis = [
@@ -445,7 +445,7 @@ const ReportsPage = () => {
         kpis.forEach((kpi, idx) => {
           const x = 20 + idx * 67;
           doc.setFontSize(7.5);
-          doc.setTextColor(180, 83, 9); // amber-700
+          doc.setTextColor(184, 145, 31); // gold #B8911F
           doc.setFont("helvetica", "bold");
           doc.text(kpi.label, x, currentY + 5.5);
 
@@ -486,7 +486,7 @@ const ReportsPage = () => {
         }
       }
 
-      // Render the Data Table with Amber theme
+      // Render the Data Table with Gold theme
       autoTable(doc, { 
         startY: currentY, 
         head: [header], 
@@ -494,7 +494,7 @@ const ReportsPage = () => {
         foot: foot ? [foot] : undefined,
         theme: 'grid', 
         headStyles: { 
-          fillColor: primaryColor, // Amber/Orange [249, 115, 22]
+          fillColor: primaryColor, // Secondary Gold [201, 162, 39]
           textColor: [255, 255, 255],
           fontStyle: 'bold',
           fontSize: 8.5
@@ -504,8 +504,8 @@ const ReportsPage = () => {
           textColor: [30, 41, 59]
         },
         footStyles: {
-          fillColor: [254, 243, 199], // amber-100
-          textColor: [146, 64, 14], // amber-900
+          fillColor: [253, 243, 208], // gold-soft #FDF3D0
+          textColor: [146, 110, 16], // dark gold
           fontStyle: 'bold',
           fontSize: 8.5
         },
@@ -539,16 +539,16 @@ const ReportsPage = () => {
   };
 
   const reportOptions = [
-    { id: "sales_growth", label: "📈 Sales Performance & Growth Report" },
-    { id: "quotations", label: "📋 Quotations Directory (Approval Status)" },
-    { id: "customers", label: "👥 Customers Directory" },
-    { id: "leads", label: "🎯 Leads Directory" },
+    { id: "sales_growth", label: "Sales Performance & Growth Report" },
+    { id: "quotations", label: "Quotations Directory (Approval Status)" },
+    { id: "customers", label: "Customers Directory" },
+    { id: "leads", label: "Leads Directory" },
   ];
 
-  // Original Amber / Golden Gradient Panel
+  // Secondary Gold Gradient Panel
   const generatorPanel = t.isDark
     ? "bg-gradient-to-br from-violet-900 to-slate-900 border border-violet-500/20 shadow-xl"
-    : "bg-gradient-to-br from-[#d97706] to-[#b45309] shadow-amber-900/20 shadow-xl";
+    : "bg-gradient-to-br from-[#B8911F] via-[#C9A227] to-[#D4AF37] shadow-amber-900/15 shadow-xl";
 
   // Filtered rows in modal
   const filteredModalRows = useMemo(() => {
@@ -568,7 +568,7 @@ const ReportsPage = () => {
         <div>
           <motion.h1 initial={{ opacity:0, x:-20 }} animate={{ opacity:1, x:0 }}
             className={`text-xl font-black tracking-tight flex items-center gap-2 ${t.heading}`}>
-            <Activity className={t.isDark ? "text-violet-400" : "text-amber-600"} size={22} />
+            <Activity className={t.isDark ? "text-violet-400" : "text-[#C9A227]"} size={22} />
             Sales &amp; Business Intelligence Reports
           </motion.h1>
           <p className={`mt-0.5 text-xs font-medium ${t.muted}`}>
@@ -580,7 +580,7 @@ const ReportsPage = () => {
 
       {!dashboardData.loading && (
         <div className="relative z-0 space-y-6">
-          {/* TOP KPI ROW - Styled in Original Amber & Gold Theme */}
+          {/* TOP KPI ROW - Styled in Secondary Gold Theme */}
           <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }}
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
@@ -589,7 +589,7 @@ const ReportsPage = () => {
                 value: `₹${(totalQuoteValue/100000).toFixed(2)}L`, 
                 sub: `${totalQuotesCount} quotes generated`,
                 icon: FileText, 
-                color: t.isDark ? "text-violet-400" : "text-amber-600" 
+                color: t.isDark ? "text-violet-400" : "text-[#C9A227]" 
               },
               { 
                 label: "Approved Sales Value", 
@@ -603,14 +603,14 @@ const ReportsPage = () => {
                 value: customersCount, 
                 sub: "Verified client accounts",
                 icon: Award, 
-                color: t.isDark ? "text-amber-400" : "text-amber-600" 
+                color: t.isDark ? "text-amber-400" : "text-[#C9A227]" 
               },
               { 
                 label: "Active Sales Leads", 
                 value: leadsCount, 
                 sub: "Opportunities in pipeline",
                 icon: Users, 
-                color: t.isDark ? "text-violet-400" : "text-amber-700" 
+                color: t.isDark ? "text-violet-400" : "text-[#B8911F]" 
               },
             ].map(({ label, value, sub, icon: Icon, color }) => (
               <div key={label} className={`${t.card} ${t.cardHover} p-5 rounded-2xl border border-[var(--border-color)] shadow-sm`}>
@@ -635,14 +635,14 @@ const ReportsPage = () => {
                 <div className="flex justify-between items-center mb-6">
                   <div>
                     <h3 className={`text-sm font-black flex items-center gap-2 uppercase tracking-wider ${t.heading}`}>
-                      <TrendingUp size={16} className={t.isDark ? "text-violet-400" : "text-amber-600"}/> 
+                      <TrendingUp size={16} className={t.isDark ? "text-violet-400" : "text-[#C9A227]"}/> 
                       Monthly Sales &amp; Quotations Trend (6 Months)
                     </h3>
                     <p className="text-[11px] text-muted">Comparison of total quotation pipeline vs approved sales</p>
                   </div>
                   <div className="flex items-center gap-3 text-[10px] font-bold uppercase">
                     <span className="flex items-center gap-1">
-                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> Total Quotes
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#C9A227] inline-block"></span> Total Quotes
                     </span>
                     <span className="flex items-center gap-1">
                       <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Approved
@@ -655,8 +655,8 @@ const ReportsPage = () => {
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={t.chartGrid} />
                       <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize:11, fontWeight:700, fill:t.chartTickColor }} />
                       <YAxis axisLine={false} tickLine={false} tick={{ fontSize:11, fontWeight:700, fill:t.chartTickColor }} tickFormatter={(v) => `₹${Math.round(v/1000)}k`} width={55} />
-                      <RechartsTooltip cursor={{ fill: t.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(217,119,6,0.08)' }} contentStyle={t.chartTooltip} formatter={(value) => `₹${Number(value).toLocaleString('en-IN')}`} />
-                      <Bar dataKey="quotesValue" name="Total Quotes" fill={t.isDark ? "#f59e0b" : "#d97706"} radius={[4,4,0,0]} />
+                      <RechartsTooltip cursor={{ fill: t.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(201,162,39,0.08)' }} contentStyle={t.chartTooltip} formatter={(value) => `₹${Number(value).toLocaleString('en-IN')}`} />
+                      <Bar dataKey="quotesValue" name="Total Quotes" fill={t.isDark ? "#C9A227" : "#C9A227"} radius={[4,4,0,0]} />
                       <Bar dataKey="approvedValue" name="Approved Value" fill={t.isDark ? "#10b981" : "#059669"} radius={[4,4,0,0]} />
                     </BarChart>
                   </ResponsiveContainer>
@@ -666,7 +666,7 @@ const ReportsPage = () => {
               {/* Lead Sources Pie Chart */}
               <div className={`${t.card} rounded-2xl p-6 border border-[var(--border-color)] shadow-sm`}>
                 <h3 className={`text-sm font-black mb-1 flex items-center gap-2 uppercase tracking-wider ${t.heading}`}>
-                  <PieChartIcon size={16} className={t.isDark ? "text-violet-400" : "text-amber-600"}/> 
+                  <PieChartIcon size={16} className={t.isDark ? "text-violet-400" : "text-[#C9A227]"}/> 
                   CRM Lead Acquisition Sources
                 </h3>
                 <p className="text-[11px] text-muted mb-4">Origin channels for customer leads entering the pipeline</p>
@@ -712,17 +712,17 @@ const ReportsPage = () => {
                           <td className="py-2.5 px-3 text-center font-bold">{row.sent}</td>
                           <td className="py-2.5 px-3 text-right font-semibold">₹{formatINR(row.quoteValue)}</td>
                           <td className="py-2.5 px-3 text-right font-bold text-emerald-600 dark:text-emerald-400">₹{formatINR(row.approvedValue)}</td>
-                          <td className="py-2.5 px-3 text-right font-bold text-amber-600 dark:text-amber-400">{row.approvalRate}</td>
+                          <td className="py-2.5 px-3 text-right font-bold text-[#C9A227] dark:text-[var(--accent)]">{row.approvalRate}</td>
                         </tr>
                       ))}
                     </tbody>
-                    <tfoot className="border-t-2 border-[var(--border-color)] font-bold bg-amber-500/10 dark:bg-amber-500/5">
+                    <tfoot className="border-t-2 border-[var(--border-color)] font-bold bg-[#C9A227]/10 dark:bg-white/5">
                       <tr>
-                        <td className="py-2.5 px-3 uppercase text-amber-900 dark:text-amber-300">Total (6 Months)</td>
-                        <td className="py-2.5 px-3 text-center text-amber-900 dark:text-amber-300">{totalQuotesCount} Quotes</td>
-                        <td className="py-2.5 px-3 text-right text-amber-900 dark:text-amber-300">₹{formatINR(totalQuoteValue)}</td>
+                        <td className="py-2.5 px-3 uppercase text-[#997715] dark:text-[var(--accent)]">Total (6 Months)</td>
+                        <td className="py-2.5 px-3 text-center text-[#997715] dark:text-[var(--accent)]">{totalQuotesCount} Quotes</td>
+                        <td className="py-2.5 px-3 text-right text-[#997715] dark:text-[var(--accent)]">₹{formatINR(totalQuoteValue)}</td>
                         <td className="py-2.5 px-3 text-right text-emerald-700 dark:text-emerald-400">₹{formatINR(approvedQuoteValue)}</td>
-                        <td className="py-2.5 px-3 text-right text-amber-900 dark:text-amber-300">{conversionRate}%</td>
+                        <td className="py-2.5 px-3 text-right text-[#997715] dark:text-[var(--accent)]">{conversionRate}%</td>
                       </tr>
                     </tfoot>
                   </table>
@@ -731,7 +731,7 @@ const ReportsPage = () => {
 
             </div>
 
-            {/* REPORT GENERATOR — RIGHT COL (Amber / Gold theme) */}
+            {/* REPORT GENERATOR — RIGHT COL (Secondary Gold theme) */}
             <div className="xl:col-span-1">
               <div className={`${generatorPanel} rounded-2xl p-6 shadow-xl sticky top-8 relative overflow-hidden`}>
                 <h3 className="text-lg font-black mb-1 flex items-center gap-2 tracking-tight text-white">
@@ -750,7 +750,7 @@ const ReportsPage = () => {
                       className={`w-full rounded-xl p-3 text-xs font-bold outline-none transition-all cursor-pointer appearance-none ${
                         t.isDark
                           ? "bg-slate-800/90 border border-white/10 text-white focus:ring-2 focus:ring-violet-500 [&_option]:bg-slate-900"
-                          : "bg-white/20 border border-white/30 text-white focus:ring-2 focus:ring-white/50 [&_option]:bg-amber-800 [&_option]:text-white"
+                          : "bg-white/20 border border-white/30 text-white focus:ring-2 focus:ring-white/50 [&_option]:bg-[#8a680e] [&_option]:text-white"
                       }`}
                       value={selectedReport}
                       onChange={(e) => setSelectedReport(e.target.value)}
@@ -803,7 +803,7 @@ const ReportsPage = () => {
                     placeholder="Search records..."
                     value={modalSearch}
                     onChange={(e) => setModalSearch(e.target.value)}
-                    className="pl-8 pr-3 py-1.5 text-xs rounded-xl bg-black/5 dark:bg-white/5 border border-[var(--border-color)] outline-none focus:border-amber-500 w-44 sm:w-56"
+                    className="pl-8 pr-3 py-1.5 text-xs rounded-xl bg-black/5 dark:bg-white/5 border border-[var(--border-color)] outline-none focus:border-[#C9A227] w-44 sm:w-56"
                   />
                 </div>
                 <button onClick={() => setViewReportData(null)}
@@ -832,7 +832,7 @@ const ReportsPage = () => {
                               cell === "Approved" || cell === "Customer" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" :
                               cell === "Rejected" ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20" :
                               cell === "Draft" ? "bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20" :
-                              "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                              "bg-[#C9A227]/10 text-[#B8911F] dark:text-[var(--accent)] border border-[#C9A227]/30"
                             }`}>
                               {cell}
                             </span>
@@ -856,10 +856,10 @@ const ReportsPage = () => {
 
                 {/* Clear Grand Total Footer Row */}
                 {viewReportData.foot && (
-                  <tfoot className="border-t-2 border-[var(--border-color)] bg-amber-500/10 dark:bg-amber-500/5 font-bold">
+                  <tfoot className="border-t-2 border-[var(--border-color)] bg-[#C9A227]/10 dark:bg-white/5 font-bold">
                     <tr>
                       {viewReportData.foot.map((fCell, fIdx) => (
-                        <td key={fIdx} className="p-3 text-xs text-amber-900 dark:text-amber-300">
+                        <td key={fIdx} className="p-3 text-xs text-[#997715] dark:text-[var(--accent)]">
                           {fCell}
                         </td>
                       ))}
@@ -876,7 +876,7 @@ const ReportsPage = () => {
               </span>
               <div className="flex gap-2.5">
                 <button onClick={exportPDF}
-                  className="px-4 py-2 rounded-xl font-bold text-xs bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition flex items-center gap-1.5">
+                  className="px-4 py-2 rounded-xl font-bold text-xs bg-[#C9A227] hover:bg-[#B8911F] text-white shadow-sm transition flex items-center gap-1.5">
                   <Download size={14}/> Download PDF
                 </button>
                 <button onClick={exportExcel}
