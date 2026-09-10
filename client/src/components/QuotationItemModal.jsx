@@ -139,17 +139,17 @@ export default function QuotationItemModal({
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
       <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[92vh]">
-        {/* Header matching image blue banner */}
-        <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 px-6 py-4 text-white flex items-center justify-between shadow-md">
+        {/* Header matching project secondary gold color */}
+        <div className="bg-gradient-to-r from-[#B8911F] via-[#C9A227] to-[#D4AF37] px-6 py-4 text-white flex items-center justify-between shadow-md">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
               <Layers size={18} />
             </div>
             <div>
               <h3 className="text-base font-black tracking-wide uppercase">
                 {editingItem ? "Edit Quotation Item" : "Add Quotation Item"}
               </h3>
-              <p className="text-[11px] text-blue-100 font-medium">
+              <p className="text-[11px] text-amber-100 font-medium">
                 Enter item details, material specifications, and rates
               </p>
             </div>
@@ -157,7 +157,7 @@ export default function QuotationItemModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-white/20 text-white/80 hover:text-white transition"
+            className="p-1.5 rounded-full hover:bg-white/20 text-white/90 hover:text-white transition"
           >
             <X size={18} />
           </button>
@@ -188,7 +188,7 @@ export default function QuotationItemModal({
                 <button
                   type="button"
                   onClick={() => onOpenManageOptions("products")}
-                  className="text-[10px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition"
+                  className="text-[10px] font-bold text-amber-700 dark:text-[var(--accent)] hover:text-amber-800 flex items-center gap-1 transition"
                 >
                   <Settings size={11} /> Manage Products
                 </button>
@@ -215,7 +215,7 @@ export default function QuotationItemModal({
                 <button
                   type="button"
                   onClick={() => onOpenManageOptions("specifications")}
-                  className="text-[10px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition"
+                  className="text-[10px] font-bold text-amber-700 dark:text-[var(--accent)] hover:text-amber-800 flex items-center gap-1 transition"
                 >
                   <Settings size={11} /> Manage Specifications
                 </button>
@@ -242,7 +242,7 @@ export default function QuotationItemModal({
                 value={qty}
                 onChange={(e) => setQty(e.target.value.replace(/[^0-9.]/g, ""))}
                 placeholder="0"
-                className="w-full themed-input border border-[var(--border-color)] px-3 py-2 rounded-xl text-sm font-black text-center outline-none focus:border-blue-500"
+                className="w-full themed-input border border-[var(--border-color)] px-3 py-2 rounded-xl text-sm font-black text-center outline-none focus:border-[#C9A227]"
               />
             </div>
 
@@ -253,7 +253,7 @@ export default function QuotationItemModal({
               <select
                 value={unit}
                 onChange={(e) => setUnit(e.target.value)}
-                className="w-full themed-input border border-[var(--border-color)] px-3 py-2 rounded-xl text-sm font-bold text-center outline-none focus:border-blue-500 cursor-pointer [&>option]:bg-[var(--bg-surface)]"
+                className="w-full themed-input border border-[var(--border-color)] px-3 py-2 rounded-xl text-sm font-bold text-center outline-none focus:border-[#C9A227] cursor-pointer [&>option]:bg-[var(--bg-surface)]"
               >
                 <option>Sq.Ft</option>
                 <option>L.Ft</option>
@@ -275,7 +275,7 @@ export default function QuotationItemModal({
                 value={rate}
                 onChange={(e) => handleRateChange(e.target.value)}
                 placeholder="0.00"
-                className="w-full themed-input border border-[var(--border-color)] px-3 py-2 rounded-xl text-sm font-black text-right outline-none focus:border-blue-500"
+                className="w-full themed-input border border-[var(--border-color)] px-3 py-2 rounded-xl text-sm font-black text-right outline-none focus:border-[#C9A227]"
               />
             </div>
 
@@ -287,7 +287,7 @@ export default function QuotationItemModal({
                 <button
                   type="button"
                   onClick={handleToggleDiscountType}
-                  className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 border border-blue-500/30 hover:bg-blue-500/20 transition"
+                  className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-[var(--accent)] border border-amber-500/30 hover:bg-amber-500/20 transition"
                   title="Switch between Percentage and Direct Price discount"
                 >
                   {discountType === "price" ? "Switch to %" : "Switch to ₹"}
@@ -304,13 +304,13 @@ export default function QuotationItemModal({
                   }
                 }}
                 placeholder={discountType === "price" ? "0.00 ₹" : "0 %"}
-                className="w-full themed-input border border-[var(--border-color)] px-3 py-2 rounded-xl text-sm font-semibold text-right outline-none focus:border-blue-500"
+                className="w-full themed-input border border-[var(--border-color)] px-3 py-2 rounded-xl text-sm font-semibold text-right outline-none focus:border-[#C9A227]"
               />
             </div>
           </div>
 
           {/* Real-time Calculation Summary Box */}
-          <div className="bg-gradient-to-r from-blue-50/70 via-indigo-50/70 to-slate-50/70 dark:from-blue-950/30 dark:via-indigo-950/30 dark:to-slate-900/40 border border-blue-200 dark:border-blue-900/40 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
+          <div className="bg-gradient-to-r from-amber-50/80 via-yellow-50/40 to-slate-50/70 dark:from-amber-950/30 dark:via-yellow-950/20 dark:to-slate-900/40 border border-amber-200/80 dark:border-amber-700/40 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
             <div className="space-y-0.5 text-xs text-slate-600 dark:text-slate-300">
               <div>
                 <span className="font-semibold text-slate-500">Effective Rate:</span>{" "}
@@ -326,10 +326,10 @@ export default function QuotationItemModal({
             </div>
 
             <div className="text-right">
-              <span className="block text-[10px] font-extrabold uppercase text-blue-600 dark:text-blue-400 tracking-wider">
+              <span className="block text-[10px] font-extrabold uppercase text-amber-700 dark:text-[var(--accent)] tracking-wider">
                 Total Line Amount
               </span>
-              <span className="text-2xl font-black text-blue-700 dark:text-blue-300 tracking-tight">
+              <span className="text-2xl font-black text-amber-700 dark:text-[var(--accent)] tracking-tight">
                 ₹{itemAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
@@ -346,7 +346,7 @@ export default function QuotationItemModal({
             </button>
             <button
               type="submit"
-              className="px-7 py-2.5 rounded-xl text-sm font-black text-white bg-blue-600 hover:bg-blue-700 active:scale-95 transition shadow-lg flex items-center gap-2"
+              className="px-7 py-2.5 rounded-xl text-sm font-black text-white bg-[#C9A227] hover:bg-[#B8911F] active:scale-95 transition shadow-lg shadow-amber-900/20 flex items-center gap-2"
             >
               <Check size={16} strokeWidth={3} />
               {editingItem ? "Save Changes" : "Add Item"}

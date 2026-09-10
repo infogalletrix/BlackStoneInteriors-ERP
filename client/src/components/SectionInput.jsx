@@ -152,7 +152,7 @@ export default function SectionInput({
           placeholder={placeholder}
           className={
             className ||
-            "w-full themed-input border border-[var(--border-color)] px-3 py-2 pr-8 rounded-xl text-sm font-semibold outline-none focus:border-blue-500 transition"
+            "w-full themed-input border border-[var(--border-color)] px-3 py-2 pr-8 rounded-xl text-sm font-semibold outline-none focus:border-[#C9A227] transition"
           }
           autoComplete="off"
           spellCheck="false"
@@ -203,9 +203,9 @@ export default function SectionInput({
                   onMouseEnter={() => setHighlightIdx(idx)}
                   className={`w-full text-left px-3 py-2 text-xs transition flex items-center justify-between ${
                     isHighlighted
-                      ? "bg-blue-600 text-white font-bold"
+                      ? "bg-[#C9A227] text-white font-bold"
                       : isSelected
-                      ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold"
+                      ? "bg-amber-500/10 text-amber-700 dark:text-[var(--accent)] font-bold"
                       : "text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5"
                   }`}
                 >
@@ -214,7 +214,7 @@ export default function SectionInput({
                     <span>{renderHighlighted(item, query)}</span>
                   </span>
                   {isSelected && (
-                    <Check size={13} className={isHighlighted ? "text-white" : "text-blue-600 shrink-0"} />
+                    <Check size={13} className={isHighlighted ? "text-white" : "text-amber-700 dark:text-[var(--accent)] shrink-0"} />
                   )}
                 </button>
               );

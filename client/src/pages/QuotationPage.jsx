@@ -820,7 +820,7 @@ export default function QuotationPage() {
                 </td>
                 <td className="px-3.5 py-3.5 text-right text-muted font-semibold text-sm">
                   {item.discountType === 'price' && item.discountPrice && parseFloat(item.discountPrice) > 0 ? (
-                    <span className="text-blue-500 font-bold">₹{formatINR(item.discountPrice)}</span>
+                    <span className="text-amber-700 dark:text-[var(--accent)] font-bold">₹{formatINR(item.discountPrice)}</span>
                   ) : item.discountPercent && parseFloat(item.discountPercent) > 0 ? (
                     <span className="text-amber-600 dark:text-[var(--accent)] font-bold">{item.discountPercent}%</span>
                   ) : (
@@ -835,7 +835,7 @@ export default function QuotationPage() {
                     <button
                       type="button"
                       onClick={() => openEditItemModal(item)}
-                      className="p-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 hover:bg-blue-500/10 rounded-lg transition"
+                      className="p-2 text-amber-700 hover:text-amber-800 dark:text-[var(--accent)] hover:bg-amber-500/10 rounded-lg transition"
                       title="Edit Item"
                     >
                       <Edit3 size={16} />
@@ -864,7 +864,7 @@ export default function QuotationPage() {
                     <button
                       type="button"
                       onClick={openAddItemModal}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-md transition"
+                      className="flex items-center gap-2 px-5 py-2.5 bg-[#C9A227] hover:bg-[#B8911F] text-white rounded-xl text-sm font-bold shadow-md shadow-amber-900/15 transition"
                     >
                       <Plus size={16} strokeWidth={3} /> Add First Item
                     </button>
@@ -880,7 +880,7 @@ export default function QuotationPage() {
           <div className="flex items-center gap-3">
             <button 
               onClick={openAddItemModal}
-              className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition-all"
+              className="flex items-center gap-2 px-6 py-2.5 bg-[#C9A227] hover:bg-[#B8911F] text-white rounded-xl font-bold text-sm shadow-md hover:shadow-lg shadow-amber-900/15 transition-all"
             >
               <Plus size={18} strokeWidth={3} /> + Add
             </button>
@@ -936,8 +936,8 @@ export default function QuotationPage() {
           {/* CGST and SGST text boxes ONLY appear for GST */}
           {billType === 'GST' && (
             <>
-              <div className="flex flex-col gap-1.5 bg-blue-500/5 dark:bg-blue-500/10 px-3 py-1.5 rounded-xl border border-blue-500/20">
-                <label className="text-[11px] font-black text-blue-600 dark:text-blue-400 uppercase flex items-center justify-between gap-2">
+              <div className="flex flex-col gap-1.5 bg-amber-500/5 dark:bg-amber-500/10 px-3 py-1.5 rounded-xl border border-amber-500/20">
+                <label className="text-[11px] font-black text-amber-700 dark:text-[var(--accent)] uppercase flex items-center justify-between gap-2">
                   <span>CGST (%)</span>
                   <span className="text-[10px] opacity-80 font-bold">₹{formatINR(cgstAmount)}</span>
                 </label>
@@ -945,12 +945,12 @@ export default function QuotationPage() {
                   value={cgstPercent} 
                   onChange={e => setCgstPercent(e.target.value.replace(/[^0-9.]/g, ''))} 
                   placeholder="9" 
-                  className="w-24 themed-input px-2.5 py-1.5 text-sm text-right border border-blue-500/30 rounded-lg font-bold text-blue-600 dark:text-blue-400 outline-none focus:border-blue-500" 
+                  className="w-24 themed-input px-2.5 py-1.5 text-sm text-right border border-amber-500/30 rounded-lg font-bold text-amber-700 dark:text-[var(--accent)] outline-none focus:border-[#C9A227]" 
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5 bg-blue-500/5 dark:bg-blue-500/10 px-3 py-1.5 rounded-xl border border-blue-500/20">
-                <label className="text-[11px] font-black text-blue-600 dark:text-blue-400 uppercase flex items-center justify-between gap-2">
+              <div className="flex flex-col gap-1.5 bg-amber-500/5 dark:bg-amber-500/10 px-3 py-1.5 rounded-xl border border-amber-500/20">
+                <label className="text-[11px] font-black text-amber-700 dark:text-[var(--accent)] uppercase flex items-center justify-between gap-2">
                   <span>SGST (%)</span>
                   <span className="text-[10px] opacity-80 font-bold">₹{formatINR(sgstAmount)}</span>
                 </label>
@@ -958,7 +958,7 @@ export default function QuotationPage() {
                   value={sgstPercent} 
                   onChange={e => setSgstPercent(e.target.value.replace(/[^0-9.]/g, ''))} 
                   placeholder="9" 
-                  className="w-24 themed-input px-2.5 py-1.5 text-sm text-right border border-blue-500/30 rounded-lg font-bold text-blue-600 dark:text-blue-400 outline-none focus:border-blue-500" 
+                  className="w-24 themed-input px-2.5 py-1.5 text-sm text-right border border-amber-500/30 rounded-lg font-bold text-amber-700 dark:text-[var(--accent)] outline-none focus:border-[#C9A227]" 
                 />
               </div>
             </>
@@ -976,7 +976,7 @@ export default function QuotationPage() {
               {formatINR(grandTotal)}
             </div>
             {billType === 'GST' ? (
-              <div className="text-[11px] font-bold text-blue-600 dark:text-blue-400 mt-1">
+              <div className="text-[11px] font-bold text-amber-700 dark:text-[var(--accent)] mt-1">
                 CGST ({cgstPercent || 0}%): ₹{formatINR(cgstAmount)} | SGST ({sgstPercent || 0}%): ₹{formatINR(sgstAmount)}
               </div>
             ) : (

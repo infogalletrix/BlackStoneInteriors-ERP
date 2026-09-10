@@ -169,7 +169,7 @@ export default function ComboboxSelect({
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             required={required}
-            className={`w-full themed-input border border-[var(--border-color)] p-3 pr-16 rounded-xl text-xs outline-none focus:border-blue-500 resize-y transition ${className}`}
+            className={`w-full themed-input border border-[var(--border-color)] p-3 pr-16 rounded-xl text-xs outline-none focus:border-[#C9A227] resize-y transition ${className}`}
           />
         ) : (
           <input
@@ -186,7 +186,7 @@ export default function ComboboxSelect({
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             required={required}
-            className={`w-full themed-input border border-[var(--border-color)] px-3 py-2 pr-16 rounded-xl text-sm font-semibold outline-none focus:border-blue-500 transition ${className}`}
+            className={`w-full themed-input border border-[var(--border-color)] px-3 py-2 pr-16 rounded-xl text-sm font-semibold outline-none focus:border-[#C9A227] transition ${className}`}
             autoComplete="off"
             spellCheck="false"
           />
@@ -208,7 +208,7 @@ export default function ComboboxSelect({
           <button
             type="button"
             onClick={toggleDropdown}
-            className={`p-1 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-md hover:bg-black/5 dark:hover:bg-white/10 transition ${isOpen ? "text-blue-600 rotate-180" : ""}`}
+            className={`p-1 text-slate-400 hover:text-amber-700 dark:hover:text-[var(--accent)] rounded-md hover:bg-black/5 dark:hover:bg-white/10 transition ${isOpen ? "text-amber-700 rotate-180" : ""}`}
             title="Toggle options menu"
           >
             <ChevronDown size={16} className="transition-transform duration-200" />
@@ -233,7 +233,7 @@ export default function ComboboxSelect({
                   onOpenManage();
                   setIsOpen(false);
                 }}
-                className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 normal-case text-[10px] font-extrabold"
+                className="text-amber-700 dark:text-[var(--accent)] hover:underline flex items-center gap-1 normal-case text-[10px] font-extrabold"
               >
                 <Settings size={10} /> {manageLabel}
               </button>
@@ -251,10 +251,10 @@ export default function ComboboxSelect({
                   e.preventDefault();
                   handleSelect(currentVal.trim());
                 }}
-                className="w-full text-left px-3 py-2 text-xs transition flex items-center justify-between bg-blue-50/50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 hover:bg-blue-100/70 dark:hover:bg-blue-900/40 font-semibold"
+                className="w-full text-left px-3 py-2 text-xs transition flex items-center justify-between bg-amber-50/60 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 hover:bg-amber-100/70 dark:hover:bg-amber-900/40 font-semibold"
               >
                 <span className="flex items-center gap-1.5 truncate">
-                  <Plus size={13} className="text-blue-600 shrink-0" />
+                  <Plus size={13} className="text-amber-600 shrink-0" />
                   <span>Use typed: <strong className="underline">{currentVal.trim()}</strong></span>
                 </span>
                 <span className="text-[10px] opacity-70 uppercase tracking-wider font-bold shrink-0 ml-2">Custom</span>
@@ -278,9 +278,9 @@ export default function ComboboxSelect({
                     onMouseEnter={() => setHighlightIdx(idx)}
                     className={`w-full text-left px-3 py-2 text-xs transition flex items-center justify-between ${
                       isHighlighted
-                        ? "bg-blue-600 text-white font-bold"
+                        ? "bg-[#C9A227] text-white font-bold"
                         : isSelected
-                        ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold"
+                        ? "bg-amber-500/10 text-amber-700 dark:text-[var(--accent)] font-bold"
                         : "text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/5"
                     }`}
                   >
@@ -288,7 +288,7 @@ export default function ComboboxSelect({
                       {renderHighlighted(opt, query)}
                     </span>
                     {isSelected && (
-                      <Check size={14} className={isHighlighted ? "text-white" : "text-blue-600 shrink-0"} />
+                      <Check size={14} className={isHighlighted ? "text-white" : "text-amber-700 dark:text-[var(--accent)] shrink-0"} />
                     )}
                   </button>
                 );
@@ -310,7 +310,7 @@ export default function ComboboxSelect({
                   onOpenManage();
                   setIsOpen(false);
                 }}
-                className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-blue-500/10 transition"
+                className="text-[11px] font-bold text-amber-700 dark:text-[var(--accent)] hover:text-amber-800 flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-amber-500/10 transition"
               >
                 <Settings size={12} /> {manageLabel}
               </button>
