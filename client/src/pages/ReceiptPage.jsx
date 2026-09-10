@@ -616,7 +616,7 @@ export default function ReceiptPage() {
                 <div className="flex-1 overflow-y-auto custom-scrollbar">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="text-[9px] font-black text-muted uppercase tracking-widest border-b border-[var(--border-color)] themed-thead sticky top-0 shadow-sm z-10">
+                      <tr className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider border-b border-[var(--border-color)] bg-white dark:bg-slate-900 sticky top-0 shadow-sm z-10">
                         <th className="px-4 py-3 w-8"></th>
                         <th className="px-4 py-3">Receipt No</th>
                         <th className="px-4 py-3">Date</th>
@@ -984,7 +984,7 @@ export default function ReceiptPage() {
                   <div className="flex-1 overflow-y-auto custom-scrollbar">
                     <table className="w-full text-left text-xs">
                       <thead>
-                        <tr className="text-[9px] font-black text-muted uppercase tracking-widest border-b border-[var(--border-color)] themed-thead sticky top-0 shadow-sm z-10">
+                        <tr className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider border-b border-[var(--border-color)] bg-white dark:bg-slate-900 sticky top-0 shadow-sm z-10">
                           <th className="px-4 py-3 w-8"></th>
                           <th className="px-4 py-3">Receipt No</th>
                           <th className="px-4 py-3">Status</th>
