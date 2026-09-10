@@ -13,7 +13,7 @@ export default function QuotationItemModal({
   sectionSuggestions = [],
   onOpenManageOptions
 }) {
-  const [section, setSection] = useState("General");
+  const [section, setSection] = useState("");
   const [product, setProduct] = useState("");
   const [specification, setSpecification] = useState("");
   const [qty, setQty] = useState("");
@@ -23,10 +23,16 @@ export default function QuotationItemModal({
   const [discountPercent, setDiscountPercent] = useState("");
   const [discountPrice, setDiscountPrice] = useState("");
 
+  const cleanProductsList = React.useMemo(() => {
+    return (productsList || []).filter(
+      p => p && typeof p === "string" && !p.toLowerCase().includes("product / category")
+    );
+  }, [productsList]);
+
   useEffect(() => {
     if (isOpen) {
       if (editingItem) {
-        setSection(editingItem.section || "General");
+        setSection(editingItem.section || "");
         setProduct(editingItem.product || "");
         setSpecification(editingItem.specification || "");
         setQty(editingItem.qty !== undefined && editingItem.qty !== null ? String(editingItem.qty) : "");
@@ -36,8 +42,8 @@ export default function QuotationItemModal({
         setDiscountPercent(editingItem.discountPercent || "");
         setDiscountPrice(editingItem.discountPrice || "");
       } else {
-        setSection("General");
-        setProduct(productsList[0] || "");
+        setSection("");
+        setProduct("");
         setSpecification("");
         setQty("");
         setUnit("Sq.Ft");
@@ -47,7 +53,7 @@ export default function QuotationItemModal({
         setDiscountPrice("");
       }
     }
-  }, [isOpen, editingItem, productsList]);
+  }, [isOpen, editingItem]);
 
   if (!isOpen) return null;
 
@@ -122,7 +128,7 @@ export default function QuotationItemModal({
     onSave({
       id: editingItem ? editingItem.id : Date.now() + Math.random(),
       code: editingItem?.code || "",
-      section: section.trim() || "General",
+      section: section.trim(),
       product: product.trim(),
       specification: specification.trim(),
       qty: qty || "0",
@@ -197,7 +203,7 @@ export default function QuotationItemModal({
             <ComboboxSelect
               value={product}
               onChange={(val) => setProduct(val)}
-              options={productsList}
+              options={cleanProductsList}
               placeholder="Search or type product (e.g. Wardrobe, Kitchen Cabinets)..."
               onOpenManage={onOpenManageOptions ? () => onOpenManageOptions("products") : null}
               manageLabel="Manage Products"

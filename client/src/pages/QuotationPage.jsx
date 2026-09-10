@@ -73,7 +73,11 @@ export default function QuotationPage() {
   // Dropdown Options Management (Products, Specifications)
   const [productsList, setProductsList] = useState(() => {
     const saved = localStorage.getItem("quote_products");
-    return saved ? JSON.parse(saved) : DEFAULT_PRODUCTS;
+    let list = saved ? JSON.parse(saved) : DEFAULT_PRODUCTS;
+    if (Array.isArray(list)) {
+      list = list.filter(p => p && typeof p === "string" && !p.toLowerCase().includes("product / category"));
+    }
+    return list;
   });
 
   const [specificationsList, setSpecificationsList] = useState(() => {
@@ -799,9 +803,13 @@ export default function QuotationPage() {
                   {idx + 1}
                 </td>
                 <td className="px-3.5 py-3.5">
-                  <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-amber-500/10 text-amber-700 dark:text-[var(--accent)] border border-amber-500/20">
-                    {item.section || "General"}
-                  </span>
+                  {item.section ? (
+                    <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-amber-500/10 text-amber-700 dark:text-[var(--accent)] border border-amber-500/20">
+                      {item.section}
+                    </span>
+                  ) : (
+                    <span className="text-muted text-xs">—</span>
+                  )}
                 </td>
                 <td className="px-3.5 py-3.5 font-bold text-themed text-sm">
                   {item.product || "—"}
