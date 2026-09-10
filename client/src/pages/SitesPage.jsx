@@ -523,7 +523,7 @@ export default function SitesPage() {
   };
 
   return (
-    <div className="page-wrapper min-h-screen font-sans">
+    <div className="page-wrapper min-h-screen font-sans bg-white dark:bg-slate-950">
       <div className="p-4 md:p-6">
         <div className="flex justify-between items-center mb-5 relative z-10">
           <div>
@@ -555,7 +555,7 @@ export default function SitesPage() {
           {/* ── LEFT PANEL: SITES ROSTER ── */}
           <div className="xl:col-span-4 flex flex-col h-[calc(100vh-160px)]">
             {/* Filters */}
-            <div className="themed-card rounded-t-3xl p-4 shadow-sm z-10 relative">
+            <div className="bg-white dark:bg-slate-900 border border-[var(--border-color)] rounded-t-3xl p-4 shadow-sm z-10 relative">
               <div className="relative mb-3">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={16} />
                 <input
@@ -573,7 +573,7 @@ export default function SitesPage() {
                     onClick={() => setStatusFilter(status)}
                     className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition ${statusFilter === status
                         ? "bg-accent/10 text-accent"
-                        : "bg-white/5 text-muted hover:bg-white/10"
+                        : "bg-white dark:bg-slate-800 text-muted hover:bg-slate-50 dark:hover:bg-slate-700 border border-[var(--border-color)]"
                       }`}
                   >
                     {status}
@@ -583,7 +583,7 @@ export default function SitesPage() {
             </div>
 
             {/* List */}
-            <div className="themed-card rounded-b-3xl border-t-0 shadow-sm flex-1 overflow-y-auto">
+            <div className="bg-white dark:bg-slate-900 border border-[var(--border-color)] rounded-b-3xl border-t-0 shadow-sm flex-1 overflow-y-auto">
               {filteredSites.length === 0 ? (
                 <p className="p-8 text-center text-muted font-bold text-sm">No work orders found.</p>
               ) : (
@@ -592,7 +592,7 @@ export default function SitesPage() {
                     <button
                       key={site.id}
                       onClick={() => setSelectedSiteId(site.id)}
-                      className={`w-full text-left p-3 transition-all ${selectedSiteId === site.id ? "bg-accent/10" : "hover:bg-white/5"}`}
+                      className={`w-full text-left p-3 transition-all ${selectedSiteId === site.id ? "bg-accent/10" : "hover:bg-slate-50 dark:hover:bg-white/5"}`}
                     >
                       <div className="flex justify-between items-start mb-1">
                         <h3 className="font-black text-themed text-sm">{String(site.id).padStart(4, "0")} - {site.name}</h3>
@@ -650,10 +650,10 @@ export default function SitesPage() {
           {/* ── RIGHT PANEL: SITE PROFILE ── */}
           <div className="xl:col-span-8 h-[calc(100vh-160px)]">
             {selectedSite ? (
-              <div className="bg-white/5 border border-white/10 shadow-sm rounded-3xl h-full flex flex-col overflow-hidden relative">
+              <div className="bg-white dark:bg-slate-900 border border-[var(--border-color)] shadow-sm rounded-3xl h-full flex flex-col overflow-hidden relative">
 
                 {/* Profile Header */}
-                <div className="p-5 border-b border-[var(--border-color)] bg-[var(--bg-surface)] relative">
+                <div className="p-5 border-b border-[var(--border-color)] bg-white dark:bg-slate-900 relative">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3">
@@ -806,7 +806,7 @@ export default function SitesPage() {
                 })()}
 
                 {/* Profile Tabs */}
-                <div className="flex bg-[var(--bg-surface)] border-b border-[var(--border-color)]">
+                <div className="flex bg-white dark:bg-slate-900 border-b border-[var(--border-color)]">
                   {[
                     { id: "media", label: "Gallery", icon: <Camera size={14} /> },
                     { id: "history", label: "Timeline", icon: <History size={14} /> },
@@ -817,8 +817,8 @@ export default function SitesPage() {
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
                       className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition ${activeTab === tab.id
-                          ? "bg-[var(--bg-card)] text-indigo-500 border-b-2 border-indigo-500"
-                          : "text-muted hover:bg-white/5"
+                          ? "bg-white dark:bg-slate-800 text-indigo-500 border-b-2 border-indigo-500 font-black"
+                          : "text-muted hover:bg-slate-50 dark:hover:bg-white/5"
                         }`}
                     >
                       {tab.icon} {tab.label}
@@ -827,7 +827,7 @@ export default function SitesPage() {
                 </div>
 
                 {/* Profile Content Area */}
-                <div className="flex-1 overflow-y-auto p-5 bg-[var(--bg-surface)]">
+                <div className="flex-1 overflow-y-auto p-5 bg-white dark:bg-slate-900">
 
                   {/* TAB: MEDIA GALLERY */}
                   {activeTab === "media" && (
@@ -894,7 +894,7 @@ export default function SitesPage() {
                               <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-accent text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
                                 <CheckCircle2 size={16} />
                               </div>
-                              <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] themed-card p-4 rounded-xl shadow-sm">
+                              <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white dark:bg-slate-900 border border-[var(--border-color)] p-4 rounded-xl shadow-sm">
                                 <time className="text-[10px] font-black uppercase text-indigo-500 tracking-widest mb-1 block">
                                   {new Date(entry.date).toLocaleDateString('en-GB')}
                                 </time>
@@ -911,7 +911,7 @@ export default function SitesPage() {
                   {activeTab === "financials" && (
                     <div className="flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-300">
                       {/* Financial Summary - Compact */}
-                      <div className="themed-card border-l-4 border-l-indigo-500 rounded-2xl p-4 flex justify-between items-center mb-4 shrink-0">
+                      <div className="bg-white dark:bg-slate-900 border border-[var(--border-color)] border-l-4 border-l-indigo-500 rounded-2xl p-4 flex justify-between items-center mb-4 shrink-0 shadow-sm">
                         <div>
                           <h4 className="text-base font-black mb-0.5">Financial Summary</h4>
                           <p className="text-muted text-[10px] font-medium">Overview of the project budget.</p>
@@ -925,7 +925,7 @@ export default function SitesPage() {
                       {/* Actions List - Compact Horizontal Bars */}
                       <div className="flex flex-col gap-3">
                         {/* Billing Action */}
-                        <div className="themed-card p-3 rounded-2xl flex items-center gap-4 hover:border-indigo-500/30 transition-all shadow-sm group">
+                        <div className="bg-white dark:bg-slate-900 border border-[var(--border-color)] p-3 rounded-2xl flex items-center gap-4 hover:border-indigo-500/30 transition-all shadow-sm group">
                           <div className="w-10 h-10 bg-accent/10 text-accent border border-accent/20 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                             <FileText size={20} />
                           </div>
@@ -938,7 +938,7 @@ export default function SitesPage() {
                           </button>
                         </div>
 
-                        <div className="themed-card p-3 rounded-2xl flex items-center gap-4 hover:border-emerald-500/30 transition-all shadow-sm group">
+                        <div className="bg-white dark:bg-slate-900 border border-[var(--border-color)] p-3 rounded-2xl flex items-center gap-4 hover:border-emerald-500/30 transition-all shadow-sm group">
                           <div className="w-10 h-10 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                             <Receipt size={20} />
                           </div>
@@ -951,7 +951,7 @@ export default function SitesPage() {
                           </button>
                         </div>
 
-                        <div className="themed-card p-3 rounded-2xl flex items-center gap-4 hover:border-amber-500/30 transition-all shadow-sm group">
+                        <div className="bg-white dark:bg-slate-900 border border-[var(--border-color)] p-3 rounded-2xl flex items-center gap-4 hover:border-amber-500/30 transition-all shadow-sm group">
                           <div className="w-10 h-10 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                             <Briefcase size={20} />
                           </div>
@@ -970,7 +970,7 @@ export default function SitesPage() {
                   {/* TAB: MAINTENANCE CONFIG */}
                   {activeTab === "maintenance" && (
                     <div className="max-w-2xl mx-auto mt-0">
-                      <div className="themed-card rounded-3xl p-5">
+                      <div className="bg-white dark:bg-slate-900 border border-[var(--border-color)] rounded-3xl p-5 shadow-sm">
                         <div className="flex items-center gap-3 text-amber-400 mb-3">
                           <AlertTriangle size={20} />
                           <h3 className="text-base font-black tracking-tight text-themed">Periodic Maintenance Protocol</h3>
@@ -1050,7 +1050,7 @@ export default function SitesPage() {
                 </div>
               </div>
             ) : (
-              <div className="bg-white/5 border border-white/10 shadow-sm rounded-3xl h-full flex items-center justify-center text-muted">
+              <div className="bg-white dark:bg-slate-900 border border-[var(--border-color)] shadow-sm rounded-3xl h-full flex items-center justify-center text-muted">
                 <div className="text-center">
                   <Building size={48} className="mx-auto mb-4 opacity-20" />
                   <p className="font-bold">Select a work order to view details</p>
