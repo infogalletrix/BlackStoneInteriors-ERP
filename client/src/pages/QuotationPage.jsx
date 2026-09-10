@@ -343,21 +343,6 @@ export default function QuotationPage() {
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
 
-  // Payment Plan milestones
-  const [paymentMilestones, setPaymentMilestones] = useState([
-    { name: "Production", percent: "50" },
-    { name: "Delivery", percent: "40" },
-    { name: "Handover", percent: "10" }
-  ]);
-
-  // Exclusions state
-  const [exclusions, setExclusions] = useState([
-    "Civil, plumbing, and core masonry works unless explicitly listed.",
-    "Electrical appliances, specialty light fixtures, and chandeliers.",
-    "Countertop granite/quartz procurement unless itemized.",
-    "Approvals/permits required from building society or authorities."
-  ]);
-  const [newExclusionText, setNewExclusionText] = useState("");
 
   const openAddItemModal = () => {
     setEditingItem(null);
@@ -923,110 +908,6 @@ export default function QuotationPage() {
           </div>
         </div>
 
-        {/* ── PAYMENT PLAN SECTION (Reference Image 2) ── */}
-        <div className="p-4 border-t border-[var(--border-color)] bg-[var(--bg-surface)]">
-          <div className="flex justify-between items-center mb-3">
-            <div>
-              <h3 className="text-xs font-black uppercase text-themed tracking-wide">
-                Payment Plan
-              </h3>
-              <p className="text-[11px] text-muted">Milestone stages and payment breakdown</p>
-            </div>
-            <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-full border border-blue-500/20">
-              Total Allocation: {paymentMilestones.reduce((s, m) => s + (parseFloat(m.percent) || 0), 0)}%
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {paymentMilestones.map((milestone, mIdx) => {
-              const pct = parseFloat(milestone.percent) || 0;
-              const milestoneAmount = (grandTotal * pct) / 100;
-              return (
-                <div 
-                  key={mIdx}
-                  className="p-3.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] shadow-sm flex flex-col justify-between"
-                >
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs font-bold text-themed">{milestone.name}</span>
-                    <div className="flex items-center gap-1">
-                      <input
-                        type="text"
-                        value={milestone.percent}
-                        onChange={(e) => {
-                          const val = e.target.value.replace(/[^0-9.]/g, '');
-                          setPaymentMilestones(prev => prev.map((m, i) => i === mIdx ? { ...m, percent: val } : m));
-                        }}
-                        className="w-12 text-center text-xs font-bold themed-input border border-[var(--border-color)] rounded-lg px-1 py-0.5 outline-none focus:border-blue-500"
-                      />
-                      <span className="text-xs font-bold text-muted">%</span>
-                    </div>
-                  </div>
-                  <div className="text-right pt-2 border-t border-[var(--border-color)]/60">
-                    <span className="text-sm font-black text-amber-700 dark:text-[var(--accent)] tracking-tight">
-                      INR {formatINR(milestoneAmount)}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* ── EXCLUSIONS SECTION (Reference Image 2) ── */}
-        <div className="p-4 border-t border-[var(--border-color)] bg-[var(--bg-surface)]">
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="text-xs font-black uppercase text-themed tracking-wide">
-              Exclusions
-            </h3>
-            <span className="text-[10px] text-muted">Scope boundaries and terms</span>
-          </div>
-          <div className="space-y-1.5">
-            {exclusions.map((ex, exIdx) => (
-              <div key={exIdx} className="flex items-center justify-between text-xs text-muted py-0.5 hover:text-themed">
-                <div className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                  <span>{ex}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setExclusions(exclusions.filter((_, i) => i !== exIdx))}
-                  className="text-slate-400 hover:text-red-500 p-0.5 rounded transition"
-                  title="Remove"
-                >
-                  <X size={12} />
-                </button>
-              </div>
-            ))}
-            <div className="flex gap-2 mt-2 pt-2 border-t border-[var(--border-color)]/40 max-w-xl">
-              <input
-                type="text"
-                value={newExclusionText}
-                onChange={(e) => setNewExclusionText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && newExclusionText.trim()) {
-                    e.preventDefault();
-                    setExclusions([...exclusions, newExclusionText.trim()]);
-                    setNewExclusionText("");
-                  }
-                }}
-                placeholder="Add custom exclusion (e.g. Electrical fixtures) and press Enter..."
-                className="flex-1 themed-input border border-[var(--border-color)] px-3 py-1 rounded-xl text-xs outline-none focus:border-blue-500"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  if (newExclusionText.trim()) {
-                    setExclusions([...exclusions, newExclusionText.trim()]);
-                    setNewExclusionText("");
-                  }
-                }}
-                className="px-3 py-1 bg-slate-200 dark:bg-slate-800 hover:bg-blue-600 hover:text-white text-xs font-bold rounded-xl transition"
-              >
-                + Add
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* ── FOOTER ── */}
