@@ -24,8 +24,8 @@
 ════════════════════════════════════════════════════ */
 :root {
   /* Light: ManForce ERP — crisp white / navy / gold */
-  --bg:               #F4F5F7;
-  --bg-surface:       #EAECF0;
+  --bg:               #FFFFFF;
+  --bg-surface:       #FFFFFF;
   --bg-card:          #FFFFFF;
   --bg-card-hover:    #F9FAFB;
   --border-color:     #E1E4E8;
@@ -47,7 +47,7 @@
   --accent-glow:      rgba(201,162,39,0.18);
   --input-bg:         #FFFFFF;
   --input-focus:      #C9A227;
-  --thead-bg:         #F4F5F7;
+  --thead-bg:         #FFFFFF;
   --row-hover:        #F9FAFB;
   --divider:          #E1E4E8;
   --scrollbar-thumb:  #C9A227;

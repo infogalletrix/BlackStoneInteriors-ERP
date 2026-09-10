@@ -577,9 +577,9 @@ export default function QuotationPage() {
   };
 
   return (
-    <div className="page-wrapper min-h-screen font-sans flex flex-col text-sm">
+    <div className="page-wrapper min-h-screen font-sans flex flex-col text-sm bg-white dark:bg-slate-950">
       {/* Sessions Tab Bar */}
-      <div className="bg-[var(--bg-surface)] px-4 pt-2.5 flex items-center justify-between border-b border-[var(--border-color)] relative z-30">
+      <div className="bg-white dark:bg-slate-900 px-4 pt-2.5 flex items-center justify-between border-b border-[var(--border-color)] relative z-30">
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar flex-1">
           {sessions.map(s => (
             <div
@@ -587,8 +587,8 @@ export default function QuotationPage() {
               onClick={() => setActiveSessionId(s.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-t-xl text-xs font-bold uppercase tracking-wider cursor-pointer transition-all ${
                 activeSessionId === s.id 
-                ? "bg-[var(--bg-card)] text-[var(--text-primary)] border border-b-0 border-[var(--border-color)] shadow-sm" 
-                : "bg-[var(--bg-surface)] text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-primary)]"
+                ? "bg-white dark:bg-slate-800 text-[var(--text-primary)] border border-b-0 border-[var(--border-color)] shadow-sm" 
+                : "bg-slate-100 dark:bg-slate-800/40 text-[var(--text-muted)] hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-[var(--text-primary)]"
               }`}
             >
               <FileText size={14} className={activeSessionId === s.id ? "text-[var(--accent)]" : "opacity-40"} />
@@ -776,9 +776,9 @@ export default function QuotationPage() {
 
 
       {/* ── MAIN TABLE ── */}
-      <div className="flex-grow bg-[var(--bg-surface)] overflow-x-auto overflow-y-auto">
+      <div className="flex-grow bg-white dark:bg-slate-950 overflow-x-auto overflow-y-auto">
         <table className="w-full text-sm min-w-[1050px] border-collapse">
-          <thead className="themed-thead border-b-2 border-[var(--border-color)] sticky top-0 bg-[var(--bg-surface)] z-10 shadow-sm">
+          <thead className="border-b-2 border-slate-200 dark:border-slate-800 sticky top-0 bg-white dark:bg-slate-900 z-10 shadow-sm">
             <tr className="uppercase text-slate-900 dark:text-white font-black text-xs tracking-wider">
               <th className="px-3.5 py-3.5 text-center w-14 font-black">SI</th>
               <th className="px-3.5 py-3.5 text-left w-52 font-black">Product / Category</th>
@@ -794,7 +794,7 @@ export default function QuotationPage() {
           </thead>
           <tbody className="divide-y divide-[var(--border-color)]">
             {items.map((item, idx) => (
-              <tr key={item.id} className="themed-row hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+              <tr key={item.id} className="themed-row bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                 <td className="px-3.5 py-3.5 text-center font-bold text-muted text-sm">
                   {idx + 1}
                 </td>
@@ -876,7 +876,7 @@ export default function QuotationPage() {
         </table>
 
         {/* Action button below table */}
-        <div className="p-4 border-t border-[var(--border-color)] bg-[var(--bg-card)] flex flex-wrap items-center justify-between gap-4">
+        <div className="p-4 border-t border-[var(--border-color)] bg-white dark:bg-slate-900 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <button 
               onClick={openAddItemModal}
@@ -886,7 +886,7 @@ export default function QuotationPage() {
             </button>
             <button 
               onClick={() => openOptionsModal("products")}
-              className="flex items-center gap-2 px-4 py-2.5 bg-[var(--bg-surface)] text-slate-700 dark:text-slate-200 rounded-xl font-bold text-sm hover:bg-black/5 dark:hover:bg-white/5 transition border border-[var(--border-color)]"
+              className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition border border-[var(--border-color)]"
             >
               <Settings size={15} /> Manage Options
             </button>
@@ -905,7 +905,7 @@ export default function QuotationPage() {
       </div>
 
       {/* ── FOOTER ── */}
-      <div className="bg-[var(--bg-surface)] p-4 border-t border-[var(--border-color)] flex flex-wrap justify-between items-center gap-4">
+      <div className="bg-white dark:bg-slate-900 p-4 border-t border-[var(--border-color)] flex flex-wrap justify-between items-center gap-4">
         {/* Stats and Extra Charges */}
         <div className="flex flex-wrap gap-4 items-center">
           <div className="bg-[var(--accent-soft)] border border-[var(--accent)]/30 px-4 py-2 flex gap-2.5 items-center rounded-xl">
@@ -989,7 +989,7 @@ export default function QuotationPage() {
       </div>
 
       {/* ── BOTTOM ACTION BAR ── */}
-      <div className="bg-[var(--bg-surface)] p-3.5 flex flex-wrap justify-center gap-3 border-t border-[var(--border-color)] shadow-md">
+      <div className="bg-white dark:bg-slate-900 p-3.5 flex flex-wrap justify-center gap-3 border-t border-[var(--border-color)] shadow-md">
         <button
           onClick={clearForm}
           className="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 text-sm font-bold transition shadow-sm hover:shadow"
