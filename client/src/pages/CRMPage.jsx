@@ -994,13 +994,17 @@ const CRMPage = () => {
         {activeTab === "schedule" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 lg:p-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              {[{ type: "Follow-up Call", icon: <Phone size={18} />, color: "blue" }, { type: "Site Visit", icon: <MapPin size={18} />, color: "orange" }, { type: "Send Quotation", icon: <DollarSign size={18} />, color: "emerald" }].map(({ type, icon, color }) => (
+              {[
+                { type: "Follow-up Call", icon: <Phone size={18} />, colorClass: "bg-blue-500/10 text-blue-500 border-blue-500/20" },
+                { type: "Site Visit", icon: <MapPin size={18} />, colorClass: "bg-amber-500/10 text-amber-500 border-amber-500/20" },
+                { type: "Send Quotation", icon: <DollarSign size={18} />, colorClass: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" }
+              ].map(({ type, icon, colorClass }) => (
                 <button key={type} onClick={() => setEditActivity({ type: type, date: new Date().toISOString().split('T')[0], client: contacts[0]?.id || '', status: 'Pending' })} className="flex items-center justify-between p-4 themed-card rounded-2xl hover:border-violet-500/30 transition-all group">
                   <div className="flex items-center gap-3">
-                    <div className={`bg-${color}-50 text-${color}-600 p-2.5 rounded-xl border border-${color}-100 group-hover:scale-110 transition-transform`}>{icon}</div>
+                    <div className={`${colorClass} p-2.5 rounded-xl border group-hover:scale-110 transition-transform`}>{icon}</div>
                     <span className="font-bold text-themed text-sm">{type}</span>
                   </div>
-                  <Plus size={16} className="text-slate-500 group-hover:text-white" />
+                  <Plus size={16} className="text-slate-500 group-hover:text-themed transition-colors" />
                 </button>
               ))}
             </div>
@@ -1016,19 +1020,39 @@ const CRMPage = () => {
                   const isOverdue = checkDate < new Date() && act.status !== 'Completed';
                   const displayStatus = isOverdue ? 'Overdue' : act.status;
                   const actDate = new Date(act.date);
+                  const actTypeLower = (act.type || '').toLowerCase();
+
                   return (
                     <div key={act.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 themed-card rounded-xl shadow-sm hover:shadow-md transition-all">
                       <div className="flex gap-4 items-center">
-                        <div className="themed-card px-3 py-2 rounded-lg text-center min-w-[60px]">
+                        <div className="themed-card px-3 py-2 rounded-lg text-center min-w-[60px] border border-[var(--border-color)]">
                           <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{actDate.toLocaleString('default', { month: 'short' })}</p>
                           <p className="text-lg font-black text-themed">{actDate.getDate()}</p>
                         </div>
                         <div>
-                          <p className="font-black text-white text-sm mb-0.5">{act.type}</p>
-                          <p className="text-xs font-bold text-slate-400 flex items-center gap-1.5"><User size={12} /> {contact ? contact.name : "Unknown Client"} <span className="ml-2 flex items-center gap-1 text-slate-500"><Clock size={12}/> {actDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span></p>
+                          <p className="font-black text-themed text-base sm:text-lg mb-1 leading-snug flex items-center gap-2">
+                            {actTypeLower.includes('call') || actTypeLower.includes('phone') ? (
+                              <Phone size={15} className="text-blue-500" />
+                            ) : actTypeLower.includes('site') || actTypeLower.includes('visit') ? (
+                              <MapPin size={15} className="text-amber-500" />
+                            ) : actTypeLower.includes('quote') || actTypeLower.includes('quotation') ? (
+                              <DollarSign size={15} className="text-emerald-500" />
+                            ) : (
+                              <Calendar size={15} className="text-violet-500" />
+                            )}
+                            {act.type}
+                          </p>
+                          <div className="flex flex-wrap items-center gap-2.5">
+                            <span className="text-sm sm:text-base font-bold text-themed flex items-center gap-1.5">
+                              <User size={15} className="text-[var(--accent)]" /> {contact ? contact.name : "Unknown Client"}
+                            </span>
+                            <span className="flex items-center gap-1 text-xs font-semibold text-slate-400">
+                              <Clock size={12} className="text-slate-500" /> {actDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                      <div className="mt-3 sm:mt-0 flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto border-t sm:border-0 border-white/10 pt-3 sm:pt-0">
+                      <div className="mt-3 sm:mt-0 flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto border-t sm:border-0 border-[var(--border-color)] pt-3 sm:pt-0">
                         <span className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 border rounded-md ${
                           displayStatus === 'Completed' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
                           displayStatus === 'Overdue' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 
