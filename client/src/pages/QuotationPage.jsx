@@ -778,18 +778,18 @@ export default function QuotationPage() {
       {/* ── MAIN TABLE ── */}
       <div className="flex-grow bg-[var(--bg-surface)] overflow-x-auto overflow-y-auto">
         <table className="w-full text-xs min-w-[950px] border-collapse">
-          <thead className="themed-thead border-b border-[var(--border-color)] sticky top-0 bg-[var(--bg-surface)] z-10">
-            <tr className="uppercase text-muted font-bold text-[10px] tracking-wider">
-              <th className="px-3 py-2.5 text-center w-12">#</th>
-              <th className="px-3 py-2.5 text-left w-48">Product / Category</th>
-              <th className="px-3 py-2.5 text-left">Specification & Material</th>
-              <th className="px-3 py-2.5 text-left w-28">Section</th>
-              <th className="px-3 py-2.5 text-center w-16">Qty</th>
-              <th className="px-3 py-2.5 text-center w-16">Unit</th>
-              <th className="px-3 py-2.5 text-right w-24">Rate (₹)</th>
-              <th className="px-3 py-2.5 text-right w-20">Discount</th>
-              <th className="px-3 py-2.5 text-right w-28">Amount (₹)</th>
-              <th className="px-3 py-2.5 text-center w-20">Actions</th>
+          <thead className="themed-thead border-b-2 border-[var(--border-color)] sticky top-0 bg-[var(--bg-surface)] z-10 shadow-sm">
+            <tr className="uppercase text-slate-900 dark:text-white font-black text-xs tracking-wider">
+              <th className="px-3 py-3 text-center w-12 font-black">#</th>
+              <th className="px-3 py-3 text-left w-48 font-black">Product / Category</th>
+              <th className="px-3 py-3 text-left font-black">Specification & Material</th>
+              <th className="px-3 py-3 text-left w-28 font-black">Section</th>
+              <th className="px-3 py-3 text-center w-16 font-black">Qty</th>
+              <th className="px-3 py-3 text-center w-16 font-black">Unit</th>
+              <th className="px-3 py-3 text-right w-24 font-black">Rate (₹)</th>
+              <th className="px-3 py-3 text-right w-20 font-black">Discount</th>
+              <th className="px-3 py-3 text-right w-28 font-black">Amount (₹)</th>
+              <th className="px-3 py-3 text-center w-20 font-black">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--border-color)]">
