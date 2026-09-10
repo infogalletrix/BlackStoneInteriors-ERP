@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { 
   FileText, FileSpreadsheet, Download, 
-  TrendingUp, TrendingDown, Users, Building, PieChart as PieChartIcon, Activity
+  TrendingUp, Users, CheckCircle2, Award, PieChart as PieChartIcon, Activity, Clock
 } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -15,168 +15,362 @@ import { useDialog } from "../contexts/DialogContext";
 import { useThemeClasses } from "../hooks/useThemeClasses";
 import NotificationWidget from "../components/NotificationWidget";
 
-const DARK_COLORS  = ['#8b5cf6', '#10b981', '#f59e0b', '#f43f5e', '#3b82f6', '#ec4899'];
-const LIGHT_COLORS = ['#f97316', '#10b981', '#eab308', '#ef4444', '#3b82f6', '#ec4899'];
+const DARK_COLORS  = ['#8b5cf6', '#10b981', '#f59e0b', '#3b82f6', '#ec4899', '#06b6d4'];
+const LIGHT_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
+
+const formatINR = (val) => {
+  const num = Number(val) || 0;
+  return num.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
 
 const ReportsPage = () => {
   const { showDialog } = useDialog();
   const t = useThemeClasses();
   const COLORS = t.isDark ? DARK_COLORS : LIGHT_COLORS;
 
-  const [selectedReport, setSelectedReport] = useState("invoices");
-  const [dashboardData, setDashboardData] = useState({ accounts: [], crm: [], sites: [], loading: true });
+  const [selectedReport, setSelectedReport] = useState("sales_growth");
+  const [dashboardData, setDashboardData] = useState({ 
+    quotations: [], 
+    crm: [], 
+    loading: true 
+  });
   const [viewReportData, setViewReportData] = useState(null);
 
   useEffect(() => {
     const fetchInsights = async () => {
       try {
-        const [accRes, crmRes, sitesRes] = await Promise.all([
-          fetch('/api/finance/accounts'),
-          fetch('/api/crm'),
-          fetch('/api/sites')
+        const [qRes, crmRes] = await Promise.all([
+          fetch('/api/quotations').then(r => r.ok ? r.json() : []),
+          fetch('/api/crm').then(r => r.ok ? r.json() : [])
         ]);
-        const accounts = await accRes.json();
-        const crm = await crmRes.json();
-        const sites = await sitesRes.json();
-        setDashboardData({ accounts, crm, sites, loading: false });
+        setDashboardData({ 
+          quotations: Array.isArray(qRes) ? qRes : [], 
+          crm: Array.isArray(crmRes) ? crmRes : [], 
+          loading: false 
+        });
       } catch (err) {
-        console.error("Failed to load insights", err);
+        console.error("Failed to load report insights", err);
         setDashboardData(prev => ({ ...prev, loading: false }));
       }
     };
     fetchInsights();
   }, []);
 
-  const { totalInflow, totalOutflow, activeProjects, totalLeads, leadSources, cashflowTrend } = useMemo(() => {
-    let inflow = 0, outflow = 0;
-    dashboardData.accounts.forEach(a => {
-      if (a.type.toLowerCase() === 'credit') inflow += a.amount;
-      else if (a.type.toLowerCase() === 'debit') outflow += a.amount;
+  // Compute Sales Insights, KPIs and Graphs
+  const { 
+    totalQuoteValue, 
+    approvedQuoteValue, 
+    approvedCount, 
+    totalQuotesCount,
+    customersCount, 
+    leadsCount, 
+    conversionRate,
+    leadSources, 
+    salesTrend 
+  } = useMemo(() => {
+    const quotes = dashboardData.quotations;
+    const crm = dashboardData.crm;
+
+    let totalQVal = 0;
+    let approvedQVal = 0;
+    let appCount = 0;
+
+    quotes.forEach(q => {
+      const val = Number(q.total) || 0;
+      totalQVal += val;
+      if (q.status === "Approved") {
+        approvedQVal += val;
+        appCount += 1;
+      }
     });
-    const activeProjectsCount = dashboardData.sites.filter(s => s.status !== 'Completed').length;
-    const leadsCount = dashboardData.crm.length;
+
+    const customers = crm.filter(c => c.status === "Customer");
+    const leads = crm.filter(c => c.status !== "Customer");
+
+    const convRate = quotes.length > 0 ? ((appCount / quotes.length) * 100).toFixed(1) : "0";
+
+    // Lead Sources Distribution
     const sourcesMap = {};
-    dashboardData.crm.forEach(c => { const s = c.source || 'Other'; sourcesMap[s] = (sourcesMap[s] || 0) + 1; });
+    crm.forEach(c => { 
+      const s = c.source || 'Other'; 
+      sourcesMap[s] = (sourcesMap[s] || 0) + 1; 
+    });
     const sources = Object.keys(sourcesMap).map(k => ({ name: k, value: sourcesMap[k] }));
+
+    // Monthly Sales & Quotations Trend (last 6 months)
     const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     const currentMonthIndex = new Date().getMonth();
     const trendMap = {};
+
     for (let i = 5; i >= 0; i--) {
-      let d = new Date(); d.setMonth(currentMonthIndex - i);
-      trendMap[`${months[d.getMonth()]} ${d.getFullYear()}`] = { name: months[d.getMonth()], inflow: 0, outflow: 0, sortDate: new Date(d.getFullYear(), d.getMonth(), 1) };
+      const d = new Date();
+      d.setMonth(currentMonthIndex - i);
+      const key = `${months[d.getMonth()]} ${d.getFullYear()}`;
+      trendMap[key] = { 
+        name: months[d.getMonth()], 
+        quotesValue: 0, 
+        approvedValue: 0, 
+        sortDate: new Date(d.getFullYear(), d.getMonth(), 1) 
+      };
     }
-    dashboardData.accounts.forEach(a => {
-      const d = new Date(a.date);
+
+    quotes.forEach(q => {
+      const d = new Date(q.date || Date.now());
       const key = `${months[d.getMonth()]} ${d.getFullYear()}`;
       if (trendMap[key]) {
-        if (a.type.toLowerCase() === 'credit') trendMap[key].inflow += a.amount;
-        else if (a.type.toLowerCase() === 'debit') trendMap[key].outflow += a.amount;
+        const val = Number(q.total) || 0;
+        trendMap[key].quotesValue += val;
+        if (q.status === "Approved") {
+          trendMap[key].approvedValue += val;
+        }
       }
     });
+
     const trend = Object.values(trendMap).sort((a,b) => a.sortDate - b.sortDate);
-    return { totalInflow: inflow, totalOutflow: outflow, activeProjects: activeProjectsCount, totalLeads: leadsCount, leadSources: sources, cashflowTrend: trend };
+
+    return {
+      totalQuoteValue: totalQVal,
+      approvedQuoteValue: approvedQVal,
+      approvedCount: appCount,
+      totalQuotesCount: quotes.length,
+      customersCount: customers.length,
+      leadsCount: leads.length,
+      conversionRate: convRate,
+      leadSources: sources.length > 0 ? sources : [{ name: "Direct", value: 1 }],
+      salesTrend: trend
+    };
   }, [dashboardData]);
 
+  // Report Generator logic for the requested datasets
   const fetchReportData = async (reportId) => {
     let header = [], rows = [], title = "Report";
+    const quotes = dashboardData.quotations;
+    const crm = dashboardData.crm;
+
     try {
       switch(reportId) {
-        case 'employees': { const d = await (await fetch('/api/employees')).json(); title="Staff Directory"; header=["ID","Name","Role","Phone","Salary Type","Salary","Status"]; rows=d.map(e=>[e.workerId,e.name,e.role,e.phone,e.salaryType,e.salary,e.status]); break; }
-        case 'advance': { let d = await (await fetch('/api/employees')).json(); d=d.filter(e=>e.advanceBalance>0); title="Advance Salary Balances"; header=["ID","Name","Role","Advance Balance"]; rows=d.map(e=>[e.workerId,e.name,e.role,e.advanceBalance]); break; }
-        case 'salary': { const d = await (await fetch('/api/finance/payroll')).json(); title="Salary Disbursal History"; header=["Date","Employee ID","Status","Amount","Month","Year"]; d.forEach(p=>rows.push([p.paidDate||p.month+' '+p.year,`EMP-${p.employeeId}`,p.status,p.netPay,p.month,p.year])); rows.sort((a,b)=>new Date(b[0])-new Date(a[0])); break; }
-        case 'expenses': { const d = await (await fetch('/api/finance/expenses')).json(); title="Expense Register"; header=["Date","Type","Category/Client","Description","Amount"]; rows=d.map(e=>[e.date ? new Date(e.date).toLocaleDateString('en-IN') : "-",e.type,e.clientId||e.category,e.description,e.amount]); break; }
-        case 'invoices': { const d = await (await fetch('/api/finance/invoices')).json(); title="Invoice Register"; header=["Date","Invoice No","Client","Total","Status"]; rows=d.map(e=>[e.date ? new Date(e.date).toLocaleDateString('en-IN') : "-",e.invoiceNo,e.clientName,e.total || 0,e.status||"Paid"]); break; }
-        case 'quotations': { const d = await (await fetch('/api/quotations')).json(); title="Quotation Register"; header=["Date","Quote ID","Client","Total","Status"]; rows=d.map(e=>[e.date ? new Date(e.date).toLocaleDateString('en-IN') : "-",e.quoteNo || `BSI-${e.id}`,e.clientName,e.total,e.status||"Pending"]); break; }
-        case 'accounts': { const d = await (await fetch('/api/finance/accounts')).json(); title="Account Ledger"; header=["Date","Type","Category","Description","Amount"]; rows=d.map(e=>[e.date ? new Date(e.date).toLocaleDateString('en-IN') : "-",e.type.toUpperCase(),e.category||"-",e.description,e.amount]); break; }
-        case 'sites': { const d = await (await fetch('/api/sites')).json(); title="Project Sites Register"; header=["Site Name","Client","Location","Budget","Status","Completion %"]; rows=d.map(e=>[e.name,e.clientName,e.address,e.budget,e.status,`${e.completion||0}%`]); break; }
-        case 'clients': { const d = await (await fetch('/api/crm')).json(); title="Client Directory"; header=["Name","Phone","Email","Status","Source"]; rows=d.map(e=>[e.name,e.phone,e.email||"-",e.status,e.source||"Unknown"]); break; }
-        case 'growth': {
-          const crmData = await (await fetch('/api/crm')).json();
-          title="Sales & Growth Report"; header=["Month","Total Leads","Converted","Conversion Rate"];
+        case 'sales_growth': {
+          title = "Sales Performance & Growth Report";
+          header = ["Month", "Quotations Sent", "Total Quote Value (₹)", "Approved Value (₹)", "Approval Rate"];
+          
           const monthly = {};
-          crmData.forEach(lead => { const d=new Date(lead.date||Date.now()); const month=d.toISOString().slice(0,7); if(!monthly[month]) monthly[month]={total:0,converted:0}; monthly[month].total++; if(lead.status==="Converted") monthly[month].converted++; });
-          Object.keys(monthly).sort().reverse().forEach(m => { const rate=((monthly[m].converted/monthly[m].total)*100).toFixed(1)+"%"; rows.push([m,monthly[m].total,monthly[m].converted,rate]); });
+          quotes.forEach(q => {
+            const d = new Date(q.date || Date.now());
+            const m = d.toISOString().slice(0, 7);
+            if (!monthly[m]) {
+              monthly[m] = { count: 0, total: 0, approved: 0, approvedCount: 0 };
+            }
+            monthly[m].count++;
+            const amt = Number(q.total) || 0;
+            monthly[m].total += amt;
+            if (q.status === "Approved") {
+              monthly[m].approved += amt;
+              monthly[m].approvedCount++;
+            }
+          });
+
+          const sortedMonths = Object.keys(monthly).sort().reverse();
+          sortedMonths.forEach(m => {
+            const item = monthly[m];
+            const rate = item.count > 0 ? `${((item.approvedCount / item.count) * 100).toFixed(1)}%` : "0%";
+            rows.push([
+              m,
+              item.count,
+              `₹${formatINR(item.total)}`,
+              `₹${formatINR(item.approved)}`,
+              rate
+            ]);
+          });
           break;
         }
-        default: break;
+
+        case 'quotations': {
+          title = "Quotations Directory (Approval Status)";
+          header = ["Quote No", "Date", "Client Name", "Project Title", "Total Amount (₹)", "Status"];
+          quotes.forEach(q => {
+            rows.push([
+              q.quoteNo || `BSI-${q.id}`,
+              q.date ? new Date(q.date).toLocaleDateString('en-IN') : "-",
+              q.clientName || "Valued Client",
+              q.projectTitle || "Interior Project",
+              `₹${formatINR(q.total)}`,
+              q.status || "Pending"
+            ]);
+          });
+          break;
+        }
+
+        case 'customers': {
+          title = "Customers Directory";
+          header = ["ID", "Customer Name", "Phone", "Email", "Project / Address", "Source", "Status"];
+          const customers = crm.filter(c => c.status === "Customer");
+          customers.forEach(c => {
+            rows.push([
+              `CUST-${c.id}`,
+              c.name,
+              c.phone || "-",
+              c.email || "-",
+              c.project || c.address || "-",
+              c.source || "Direct",
+              "Customer"
+            ]);
+          });
+          break;
+        }
+
+        case 'leads': {
+          title = "Leads Directory";
+          header = ["ID", "Lead Name", "Phone", "Email", "Interest Status", "Source", "Date Created"];
+          const leads = crm.filter(c => c.status !== "Customer");
+          leads.forEach(c => {
+            rows.push([
+              `LEAD-${c.id}`,
+              c.name,
+              c.phone || "-",
+              c.email || "-",
+              c.status || "Interested",
+              c.source || "Website",
+              c.date ? new Date(c.date).toLocaleDateString('en-IN') : "-"
+            ]);
+          });
+          break;
+        }
+
+        default:
+          break;
       }
-    } catch (err) { console.error(err); showDialog({ title: "Error", message: "Failed to fetch data for report.", type: "error" }); }
+    } catch (err) {
+      console.error(err);
+      showDialog({ title: "Error", message: "Failed to compile report data.", type: "error" });
+    }
+
     return { title, header, rows: rows.map(r => r.map(c => c != null ? String(c) : "-")) };
   };
 
   const viewReport = async () => {
     const data = await fetchReportData(selectedReport);
-    if(data.rows.length === 0) { showDialog({ title: "No Data", message: "No data available for this report.", type: "alert" }); return; }
+    if(data.rows.length === 0) { 
+      showDialog({ title: "No Data", message: "No data available for this report.", type: "alert" }); 
+      return; 
+    }
     setViewReportData(data);
   };
 
   const exportPDF = async () => {
     try {
       const { title, header, rows } = await fetchReportData(selectedReport);
-      if(rows.length === 0) { showDialog({ title: "No Data", message: "No data available for this report.", type: "alert" }); return; }
-      const doc = new jsPDF();
-      doc.setFontSize(18); doc.text(title, 14, 22);
-      doc.setFontSize(11); doc.setTextColor(100); doc.text(`Generated on: ${new Date().toLocaleDateString('en-IN')}`, 14, 30);
-      autoTable(doc, { startY: 35, head: [header], body: rows, theme: 'grid', headStyles: { fillColor: t.isDark ? [79,70,229] : [249,115,22] } });
+      if(rows.length === 0) { 
+        showDialog({ title: "No Data", message: "No data available for this report.", type: "alert" }); 
+        return; 
+      }
+      const doc = new jsPDF('landscape');
+      doc.setFontSize(16); 
+      doc.text(title, 14, 18);
+      doc.setFontSize(10); 
+      doc.setTextColor(100); 
+      doc.text(`Black Stone Interiors • Generated on: ${new Date().toLocaleDateString('en-IN')}`, 14, 25);
+      autoTable(doc, { 
+        startY: 30, 
+        head: [header], 
+        body: rows, 
+        theme: 'grid', 
+        headStyles: { fillColor: t.isDark ? [99, 102, 241] : [37, 99, 235] } 
+      });
       doc.save(`${title.replace(/\s+/g,'_')}_${Date.now()}.pdf`);
-    } catch (err) { showDialog({ title: "Export Error", message: "PDF Export Error: " + err.message, type: "error" }); }
+    } catch (err) { 
+      showDialog({ title: "Export Error", message: "PDF Export Error: " + err.message, type: "error" }); 
+    }
   };
 
   const exportExcel = async () => {
     try {
       const { title, header, rows } = await fetchReportData(selectedReport);
-      if(rows.length === 0) { showDialog({ title: "No Data", message: "No data available for this report.", type: "alert" }); return; }
+      if(rows.length === 0) { 
+        showDialog({ title: "No Data", message: "No data available for this report.", type: "alert" }); 
+        return; 
+      }
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
       XLSX.utils.book_append_sheet(wb, ws, "Report Data");
       XLSX.writeFile(wb, `${title.replace(/\s+/g,'_')}_${Date.now()}.xlsx`);
-    } catch (err) { showDialog({ title: "Export Error", message: "Excel Export Error: " + err.message, type: "error" }); }
+    } catch (err) { 
+      showDialog({ title: "Export Error", message: "Excel Export Error: " + err.message, type: "error" }); 
+    }
   };
 
   const reportOptions = [
-    { group: "HR & Payroll", options: [{id:"employees",label:"Staff Directory"},{id:"salary",label:"Salary History"},{id:"advance",label:"Advance Salaries"}] },
-    { group: "Financial Reports", options: [{id:"accounts",label:"Accounts Ledger"},{id:"expenses",label:"Expense Register"},{id:"invoices",label:"Invoice History"},{id:"quotations",label:"Quotations Sent"}] },
-    { group: "Projects & CRM", options: [{id:"sites",label:"Sites History"},{id:"clients",label:"Client Directory"},{id:"growth",label:"Growth Metrics"}] },
+    { id: "sales_growth", label: "📈 Sales Performance & Growth Report" },
+    { id: "quotations", label: "📋 Quotations Directory (Approval Status)" },
+    { id: "customers", label: "👥 Customers Directory" },
+    { id: "leads", label: "🎯 Leads Directory" },
   ];
 
   const generatorPanel = t.isDark
     ? "themed-card border border-[var(--border-color)]"
-    : "bg-[var(--accent)] text-white";
+    : "bg-gradient-to-br from-blue-600 to-indigo-700 text-white";
 
   return (
-    <div className={`p-4 md:p-6 ${t.page}`}>
+    <div className={`p-4 md:p-6 ${t.page} min-h-screen`}>
 
       {/* HEADER */}
       <div className="relative z-30 mb-6 flex justify-between items-start">
         <div>
           <motion.h1 initial={{ opacity:0, x:-20 }} animate={{ opacity:1, x:0 }}
             className={`text-xl font-black tracking-tight flex items-center gap-2 ${t.heading}`}>
-            <Activity className={t.isDark ? "text-violet-400" : "text-accent"} size={20} />
-            Reports &amp; Insights
+            <Activity className={t.isDark ? "text-violet-400" : "text-blue-600"} size={22} />
+            Sales &amp; Business Intelligence Reports
           </motion.h1>
           <p className={`mt-0.5 text-xs font-medium ${t.muted}`}>
-            Generate comprehensive reports and monitor real-time business metrics.
+            Executive sales insights, quotation approval metrics, and customer &amp; lead directories.
           </p>
         </div>
         <NotificationWidget />
       </div>
 
       {!dashboardData.loading && (
-        <div className="relative z-0">
+        <div className="relative z-0 space-y-6">
           {/* KPI ROW */}
           <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label:"Total Inflow", value:`₹${(totalInflow/100000).toFixed(2)}L`, icon:TrendingUp, color: t.isDark ? "text-emerald-400" : "text-emerald-600" },
-              { label:"Total Outflow", value:`₹${(totalOutflow/100000).toFixed(2)}L`, icon:TrendingDown, color: t.isDark ? "text-rose-400" : "text-rose-600" },
-              { label:"CRM Leads", value:totalLeads, icon:Users, color: t.isDark ? "text-blue-400" : "text-blue-600" },
-              { label:"Active Projects", value:activeProjects, icon:Building, color: t.isDark ? "text-violet-400" : "text-accent" },
-            ].map(({ label, value, icon: Icon, color }) => (
-              <div key={label} className={`${t.card} ${t.cardHover} p-6 rounded-[2rem]`}>
-                <h3 className={`${t.label} mb-2 flex items-center gap-2`}>
-                  <Icon size={14} className={color} /> {label}
-                </h3>
-                <div className={`text-3xl font-black ${t.heading}`}>{value}</div>
+              { 
+                label: "Total Quotations Value", 
+                value: `₹${(totalQuoteValue/100000).toFixed(2)}L`, 
+                sub: `${totalQuotesCount} quotes generated`,
+                icon: FileText, 
+                color: t.isDark ? "text-blue-400" : "text-blue-600" 
+              },
+              { 
+                label: "Approved Sales Value", 
+                value: `₹${(approvedQuoteValue/100000).toFixed(2)}L`, 
+                sub: `${approvedCount} approved (${conversionRate}%)`,
+                icon: CheckCircle2, 
+                color: t.isDark ? "text-emerald-400" : "text-emerald-600" 
+              },
+              { 
+                label: "Converted Customers", 
+                value: customersCount, 
+                sub: "Active verified clients",
+                icon: Award, 
+                color: t.isDark ? "text-amber-400" : "text-amber-600" 
+              },
+              { 
+                label: "Active Sales Leads", 
+                value: leadsCount, 
+                sub: "In sales pipeline",
+                icon: Users, 
+                color: t.isDark ? "text-indigo-400" : "text-indigo-600" 
+              },
+            ].map(({ label, value, sub, icon: Icon, color }) => (
+              <div key={label} className={`${t.card} ${t.cardHover} p-5 rounded-2xl border border-[var(--border-color)] shadow-sm`}>
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-[11px] font-bold text-muted uppercase tracking-wider">{label}</span>
+                  <div className={`p-2 rounded-xl bg-black/5 dark:bg-white/5 ${color}`}>
+                    <Icon size={18} />
+                  </div>
+                </div>
+                <div className={`text-2xl font-black ${t.heading}`}>{value}</div>
+                <p className="text-[11px] text-muted font-medium mt-1">{sub}</p>
               </div>
             ))}
           </motion.div>
@@ -184,82 +378,103 @@ const ReportsPage = () => {
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             {/* CHARTS — LEFT 2 COLS */}
             <div className="xl:col-span-2 space-y-6">
-              {/* Cashflow Chart */}
-              <div className={`${t.card} rounded-[2rem] p-6 lg:p-8`}>
-                <h3 className={`text-sm font-black mb-6 flex items-center gap-2 uppercase tracking-widest ${t.heading}`}>
-                  <Activity size={16} className={t.isDark ? "text-violet-400" : "text-accent"}/> Cashflow Overview (6 Months)
-                </h3>
-                <ResponsiveContainer width="100%" height={250} minWidth={1}>
-                  <BarChart data={cashflowTrend} margin={{ top:5, right:10, left:0, bottom:5 }} barCategoryGap="30%">
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={t.chartGrid} />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize:11, fontWeight:700, fill:t.chartTickColor }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize:11, fontWeight:700, fill:t.chartTickColor }} tickFormatter={(v) => `₹${v/1000}k`} />
-                    <RechartsTooltip cursor={{ fill: t.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(253,216,53,0.1)' }} contentStyle={t.chartTooltip} />
-                    <Bar dataKey="inflow" name="Cash Inflow" fill={t.isDark ? "#10b981" : "#16a34a"} radius={[4,4,0,0]} />
-                    <Bar dataKey="outflow" name="Cash Outflow" fill={t.isDark ? "#f43f5e" : "#ef4444"} radius={[4,4,0,0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+              {/* Sales & Quotations Trend Chart */}
+              <div className={`${t.card} rounded-2xl p-6 border border-[var(--border-color)] shadow-sm`}>
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h3 className={`text-sm font-black flex items-center gap-2 uppercase tracking-wider ${t.heading}`}>
+                      <TrendingUp size={16} className={t.isDark ? "text-violet-400" : "text-blue-600"}/> 
+                      Monthly Sales &amp; Quotations Trend (6 Months)
+                    </h3>
+                    <p className="text-[11px] text-muted">Total quotation value vs approved sales</p>
+                  </div>
+                  <div className="flex items-center gap-3 text-[10px] font-bold uppercase">
+                    <span className="flex items-center gap-1">
+                      <span className="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block"></span> Total Quotes
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Approved
+                    </span>
+                  </div>
+                </div>
+                <div className="h-64 w-full">
+                  <ResponsiveContainer width="100%" height={256} minWidth={1}>
+                    <BarChart data={salesTrend} margin={{ top:5, right:10, left:0, bottom:5 }} barCategoryGap="25%">
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={t.chartGrid} />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize:11, fontWeight:700, fill:t.chartTickColor }} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize:11, fontWeight:700, fill:t.chartTickColor }} tickFormatter={(v) => `₹${Math.round(v/1000)}k`} width={55} />
+                      <RechartsTooltip cursor={{ fill: t.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(59,130,246,0.06)' }} contentStyle={t.chartTooltip} formatter={(value) => `₹${Number(value).toLocaleString('en-IN')}`} />
+                      <Bar dataKey="quotesValue" name="Total Quotes" fill={t.isDark ? "#3b82f6" : "#2563eb"} radius={[4,4,0,0]} />
+                      <Bar dataKey="approvedValue" name="Approved Value" fill={t.isDark ? "#10b981" : "#059669"} radius={[4,4,0,0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
 
-              {/* Lead Sources Pie */}
-              <div className={`${t.card} rounded-[2rem] p-6 lg:p-8`}>
-                <h3 className={`text-sm font-black mb-6 flex items-center gap-2 uppercase tracking-widest ${t.heading}`}>
-                  <PieChartIcon size={16} className={t.isDark ? "text-violet-400" : "text-accent"}/> CRM Lead Sources
+              {/* Lead Sources Pie Chart */}
+              <div className={`${t.card} rounded-2xl p-6 border border-[var(--border-color)] shadow-sm`}>
+                <h3 className={`text-sm font-black mb-1 flex items-center gap-2 uppercase tracking-wider ${t.heading}`}>
+                  <PieChartIcon size={16} className={t.isDark ? "text-violet-400" : "text-blue-600"}/> 
+                  Lead Acquisition Sources
                 </h3>
-                <ResponsiveContainer width="100%" height={250} minWidth={1}>
-                  <PieChart>
-                    <Pie data={leadSources} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={5} dataKey="value" stroke="none">
-                      {leadSources.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                    </Pie>
-                    <RechartsTooltip contentStyle={t.chartTooltip} />
-                    <Legend verticalAlign="bottom" height={36} iconType="circle"
-                      wrapperStyle={{ fontSize:'11px', fontWeight:700, color: t.chartTickColor }}/>
-                  </PieChart>
-                </ResponsiveContainer>
+                <p className="text-[11px] text-muted mb-4">Origin of leads entering the sales pipeline</p>
+                <div className="h-60 w-full">
+                  <ResponsiveContainer width="100%" height={240} minWidth={1}>
+                    <PieChart>
+                      <Pie data={leadSources} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={4} dataKey="value" stroke="none">
+                        {leadSources.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                      </Pie>
+                      <RechartsTooltip contentStyle={t.chartTooltip} />
+                      <Legend verticalAlign="bottom" height={36} iconType="circle"
+                        wrapperStyle={{ fontSize:'11px', fontWeight:700, color: t.chartTickColor }}/>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </div>
 
             {/* REPORT GENERATOR — RIGHT COL */}
             <div className="xl:col-span-1">
-              <div className={`${generatorPanel} rounded-[2rem] p-6 lg:p-8 shadow-xl sticky top-8 relative overflow-hidden`}>
+              <div className={`${generatorPanel} rounded-2xl p-6 shadow-xl sticky top-8 relative overflow-hidden`}>
+                <h3 className="text-lg font-black mb-1 flex items-center gap-2 tracking-tight text-white">
+                  Report Directory
+                </h3>
+                <p className="text-xs font-medium mb-6 text-white/80">
+                  Select a directory or sales report to view and export.
+                </p>
 
-                <h3 className="text-xl font-black mb-2 flex items-center gap-2 tracking-tight text-white">Report Generator</h3>
-                <p className="text-xs font-medium mb-8 text-white/70">Select a dataset to compile into a downloadable document.</p>
-
-                <div className="space-y-6 relative z-10">
+                <div className="space-y-5 relative z-10">
                   <div>
-                    <label className="text-[10px] font-black text-white/60 uppercase tracking-widest mb-2 block">Select Dataset</label>
+                    <label className="text-[10px] font-black text-white/70 uppercase tracking-widest mb-2 block">
+                      Select Report / Directory
+                    </label>
                     <select
-                      className={`w-full rounded-xl p-3 text-sm font-bold outline-none transition-all cursor-pointer appearance-none ${
+                      className={`w-full rounded-xl p-3 text-xs font-bold outline-none transition-all cursor-pointer appearance-none ${
                         t.isDark
-                          ? "bg-slate-800/80 border border-white/10 text-white focus:ring-2 focus:ring-violet-500 [&_optgroup]:bg-slate-900 [&_option]:bg-slate-900"
-                          : "bg-white/20 border border-white/30 text-white focus:ring-2 focus:ring-white/50 [&_optgroup]:bg-accent [&_option]:bg-accent [&_optgroup]:text-white [&_option]:text-white"
+                          ? "bg-slate-800/90 border border-white/10 text-white focus:ring-2 focus:ring-blue-500 [&_option]:bg-slate-900"
+                          : "bg-white/20 border border-white/30 text-white focus:ring-2 focus:ring-white/50 [&_option]:bg-blue-800 [&_option]:text-white"
                       }`}
                       value={selectedReport}
                       onChange={(e) => setSelectedReport(e.target.value)}
                     >
-                      {reportOptions.map((group, idx) => (
-                        <optgroup key={idx} label={group.group}>
-                          {group.options.map(opt => (
-                            <option key={opt.id} value={opt.id}>{opt.label}</option>
-                          ))}
-                        </optgroup>
+                      {reportOptions.map(opt => (
+                        <option key={opt.id} value={opt.id}>{opt.label}</option>
                       ))}
                     </select>
                   </div>
 
-                  <div className="pt-4 border-t border-white/20 space-y-3">
+                  <div className="pt-3 border-t border-white/20 space-y-2.5">
                     <button onClick={viewReport}
-                      className="w-full flex justify-center items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white py-3.5 rounded-xl font-black text-sm transition-all">
-                      <FileText size={16}/> View Report
+                      className="w-full flex justify-center items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/20 text-white py-3 rounded-xl font-black text-xs transition-all shadow-sm">
+                      <FileText size={15}/> View Directory / Report
                     </button>
                     <button onClick={exportPDF}
-                      className="w-full flex justify-center items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white py-3.5 rounded-xl font-black text-sm transition-all">
-                      <Download size={16}/> Download as PDF
+                      className="w-full flex justify-center items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/20 text-white py-3 rounded-xl font-black text-xs transition-all shadow-sm">
+                      <Download size={15}/> Export to PDF
                     </button>
                     <button onClick={exportExcel}
-                      className="w-full flex justify-center items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white py-3.5 rounded-xl font-black text-sm transition-all">
-                      <FileSpreadsheet size={16}/> Download as Excel
+                      className="w-full flex justify-center items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/20 text-white py-3 rounded-xl font-black text-xs transition-all shadow-sm">
+                      <FileSpreadsheet size={15}/> Export to Excel
                     </button>
                   </div>
                 </div>
@@ -271,40 +486,62 @@ const ReportsPage = () => {
 
       {/* VIEW REPORT MODAL */}
       {viewReportData && (
-        <div className={`fixed inset-0 ${t.modalOverlay} z-50 flex items-center justify-center p-4`}>
-          <div className={`${t.modalBg} rounded-[2rem] w-full max-w-5xl max-h-[80vh] flex flex-col shadow-2xl overflow-hidden`}>
-            <div className={`p-6 ${t.modalHeader} flex justify-between items-center`}>
-              <h2 className={`text-2xl font-black ${t.heading}`}>{viewReportData.title}</h2>
+        <div className={`fixed inset-0 ${t.modalOverlay} z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-black/60`}>
+          <div className={`${t.modalBg} rounded-2xl w-full max-w-5xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden border border-[var(--border-color)]`}>
+            <div className={`p-5 ${t.modalHeader} flex justify-between items-center border-b border-[var(--border-color)]`}>
+              <div>
+                <h2 className={`text-lg font-black ${t.heading}`}>{viewReportData.title}</h2>
+                <p className="text-xs text-muted">Showing {viewReportData.rows.length} total records</p>
+              </div>
               <button onClick={() => setViewReportData(null)}
-                className={`text-3xl leading-none transition-colors ${t.isDark ? "text-slate-400 hover:text-rose-400" : "text-amber-700 hover:text-red-600"}`}>
+                className={`text-2xl leading-none transition-colors p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 ${t.isDark ? "text-slate-400 hover:text-rose-400" : "text-slate-500 hover:text-red-600"}`}>
                 &times;
               </button>
             </div>
-            <div className="flex-1 overflow-auto p-6">
-              <table className="w-full text-left border-collapse">
+            <div className="flex-1 overflow-auto p-5">
+              <table className="w-full text-left border-collapse text-xs">
                 <thead className={`${t.tableHead} sticky top-0 shadow-sm`}>
-                  <tr>
-                    {viewReportData.header.map((h,i) => <th key={i} className="p-4">{h}</th>)}
+                  <tr className="border-b border-[var(--border-color)] font-bold uppercase text-[10px] tracking-wider text-muted">
+                    {viewReportData.header.map((h,i) => <th key={i} className="p-3">{h}</th>)}
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-[var(--border-color)]">
                   {viewReportData.rows.map((row,i) => (
-                    <tr key={i} className={t.tableRow}>
-                      {row.map((cell,j) => <td key={j} className={`p-4 text-sm ${t.tableCell}`}>{cell}</td>)}
+                    <tr key={i} className={`${t.tableRow} hover:bg-black/5 dark:hover:bg-white/5 transition`}>
+                      {row.map((cell,j) => (
+                        <td key={j} className="p-3 font-medium">
+                          {/* Badge for approval status */}
+                          {j === row.length - 1 && (cell === "Approved" || cell === "Pending" || cell === "Rejected" || cell === "Negotiating") ? (
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                              cell === "Approved" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" :
+                              cell === "Rejected" ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20" :
+                              cell === "Negotiating" ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20" :
+                              "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                            }`}>
+                              {cell}
+                            </span>
+                          ) : (
+                            cell
+                          )}
+                        </td>
+                      ))}
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <div className={`p-4 ${t.modalHeader} flex justify-end gap-3`}>
-              <button onClick={exportPDF}
-                className={`px-5 py-2 rounded-lg font-bold text-sm transition-colors flex items-center gap-2 ${t.btnDanger}`}>
-                <Download size={16}/> Download PDF
-              </button>
-              <button onClick={exportExcel}
-                className={`px-5 py-2 rounded-lg font-bold text-sm transition-colors flex items-center gap-2 ${t.isDark ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20" : "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"}`}>
-                <FileSpreadsheet size={16}/> Download Excel
-              </button>
+            <div className={`p-4 ${t.modalHeader} flex justify-between items-center border-t border-[var(--border-color)] bg-[var(--bg-surface)]`}>
+              <span className="text-xs text-muted font-bold">Total: {viewReportData.rows.length} rows</span>
+              <div className="flex gap-2.5">
+                <button onClick={exportPDF}
+                  className="px-4 py-2 rounded-xl font-bold text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition flex items-center gap-1.5">
+                  <Download size={14}/> Download PDF
+                </button>
+                <button onClick={exportExcel}
+                  className="px-4 py-2 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition flex items-center gap-1.5">
+                  <FileSpreadsheet size={14}/> Download Excel
+                </button>
+              </div>
             </div>
           </div>
         </div>
