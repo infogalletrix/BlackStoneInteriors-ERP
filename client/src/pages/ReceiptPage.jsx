@@ -415,9 +415,9 @@ export default function ReceiptPage() {
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 flex-1 overflow-hidden">
         {/* LEFT PANEL: WORK ORDERS LIST */}
-        <div className="xl:col-span-4 h-[calc(100vh-160px)] flex flex-col bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-3xl overflow-hidden shadow-sm">
+        <div className="xl:col-span-4 h-[calc(100vh-160px)] flex flex-col bg-white dark:bg-slate-900 border border-[var(--border-color)] rounded-3xl overflow-hidden shadow-sm">
           {/* Top Master Tab: All Work Orders (Full History) */}
-          <div className="p-3 border-b border-[var(--border-color)] bg-[var(--bg-card)]/40">
+          <div className="p-3 border-b border-[var(--border-color)] bg-white dark:bg-slate-900">
             <button
               onClick={() => {
                 setSelectedSiteId("all");
@@ -426,7 +426,7 @@ export default function ReceiptPage() {
               className={`w-full text-left p-3.5 rounded-2xl transition border flex items-center justify-between ${
                 isAllWorkOrders
                   ? "bg-[var(--accent)]/15 border-[var(--accent)] shadow-sm text-themed"
-                  : "themed-card border-[var(--border-color)] hover:bg-white/5"
+                  : "bg-white dark:bg-slate-800/60 border-[var(--border-color)] hover:bg-slate-50 dark:hover:bg-white/5"
               }`}
             >
               <div className="flex items-center gap-3">
@@ -489,7 +489,7 @@ export default function ReceiptPage() {
                     className={`w-full text-left p-3.5 rounded-2xl transition border flex items-start justify-between gap-2 ${
                       isSelected
                         ? "bg-[var(--accent)]/10 border-[var(--accent)] shadow-sm"
-                        : "themed-card border-[var(--border-color)] hover:bg-white/5"
+                        : "bg-white dark:bg-slate-800/60 border-[var(--border-color)] hover:bg-slate-50 dark:hover:bg-white/5"
                     }`}
                   >
                     <div className="flex-1 min-w-0">
@@ -526,7 +526,7 @@ export default function ReceiptPage() {
             <div className="h-full flex flex-col space-y-4">
               {/* Quick Metrics Bar */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 shrink-0">
-                <div className="themed-card p-4 rounded-2xl border border-[var(--border-color)] flex items-center justify-between">
+                <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[var(--border-color)] flex items-center justify-between shadow-sm">
                   <div>
                     <p className="text-[10px] font-black text-muted uppercase tracking-wider">
                       Total Collected
@@ -540,7 +540,7 @@ export default function ReceiptPage() {
                   </div>
                 </div>
 
-                <div className="themed-card p-4 rounded-2xl border border-[var(--border-color)] flex items-center justify-between">
+                <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[var(--border-color)] flex items-center justify-between shadow-sm">
                   <div>
                     <p className="text-[10px] font-black text-muted uppercase tracking-wider">
                       Total Receipts
@@ -554,7 +554,7 @@ export default function ReceiptPage() {
                   </div>
                 </div>
 
-                <div className="themed-card p-4 rounded-2xl border border-[var(--border-color)] flex items-center justify-between">
+                <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[var(--border-color)] flex items-center justify-between shadow-sm">
                   <div>
                     <p className="text-[10px] font-black text-muted uppercase tracking-wider">
                       Completed / Draft
@@ -572,8 +572,8 @@ export default function ReceiptPage() {
               </div>
 
               {/* Master Receipts Table */}
-              <div className="themed-card shadow-sm rounded-3xl overflow-hidden flex flex-col flex-1 border border-[var(--border-color)]">
-                <div className="p-4 border-b border-[var(--border-color)] flex flex-wrap justify-between items-center gap-3 bg-[var(--bg-surface)] shrink-0">
+              <div className="bg-white dark:bg-slate-900 shadow-sm rounded-3xl overflow-hidden flex flex-col flex-1 border border-[var(--border-color)]">
+                <div className="p-4 border-b border-[var(--border-color)] flex flex-wrap justify-between items-center gap-3 bg-white dark:bg-slate-900 shrink-0">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-black uppercase tracking-wider text-themed mr-1">
                       Full History
@@ -585,7 +585,7 @@ export default function ReceiptPage() {
                         className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest transition ${
                           historyFilter === filter
                             ? "btn-accent shadow-sm"
-                            : "themed-card text-muted hover:bg-white/5 border border-[var(--border-color)]"
+                            : "bg-white dark:bg-slate-800 text-muted hover:bg-slate-50 dark:hover:bg-slate-700 border border-[var(--border-color)]"
                         }`}
                       >
                         {filter}
@@ -608,24 +608,24 @@ export default function ReceiptPage() {
                       placeholder="Search receipt #, client, WO..."
                       value={historySearchTerm}
                       onChange={(e) => setHistorySearchTerm(e.target.value)}
-                      className="w-full sm:w-56 lg:w-64 pl-8 pr-3 py-1.5 rounded-xl border border-[var(--border-color)] themed-input text-xs font-bold outline-none transition-all"
+                      className="w-full sm:w-56 lg:w-64 pl-8 pr-3 py-1.5 rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-800 text-xs font-bold outline-none transition-all"
                     />
                   </div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto custom-scrollbar">
                   <table className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider border-b border-[var(--border-color)] bg-white dark:bg-slate-900 sticky top-0 shadow-sm z-10">
-                        <th className="px-4 py-3 w-8"></th>
-                        <th className="px-4 py-3">Receipt No</th>
-                        <th className="px-4 py-3">Date</th>
-                        <th className="px-4 py-3">Work Order</th>
-                        <th className="px-4 py-3">Client / Organization</th>
-                        <th className="px-4 py-3">Mode & Category</th>
-                        <th className="px-4 py-3 text-right">Amount Received</th>
-                        <th className="px-4 py-3 text-center">Status</th>
-                        <th className="px-4 py-3 text-center">Actions</th>
+                    <thead className="sticky top-0 z-10 bg-white dark:bg-slate-900 shadow-sm">
+                      <tr className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider border-b border-[var(--border-color)] bg-white dark:bg-slate-900">
+                        <th className="px-4 py-3 w-8 bg-white dark:bg-slate-900"></th>
+                        <th className="px-4 py-3 bg-white dark:bg-slate-900">Receipt No</th>
+                        <th className="px-4 py-3 bg-white dark:bg-slate-900">Date</th>
+                        <th className="px-4 py-3 bg-white dark:bg-slate-900">Work Order</th>
+                        <th className="px-4 py-3 bg-white dark:bg-slate-900">Client / Organization</th>
+                        <th className="px-4 py-3 bg-white dark:bg-slate-900">Mode & Category</th>
+                        <th className="px-4 py-3 text-right bg-white dark:bg-slate-900">Amount Received</th>
+                        <th className="px-4 py-3 text-center bg-white dark:bg-slate-900">Status</th>
+                        <th className="px-4 py-3 text-center bg-white dark:bg-slate-900">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y themed-divider">
@@ -749,7 +749,7 @@ export default function ReceiptPage() {
           ) : (
             /* ── SPECIFIC WORK ORDER VIEW ── */
             <div className="h-full flex flex-col">
-              <div className="flex justify-between items-center mb-4 shrink-0 bg-[var(--bg-surface)] p-2.5 rounded-2xl border border-[var(--border-color)]">
+              <div className="flex justify-between items-center mb-4 shrink-0 bg-white dark:bg-slate-900 p-2.5 rounded-2xl border border-[var(--border-color)]">
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => {
@@ -789,7 +789,7 @@ export default function ReceiptPage() {
 
               {!showHistory ? (
                 // New Receipt Form
-                <div className="themed-card shadow-sm rounded-3xl overflow-hidden p-5 flex-1 border border-[var(--border-color)] flex flex-col">
+                <div className="bg-white dark:bg-slate-900 shadow-sm rounded-3xl overflow-hidden p-5 flex-1 border border-[var(--border-color)] flex flex-col">
                   <h2 className="text-base font-black mb-3 flex items-center gap-2">
                     <Receipt size={16} className="text-[var(--accent)]" />
                     {formData.id ? "Edit Payment Receipt" : "New Payment Receipt"}
@@ -945,8 +945,8 @@ export default function ReceiptPage() {
                 </div>
               ) : (
                 // History Table for Selected WO
-                <div className="themed-card shadow-sm rounded-3xl overflow-hidden flex flex-col flex-1 border border-[var(--border-color)]">
-                  <div className="p-3 border-b border-[var(--border-color)] flex flex-wrap justify-between items-center gap-2 bg-[var(--bg-surface)] shrink-0">
+                <div className="bg-white dark:bg-slate-900 shadow-sm rounded-3xl overflow-hidden flex flex-col flex-1 border border-[var(--border-color)]">
+                  <div className="p-3 border-b border-[var(--border-color)] flex flex-wrap justify-between items-center gap-2 bg-white dark:bg-slate-900 shrink-0">
                     <div className="flex gap-2 overflow-x-auto">
                       {["All", "Completed", "Draft"].map((filter) => (
                         <button
@@ -955,7 +955,7 @@ export default function ReceiptPage() {
                           className={`px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition ${
                             historyFilter === filter
                               ? "btn-accent shadow-sm"
-                              : "themed-card text-muted hover:bg-white/5 border border-[var(--border-color)]"
+                              : "bg-white dark:bg-slate-800 text-muted hover:bg-slate-50 dark:hover:bg-slate-700 border border-[var(--border-color)]"
                           }`}
                         >
                           {filter}
@@ -977,19 +977,19 @@ export default function ReceiptPage() {
                         placeholder="Search Receipts..."
                         value={historySearchTerm}
                         onChange={(e) => setHistorySearchTerm(e.target.value)}
-                        className="w-full sm:w-48 lg:w-64 pl-8 pr-3 py-1.5 rounded-xl border border-[var(--border-color)] themed-input text-xs font-bold outline-none transition-all"
+                        className="w-full sm:w-48 lg:w-64 pl-8 pr-3 py-1.5 rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-800 text-xs font-bold outline-none transition-all"
                       />
                     </div>
                   </div>
                   <div className="flex-1 overflow-y-auto custom-scrollbar">
                     <table className="w-full text-left text-xs">
-                      <thead>
-                        <tr className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider border-b border-[var(--border-color)] bg-white dark:bg-slate-900 sticky top-0 shadow-sm z-10">
-                          <th className="px-4 py-3 w-8"></th>
-                          <th className="px-4 py-3">Receipt No</th>
-                          <th className="px-4 py-3">Status</th>
-                          <th className="px-4 py-3 text-right">Amount Received</th>
-                          <th className="px-4 py-3 text-right">Actions</th>
+                      <thead className="sticky top-0 z-10 bg-white dark:bg-slate-900 shadow-sm">
+                        <tr className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider border-b border-[var(--border-color)] bg-white dark:bg-slate-900">
+                          <th className="px-4 py-3 w-8 bg-white dark:bg-slate-900"></th>
+                          <th className="px-4 py-3 bg-white dark:bg-slate-900">Receipt No</th>
+                          <th className="px-4 py-3 bg-white dark:bg-slate-900">Status</th>
+                          <th className="px-4 py-3 text-right bg-white dark:bg-slate-900">Amount Received</th>
+                          <th className="px-4 py-3 text-right bg-white dark:bg-slate-900">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y themed-divider">
