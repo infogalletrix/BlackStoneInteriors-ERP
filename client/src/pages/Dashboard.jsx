@@ -274,15 +274,6 @@ const Dashboard = () => {
             onClick={() => navigate("/sites")}
           />
           <KpiCard 
-            label="Total Collections" 
-            value={fmt(receiptIncome)} 
-            icon={Wallet} 
-            color={incomeColor}
-            badge="Received"
-            sub={`${receipts.filter(r => inRange(r.date)).length} payment receipts`}
-            onClick={() => navigate("/receipts")}
-          />
-          <KpiCard 
             label="In-Process Sites" 
             value={inProcessSites} 
             icon={HardHat} 
