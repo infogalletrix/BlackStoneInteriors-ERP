@@ -234,7 +234,7 @@ const PrintableInvoice = forwardRef(({ data }, ref) => {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase text-[8px]">
-                    <th className="py-1 px-2 text-center w-7">#</th>
+                    <th className="py-1 px-2 text-center w-7">SI</th>
                     <th className="py-1 px-2 w-28">Product</th>
                     <th className="py-1 px-2">Specification & Material</th>
                     <th className="py-1 px-1.5 text-center w-12">Qty</th>

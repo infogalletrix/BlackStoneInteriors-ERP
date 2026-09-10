@@ -780,7 +780,7 @@ export default function QuotationPage() {
         <table className="w-full text-sm min-w-[1050px] border-collapse">
           <thead className="themed-thead border-b-2 border-[var(--border-color)] sticky top-0 bg-[var(--bg-surface)] z-10 shadow-sm">
             <tr className="uppercase text-slate-900 dark:text-white font-black text-xs tracking-wider">
-              <th className="px-3.5 py-3.5 text-center w-12 font-black">#</th>
+              <th className="px-3.5 py-3.5 text-center w-14 font-black">SI</th>
               <th className="px-3.5 py-3.5 text-left w-52 font-black">Product / Category</th>
               <th className="px-3.5 py-3.5 text-left font-black">Specification & Material</th>
               <th className="px-3.5 py-3.5 text-left w-32 font-black">Section</th>
