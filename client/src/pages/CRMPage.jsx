@@ -189,6 +189,13 @@ const CRMPage = () => {
 
   const handleActivitySave = async (updated) => {
     try {
+      if (updated.status === 'Completed' && updated.id) {
+        await fetch(`/api/crm/activities/${updated.id}`, { method: 'DELETE' });
+        loadData();
+        setEditActivity(null);
+        showFeedback("Schedule marked as completed and removed permanently");
+        return;
+      }
       if (!updated.id) {
         await fetch('/api/crm/activities', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(updated) });
       } else {
@@ -201,8 +208,9 @@ const CRMPage = () => {
 
   const completeActivity = async (act) => {
     try {
-      await fetch(`/api/crm/activities/${act.id}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({...act, status: 'Completed'}) });
-      loadData(); showFeedback("Activity marked as completed");
+      await fetch(`/api/crm/activities/${act.id}`, { method: 'DELETE' });
+      loadData();
+      showFeedback("Schedule marked as completed and removed permanently");
     } catch(err) { showFeedback("Error completing activity"); }
   };
 
@@ -542,6 +550,7 @@ const CRMPage = () => {
   });
 
   const filteredActivities = activities.filter((a) => {
+    if (a.status === 'Completed') return false;
     const clientName = contacts.find(c => c.id === a.client)?.name || "";
     const searchMatch = clientName.toLowerCase().includes(searchTerm.toLowerCase()) || a.type.toLowerCase().includes(searchTerm.toLowerCase());
     return searchMatch && checkMonth(a.date);

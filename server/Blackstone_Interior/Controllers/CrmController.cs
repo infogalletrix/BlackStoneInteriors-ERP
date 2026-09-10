@@ -308,6 +308,13 @@ namespace Blackstone_Interior.Controllers
         [HttpGet("activities/all")]
         public async Task<IActionResult> GetActivities()
         {
+            var completedActs = await _db.Activities.Where(a => a.Status == "Completed").ToListAsync();
+            if (completedActs.Any())
+            {
+                _db.Activities.RemoveRange(completedActs);
+                await _db.SaveChangesAsync();
+            }
+
             var acts = await _db.Activities.ToListAsync();
             var result = acts.Select(a => new
             {
@@ -325,6 +332,11 @@ namespace Blackstone_Interior.Controllers
         [HttpPost("activities")]
         public async Task<IActionResult> CreateActivity([FromBody] ActivityDto dto)
         {
+            if (dto.Status == "Completed")
+            {
+                return Ok(new { id = "0", message = "Completed activity is not retained" });
+            }
+
             string clientIdStr = dto.Client;
             if (!string.IsNullOrWhiteSpace(clientIdStr) && !int.TryParse(clientIdStr, out _))
             {
@@ -353,6 +365,13 @@ namespace Blackstone_Interior.Controllers
         {
             var act = await _db.Activities.FindAsync(id);
             if (act == null) return NotFound();
+
+            if (dto.Status == "Completed")
+            {
+                _db.Activities.Remove(act);
+                await _db.SaveChangesAsync();
+                return Ok(new { message = "Activity completed and permanently deleted" });
+            }
 
             string clientIdStr = dto.Client;
             if (!string.IsNullOrWhiteSpace(clientIdStr) && !int.TryParse(clientIdStr, out _))
