@@ -781,9 +781,9 @@ export default function QuotationPage() {
           <thead className="border-b-2 border-slate-200 dark:border-slate-800 sticky top-0 bg-white dark:bg-slate-900 z-10 shadow-sm">
             <tr className="uppercase text-slate-900 dark:text-white font-black text-xs tracking-wider">
               <th className="px-3.5 py-3.5 text-center w-14 font-black">SI</th>
+              <th className="px-3.5 py-3.5 text-left w-32 font-black">Section</th>
               <th className="px-3.5 py-3.5 text-left w-52 font-black">Product / Category</th>
               <th className="px-3.5 py-3.5 text-left font-black">Specification & Material</th>
-              <th className="px-3.5 py-3.5 text-left w-32 font-black">Section</th>
               <th className="px-3.5 py-3.5 text-center w-16 font-black">Qty</th>
               <th className="px-3.5 py-3.5 text-center w-16 font-black">Unit</th>
               <th className="px-3.5 py-3.5 text-right w-28 font-black">Rate (₹)</th>
@@ -798,16 +798,16 @@ export default function QuotationPage() {
                 <td className="px-3.5 py-3.5 text-center font-bold text-muted text-sm">
                   {idx + 1}
                 </td>
+                <td className="px-3.5 py-3.5">
+                  <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-amber-500/10 text-amber-700 dark:text-[var(--accent)] border border-amber-500/20">
+                    {item.section || "General"}
+                  </span>
+                </td>
                 <td className="px-3.5 py-3.5 font-bold text-themed text-sm">
                   {item.product || "—"}
                 </td>
                 <td className="px-3.5 py-3.5 text-muted leading-relaxed whitespace-pre-wrap max-w-md text-sm">
                   {item.specification || "—"}
-                </td>
-                <td className="px-3.5 py-3.5">
-                  <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-amber-500/10 text-amber-700 dark:text-[var(--accent)] border border-amber-500/20">
-                    {item.section || "General"}
-                  </span>
                 </td>
                 <td className="px-3.5 py-3.5 text-center font-black text-themed text-sm">
                   {item.qty}
