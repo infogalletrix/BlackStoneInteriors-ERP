@@ -33,7 +33,7 @@ const CRMPage = () => {
   
   useEffect(() => {
     const p = location.pathname.split('/').pop();
-    if (p === 'leads') {
+    if (p === 'leads' || p === 'crm') {
       setActiveTab('leads');
       setLeadFilter('interested');
     }
@@ -44,10 +44,8 @@ const CRMPage = () => {
     }
     else if (p === 'pipeline') setActiveTab('pipeline');
     else if (p === 'schedule') setActiveTab('schedule');
-    else if (p === 'telecalling') setActiveTab('telecalling'); 
-    else if (p === 'marketing') setActiveTab('campaigns'); 
     else if (p === 'document-vault') setActiveTab('document_vault');
-    else if (p === 'crm') setActiveTab('site_surveys');
+    else setActiveTab('leads');
   }, [location.pathname]);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -566,10 +564,7 @@ const CRMPage = () => {
               { id: "leads", label: "Leads", icon: <User size={14} /> },
               { id: "customers", label: "Customers", icon: <User size={14} /> },
               { id: "pipeline", label: "Pipeline", icon: <Briefcase size={14} /> },
-              { id: "site_surveys", label: "Site Surveys", icon: <MapPin size={14} /> },
               { id: "schedule", label: "Schedule", icon: <Calendar size={14} /> },
-              { id: "telecalling", label: "Telecalling", icon: <Phone size={14} /> },
-              { id: "campaigns", label: "Campaigns", icon: <BarChart2 size={14} /> },
             ].map((tab) => (
               <button key={tab.id} onClick={() => { setActiveTab(tab.id); setSearchTerm(""); }} className={`flex-shrink-0 flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300 ${activeTab === tab.id ? "dark:bg-violet-600 bg-accent text-white shadow-md" : "text-muted hover:text-themed hover:bg-[var(--bg-card-hover)]"}`}>
                 {tab.icon} <span className="hidden sm:inline">{tab.label}</span>
@@ -605,11 +600,9 @@ const CRMPage = () => {
 
           {/* ADD BUTTON (Right) */}
           <div className="flex w-full md:w-auto order-3 gap-3 items-center">
-            {activeTab !== "campaigns" && activeTab !== "telecalling" && (
-              <button onClick={() => { if (activeTab === "leads" || activeTab === "customers") setEditContact({ status: 'Cold', tags: [] }); else if (activeTab === "pipeline") setEditDeal({ value: 0, contactId: contacts[0]?.id || '' }); else if (activeTab === "site_surveys") { setEditSiteMode('full'); setEditSiteSurvey({ name: '', clientName: '', address: '', status: 'Pre-Construction', startDate: new Date().toISOString().split('T')[0], surveyNotes: '' }); } else setEditActivity({ type: '', date: new Date().toISOString().split('T')[0], client: contacts[0]?.id || '', status: 'Pending' }); }} className="w-full md:w-auto flex-shrink-0 flex items-center justify-center gap-1.5 px-6 py-2.5 rounded-xl text-sm font-black transition-all duration-300 dark:bg-violet-700 bg-accent text-white shadow-lg dark:hover:bg-slate-800 hover:bg-accent-hover">
-                <Plus size={16} /> <span className="hidden sm:inline">Add New</span>
-              </button>
-            )}
+            <button onClick={() => { if (activeTab === "leads" || activeTab === "customers") setEditContact({ status: 'Cold', tags: [] }); else if (activeTab === "pipeline") setEditDeal({ value: 0, contactId: contacts[0]?.id || '' }); else setEditActivity({ type: '', date: new Date().toISOString().split('T')[0], client: contacts[0]?.id || '', status: 'Pending' }); }} className="w-full md:w-auto flex-shrink-0 flex items-center justify-center gap-1.5 px-6 py-2.5 rounded-xl text-sm font-black transition-all duration-300 dark:bg-violet-700 bg-accent text-white shadow-lg dark:hover:bg-slate-800 hover:bg-accent-hover">
+              <Plus size={16} /> <span className="hidden sm:inline">Add New</span>
+            </button>
             <NotificationWidget />
           </div>
 

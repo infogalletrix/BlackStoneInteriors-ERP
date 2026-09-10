@@ -255,170 +255,88 @@ const Dashboard = () => {
 
       <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-6">
 
-        {/* ── Row 1: Primary Financial KPIs ── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <KpiCard label="Total Income" value={fmt(totalIncome)} icon={TrendingUp} color={incomeColor}
-            sub={`${receipts.filter(r=>inRange(r.date)).length} receipts`}/>
-          <KpiCard label="Total Spent" value={fmt(totalSpent)} icon={TrendingDown} color={expenseColor}
-            sub={`${expenses.filter(e=>inRange(e.date)).length} entries`}/>
+        {/* ── Operations & Work Order KPIs ── */}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           <KpiCard label="Work Order Revenue" value={fmt(totalWOValue)} icon={Building} color={accentMain}
             sub={`${sites.length} total projects`}/>
-          <motion.div variants={fade}
-            className={`relative overflow-hidden rounded-lg p-5 ${t.card} ${t.cardHover} flex items-center gap-4`}
-            style={{borderLeft:`3px solid ${profitPositive?incomeColor:expenseColor}`}}>
-            <div className="flex-shrink-0">
-              <span className="p-3 rounded-lg shadow-sm border border-black/5 dark:border-white/5 inline-flex" style={{background:(profitPositive?incomeColor:expenseColor)+'22'}}>
-                <IndianRupee size={24} style={{color:profitPositive?incomeColor:expenseColor}}/>
+          <KpiCard label="In-Process Sites" value={inProcessSites} icon={HardHat} color={d?"#8b5cf6":"#3D5A8A"}
+            sub="Active site execution"/>
+          <KpiCard label="Pending Work Orders" value={pendingWO} icon={ClipboardCheck} color={d?"#38bdf8":"#0ea5e9"}
+            sub="Pre-construction"/>
+          <KpiCard label="Pending Quotations" value={pendingQuotes} icon={FileText} color={d?"#fb923c":"#9E8B6E"}
+            sub="Awaiting client approval"/>
+          <KpiCard label="Completed Sites" value={sites.filter(s=>s.status==="Completed").length} icon={Building} color={incomeColor}
+            sub="Successfully delivered"/>
+        </div>
+
+        {/* ── Main Operations Section ── */}
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+
+          {/* Site Status Breakdown – 7 cols */}
+          <motion.div variants={fade} className={`xl:col-span-7 ${t.card} rounded-2xl p-6 flex flex-col`}>
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className={`font-black text-base ${d?"text-white":"text-[var(--text-primary)]"}`}>Project Status & Work Orders</h3>
+                <p className={`${t.muted} mt-0.5`}>Active sites and operational delivery breakdown</p>
+              </div>
+              <span className="text-xs font-black px-3 py-1 rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                {sites.length} Total Projects
               </span>
             </div>
-            <div className="flex flex-col">
-              <p className={t.label}>Net Profit / Loss</p>
-              <p className="text-2xl font-black tracking-tight drop-shadow-sm" style={{color:profitPositive?incomeColor:expenseColor}}>
-                {profitPositive?'+':''}{fmt(netProfit)}
-              </p>
-              <p className={`${t.muted} mt-0.5`}>Income minus expenses</p>
-            </div>
-          </motion.div>
-        </div>
 
-        {/* ── Row 2: Operations KPIs ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          <KpiCard label="Pending Quotations" value={pendingQuotes} icon={FileText} color={d?"#fb923c":"#9E8B6E"} hideLeftStroke/>
-          <KpiCard label="In-Process Sites" value={inProcessSites} icon={HardHat} color={d?"#8b5cf6":"#3D5A8A"} hideLeftStroke/>
-          <KpiCard label="Pending Work Orders" value={pendingWO} icon={ClipboardCheck} color={d?"#38bdf8":"#0ea5e9"} hideLeftStroke/>
-          <KpiCard label="Total Payroll" value={fmt(totalPayroll)} icon={Banknote} color={d?"#a78bfa":"#6366f1"} hideLeftStroke/>
-          <KpiCard label="Total Advances" value={fmt(totalAdvances)} icon={Wallet} color={d?"#f472b6":"#ec4899"} hideLeftStroke/>
-          <KpiCard label="Present Today" value={`${presentToday} staff`} icon={CalendarCheck} color={incomeColor} hideLeftStroke/>
-        </div>
-
-        {/* ── Row 3: Charts ── */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-
-          {/* Cash Flow – 8 cols */}
-          <motion.div variants={fade} className={`xl:col-span-8 ${t.card} rounded-2xl p-6`}>
-            <div className="mb-5 flex items-start justify-between">
-              <div>
-                <h3 className={`font-black text-base ${d?"text-white":"text-[var(--text-primary)]"}`}>Financial Trajectory</h3>
-                <p className={`${t.muted} mt-0.5`}>Income vs Expenses — last 6 months</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+              <div className="h-52 w-full relative flex items-center justify-center">
+                {siteStatusData.length > 0 ? (
+                  <>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
+                      <span className={t.label}>Total</span>
+                      <span className={`text-xl font-black ${d?"text-white":"text-[var(--text-primary)]"}`}>{sites.length}</span>
+                    </div>
+                    <ResponsiveContainer width="100%" height={200} minWidth={1} minHeight={1}>
+                      <PieChart>
+                        <Pie data={siteStatusData} cx="50%" cy="50%" innerRadius={55} outerRadius={75}
+                          paddingAngle={4} dataKey="value" stroke="none">
+                          {siteStatusData.map((_,i) => <Cell key={i} fill={COLORS[i%COLORS.length]}/>)}
+                        </Pie>
+                        <RechartsTooltip content={<Tooltip/>}/>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </>
+                ) : (
+                  <div className={`w-full h-full flex items-center justify-center ${t.muted} font-bold text-xs`}>No site data</div>
+                )}
               </div>
-              <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest">
-                <span className="flex items-center gap-1.5"><span className="w-3 h-1.5 rounded-full inline-block" style={{background:incomeColor}}/>Income</span>
-                <span className="flex items-center gap-1.5"><span className="w-3 h-1.5 rounded-full inline-block" style={{background:expenseColor}}/>Expenses</span>
-              </div>
-            </div>
-            <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height={256} minWidth={1} minHeight={1}>
-                <AreaChart data={cashFlowData} margin={{top:4,right:4,left:0,bottom:0}}>
-                  <defs>
-                    <linearGradient id="gIncome" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor={incomeColor} stopOpacity={d?0.3:0.15}/>
-                      <stop offset="95%" stopColor={incomeColor} stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="gExpense" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor={expenseColor} stopOpacity={d?0.3:0.15}/>
-                      <stop offset="95%" stopColor={expenseColor} stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={t.chartGrid}/>
-                  <XAxis dataKey="name" axisLine={false} tickLine={false}
-                    tick={{fontSize:10,fontWeight:700,fill:t.chartTickColor}} dy={8}/>
-                  <YAxis axisLine={false} tickLine={false}
-                    tick={{fontSize:10,fontWeight:700,fill:t.chartTickColor}}
-                    tickFormatter={v=>`₹${v>=1000?Math.round(v/1000)+'k':v}`} width={48}/>
-                  <RechartsTooltip content={<Tooltip/>}/>
-                  <Area type="monotone" dataKey="Income" stroke={incomeColor} strokeWidth={2.5}
-                    fillOpacity={1} fill="url(#gIncome)"/>
-                  <Area type="monotone" dataKey="Expenses" stroke={expenseColor} strokeWidth={2.5}
-                    fillOpacity={1} fill="url(#gExpense)"/>
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </motion.div>
 
-          {/* Site Status donut – 4 cols */}
-          <motion.div variants={fade} className={`xl:col-span-4 ${t.card} rounded-2xl p-6 flex flex-col`}>
-            <h3 className={`font-black text-base mb-1 ${d?"text-white":"text-[var(--text-primary)]"}`}>Site Status</h3>
-            <p className={`${t.muted} mb-4`}>Work order breakdown</p>
-            <div className="flex-1 min-h-[200px] h-[200px] w-full relative">
-              {siteStatusData.length > 0 ? (
-                <>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
-                    <span className={t.label}>Total</span>
-                    <span className={`text-xl font-black ${d?"text-white":"text-[var(--text-primary)]"}`}>{sites.length}</span>
+              <div className="space-y-2.5">
+                {siteStatusData.map((s,i) => (
+                  <div key={i} className="flex items-center justify-between p-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)]">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{background:COLORS[i%COLORS.length]}}/>
+                      <span className={`text-xs font-semibold ${d?"text-slate-300":"text-[var(--text-secondary)]"}`}>{s.name}</span>
+                    </div>
+                    <span className={`text-xs font-black ${d?"text-white":"text-[var(--text-primary)]"}`}>{s.value}</span>
                   </div>
-                  <ResponsiveContainer width="100%" height={200} minWidth={1} minHeight={1}>
-                    <PieChart>
-                      <Pie data={siteStatusData} cx="50%" cy="50%" innerRadius={55} outerRadius={75}
-                        paddingAngle={4} dataKey="value" stroke="none">
-                        {siteStatusData.map((_,i) => <Cell key={i} fill={COLORS[i%COLORS.length]}/>)}
-                      </Pie>
-                      <RechartsTooltip content={<Tooltip/>}/>
-                    </PieChart>
-                  </ResponsiveContainer>
-                </>
-              ) : (
-                <div className={`w-full h-full flex items-center justify-center ${t.muted} font-bold`}>No site data</div>
-              )}
-            </div>
-            <div className="mt-3 space-y-1.5">
-              {siteStatusData.map((s,i) => (
-                <div key={i} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{background:COLORS[i%COLORS.length]}}/>
-                    <span className={`text-xs font-semibold ${d?"text-slate-300":"text-[var(--text-secondary)]"}`}>{s.name}</span>
-                  </div>
-                  <span className={`text-xs font-black ${d?"text-white":"text-[var(--text-primary)]"}`}>{s.value}</span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-
-        {/* ── Row 4: Expense breakdown + Quick Actions ── */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-
-          {/* Expense bar chart – 8 cols */}
-          <motion.div variants={fade} className={`xl:col-span-8 ${t.card} rounded-2xl p-6`}>
-            <h3 className={`font-black text-base mb-1 ${d?"text-white":"text-[var(--text-primary)]"}`}>Expense Categories</h3>
-            <p className={`${t.muted} mb-5`}>Breakdown by classification (current period)</p>
-            {expenseBreakdown.length > 0 ? (
-              <div className="h-48 w-full">
-                <ResponsiveContainer width="100%" height={192} minWidth={1} minHeight={1}>
-                  <BarChart data={expenseBreakdown} layout="vertical"
-                    margin={{top:0,right:16,left:4,bottom:0}}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={t.chartGrid}/>
-                    <XAxis type="number" hide tickFormatter={v=>`₹${v>=1000?Math.round(v/1000)+'k':v}`}/>
-                    <YAxis dataKey="name" type="category" width={90} axisLine={false} tickLine={false}
-                      tick={{fontSize:10,fontWeight:700,fill:t.chartTickColor}}/>
-                    <RechartsTooltip content={<Tooltip/>}/>
-                    <Bar dataKey="value" radius={[0,6,6,0]} barSize={18} name="Amount">
-                      {expenseBreakdown.map((_,i)=><Cell key={i} fill={COLORS[i%COLORS.length]}/>)}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                ))}
               </div>
-            ) : (
-              <div className={`h-48 flex items-center justify-center ${t.muted} font-bold`}>No expense data for period</div>
-            )}
+            </div>
           </motion.div>
 
-          {/* Quick Actions – 4 cols */}
-          <motion.div variants={fade} className="xl:col-span-4 flex flex-col gap-3">
+          {/* Quick Actions – 5 cols */}
+          <motion.div variants={fade} className="xl:col-span-5 flex flex-col gap-3">
             <h3 className={`font-black text-base ${d?"text-white":"text-[var(--text-primary)]"}`}>Quick Actions</h3>
             {[
-              { label:"New Quotation",  sub:"Create & send",       path:"/quotations", color: d?"#8b5cf6":"#9E8B6E" },
-              { label:"New Receipt",    sub:"Log a payment",       path:"/receipts",   color: incomeColor },
-              { label:"Log Expense",    sub:"Record a spend",      path:"/expenses",   color: expenseColor },
-              { label:"Add Staff",      sub:"HR management",       path:"/employees",  color: accentSecond },
-              { label:"Work Orders",    sub:"View all projects",   path:"/sites",      color: d?"#fb923c":"#6366f1" },
+              { label:"New Quotation",  sub:"Create & customize quotation", path:"/quotations", color: d?"#8b5cf6":"#9E8B6E" },
+              { label:"Work Orders",    sub:"Manage projects & sites",      path:"/sites",      color: d?"#fb923c":"#6366f1" },
+              { label:"Payment Receipts",sub:"View & print receipts",       path:"/receipts",   color: incomeColor },
+              { label:"Quotation History",sub:"Review quotations & status", path:"/invoices",   color: d?"#38bdf8":"#0ea5e9" },
             ].map((btn,i) => (
               <motion.button key={i} variants={fade} whileHover={{scale:1.02}} whileTap={{scale:0.98}}
                 onClick={()=>navigate(btn.path)}
-                className={`w-full text-left p-3.5 rounded-lg flex items-center justify-between group transition-all ${t.card} ${t.cardHover}`}
-                style={{borderLeft:`3px solid ${btn.color}`}}>
+                className={`w-full text-left p-3.5 rounded-xl flex items-center justify-between group transition-all ${t.card} ${t.cardHover} border border-[var(--border-color)]`}
+                style={{borderLeft:`4px solid ${btn.color}`}}>
                 <div>
                   <p className={`font-black text-xs ${d?"text-white":"text-[var(--text-primary)]"}`}>{btn.label}</p>
-                  <p className={t.muted}>{btn.sub}</p>
+                  <p className={`${t.muted} text-[11px]`}>{btn.sub}</p>
                 </div>
                 <ArrowRight size={14} className="opacity-30 group-hover:opacity-100 group-hover:translate-x-1 transition-all" style={{color:btn.color}}/>
               </motion.button>

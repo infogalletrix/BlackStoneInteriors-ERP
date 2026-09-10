@@ -330,7 +330,6 @@ export default function HistoryPage() {
                         <td className="px-8 py-5 text-right font-bold text-emerald-600">₹{collected.toLocaleString()}</td>
                         <td className="px-8 py-5">
                           <div className="flex items-center justify-center gap-2">
-                            <button onClick={() => navigate("/billing", { state: { editInvoice: inv } })} className="p-2 bg-violet-500/10 text-violet-500 rounded-xl hover:bg-violet-500/20 transition" title="Edit"><Edit2 size={16} /></button>
                             <button onClick={() => setPreviewInvoice(inv)} className="p-2 bg-[var(--accent)]/10 text-[var(--accent)] rounded-xl hover:bg-[var(--accent)]/20 transition" title="Preview"><Eye size={16} /></button>
                             <button onClick={() => { setPreviewInvoice(inv); setTimeout(() => handlePrint(), 400); }} className="p-2 bg-teal-500/10 text-teal-500 rounded-xl hover:bg-teal-500/20 transition" title="Print"><Printer size={16} /></button>
                             <button onClick={() => deleteInvoice(inv.id)} className="p-2 bg-rose-500/10 text-rose-500 rounded-xl hover:bg-rose-500/20 transition" title="Delete"><Trash2 size={16} /></button>

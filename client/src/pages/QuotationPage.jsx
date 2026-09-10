@@ -7,6 +7,7 @@ import ManageOptionsModal, {
   DEFAULT_SPECIFICATIONS
 } from "../components/ManageOptionsModal";
 import SectionInput from "../components/SectionInput";
+import QuotationItemModal from "../components/QuotationItemModal";
 
 const formatINR = (val) => {
   const num = Number(val) || 0;
@@ -220,7 +221,7 @@ export default function QuotationPage() {
       if (d.quoteNo) setQuoteNo(d.quoteNo);
     } else {
       // Clear for a new session if no data
-      setItems([{ id: Date.now(), section: "General", product: "", specification: "", qty: "", unit: "Sq.Ft", rate: "", discountType: "percent", discountPercent: "", discountPrice: "", amount: 0 }]);
+      setItems([]);
       setClientName("");
       setOrganizationName("");
       setClientAddress("");
@@ -338,152 +339,57 @@ export default function QuotationPage() {
     }
   }, []);
 
-  const handleItemChange = (id, field, value) => {
-    setItems((prevItems) => {
-      return prevItems.map((item) => {
-        if (item.id === id) {
-          const updated = { ...item, [field]: value };
-          const qty = parseFloat(updated.qty || 0);
-          const rate = parseFloat(updated.rate || 0);
-          const discType = updated.discountType || "percent";
+  // Item modal state
+  const [isItemModalOpen, setIsItemModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
 
-          if (field === "rate") {
-            if (discType === "percent" && updated.discountPercent) {
-              const p = parseFloat(updated.discountPercent);
-              const discPrice = rate - (rate * p / 100);
-              updated.discountPrice = discPrice > 0 ? discPrice.toFixed(2) : "0";
-            } else if (discType === "price" && updated.discountPrice && rate > 0) {
-              const dp = parseFloat(updated.discountPrice);
-              updated.discountPercent = (((rate - dp) / rate) * 100).toFixed(1);
-            }
-          } else if (field === "discountPercent") {
-            if (value && parseFloat(value) > 0) {
-              const p = parseFloat(value);
-              const discPrice = rate - (rate * p / 100);
-              updated.discountPrice = discPrice > 0 ? discPrice.toFixed(2) : "0";
-            } else {
-              updated.discountPrice = "";
-            }
-          } else if (field === "discountPrice") {
-            if (value && parseFloat(value) > 0) {
-              const dp = parseFloat(value);
-              if (rate > 0) {
-                updated.discountPercent = (((rate - dp) / rate) * 100).toFixed(1);
-              }
-            } else {
-              updated.discountPercent = "";
-            }
-          }
+  // Payment Plan milestones
+  const [paymentMilestones, setPaymentMilestones] = useState([
+    { name: "Production", percent: "50" },
+    { name: "Delivery", percent: "40" },
+    { name: "Handover", percent: "10" }
+  ]);
 
-          const effectiveRate = updated.discountPrice ? parseFloat(updated.discountPrice) : rate;
-          updated.amount = qty * effectiveRate;
-          return updated;
-        }
-        return item;
-      });
-    });
+  // Exclusions state
+  const [exclusions, setExclusions] = useState([
+    "Civil, plumbing, and core masonry works unless explicitly listed.",
+    "Electrical appliances, specialty light fixtures, and chandeliers.",
+    "Countertop granite/quartz procurement unless itemized.",
+    "Approvals/permits required from building society or authorities."
+  ]);
+  const [newExclusionText, setNewExclusionText] = useState("");
+
+  const openAddItemModal = () => {
+    setEditingItem(null);
+    setIsItemModalOpen(true);
   };
 
-  const handleToggleDiscountType = (id) => {
-    setItems((prevItems) => {
-      return prevItems.map((item) => {
-        if (item.id === id) {
-          const currentType = item.discountType || "percent";
-          const newType = currentType === "percent" ? "price" : "percent";
-          const rate = parseFloat(item.rate || 0);
-
-          if (newType === "price") {
-            if (item.discountPercent && rate > 0) {
-              const p = parseFloat(item.discountPercent);
-              const discPrice = rate - (rate * p / 100);
-              return { ...item, discountType: "price", discountPrice: discPrice > 0 ? discPrice.toFixed(2) : "0" };
-            }
-            return { ...item, discountType: "price" };
-          } else {
-            if (item.discountPrice && rate > 0) {
-              const dp = parseFloat(item.discountPrice);
-              const p = (((rate - dp) / rate) * 100).toFixed(1);
-              return { ...item, discountType: "percent", discountPercent: p > 0 ? p : "" };
-            }
-            return { ...item, discountType: "percent" };
-          }
-        }
-        return item;
-      });
-    });
+  const openEditItemModal = (item) => {
+    setEditingItem(item);
+    setIsItemModalOpen(true);
   };
 
-  const handleKeyDown = (e, idx, field) => {
-    const fields = ["section", "product", "specification", "qty", "rate", "discountPrice"];
-
-    if (e.key === "Enter") {
-      e.preventDefault();
-      if (idx === items.length - 1) {
-        addNewRow();
-        setTimeout(() => {
-          const nextInput = document.getElementById(`input-${idx + 1}-description`);
-          if (nextInput) nextInput.focus();
-        }, 50);
+  const handleSaveItem = (savedItem) => {
+    setItems(prev => {
+      const exists = prev.some(i => i.id === savedItem.id);
+      if (exists) {
+        return prev.map(i => i.id === savedItem.id ? savedItem : i);
       } else {
-        const nextInput = document.getElementById(`input-${idx + 1}-${field}`);
-        if (nextInput) nextInput.focus();
+        return [...prev, savedItem];
       }
-    } else if (e.key === "ArrowDown") {
-      e.preventDefault();
-      const nextInput = document.getElementById(`input-${idx + 1}-${field}`);
-      if (nextInput) nextInput.focus();
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      const prevInput = document.getElementById(`input-${idx - 1}-${field}`);
-      if (prevInput) prevInput.focus();
-    } else if (e.key === "ArrowRight") {
-      if (e.target.selectionStart === e.target.value.length) {
-        e.preventDefault();
-        const fieldIdx = fields.indexOf(field);
-        if (fieldIdx < fields.length - 1) {
-          const nextInput = document.getElementById(`input-${idx}-${fields[fieldIdx + 1]}`);
-          if (nextInput) nextInput.focus();
-        }
-      }
-    } else if (e.key === "ArrowLeft") {
-      if (e.target.selectionEnd === 0) {
-        e.preventDefault();
-        const fieldIdx = fields.indexOf(field);
-        if (fieldIdx > 0) {
-          const prevInput = document.getElementById(`input-${idx}-${fields[fieldIdx - 1]}`);
-          if (prevInput) prevInput.focus();
-        }
-      }
-    }
-  };
-
-  const addNewRow = () => {
-    setItems((prev) => [
-      ...prev,
-      {
-        id: Date.now() + Math.random(),
-        description: "",
-        section: "General",
-        product: "",
-        specification: "",
-        qty: "",
-        unit: "Sq.Ft",
-        rate: "",
-        discountType: "percent",
-        discountPercent: "",
-        discountPrice: "",
-        amount: 0,
-      },
-    ]);
+    });
+    persistEnteredSections([savedItem]);
   };
 
   const removeItem = (id) => {
-    const idx = items.findIndex(i => i.id === id);
-    if (idx === 0) {
-      setItems(prev => prev.map(item => item.id === id ? { ...item, section: "General", product: "", specification: "", qty: "", rate: "", discountType: "percent", discountPercent: "", discountPrice: "", amount: 0 } : item));
-    } else {
-      setItems(items.filter((i) => i.id !== id));
-    }
+    showDialog({
+      title: "Remove Item",
+      message: "Are you sure you want to remove this item from the quotation?",
+      type: "confirm",
+      onConfirm: () => {
+        setItems(prev => prev.filter(i => i.id !== id));
+      }
+    });
   };
 
   const subTotal = items.reduce((s, i) => s + i.amount, 0);
@@ -587,7 +493,7 @@ export default function QuotationPage() {
       setTimeout(() => {
         if (!quoteId) {
           // Reset the form for the next quotation
-          setItems([{ id: Date.now(), section: "General", product: "", specification: "", qty: "", unit: "Sq.Ft", rate: "", discountType: "percent", discountPercent: "", discountPrice: "", amount: 0 }]);
+          setItems([]);
           setClientName("");
           setOrganizationName("");
           setClientAddress("");
@@ -664,10 +570,10 @@ export default function QuotationPage() {
   const clearForm = () => {
     showDialog({
       title: "Clear Form",
-      message: "Clear all data?",
+      message: "Clear all quotation data?",
       type: "confirm",
       onConfirm: () => {
-        setItems([{ id: Date.now(), section: "General", product: "", specification: "", qty: "", unit: "Sq.Ft", rate: "", discountType: "percent", discountPercent: "", discountPrice: "", amount: 0 }]);
+        setItems([]);
         setClientName("");
         setOrganizationName("");
         setClientAddress("");
@@ -886,190 +792,240 @@ export default function QuotationPage() {
 
       {/* ── MAIN TABLE ── */}
       <div className="flex-grow bg-[var(--bg-surface)] overflow-x-auto overflow-y-auto">
-        <table className="w-full text-[11px] min-w-[1000px]">
-          <thead className="themed-thead border-b border-[var(--border-color)] sticky top-0">
-            <tr className="uppercase text-muted font-bold">
-              <th className="px-2 py-1 border-r border-gray-300 text-center w-12">
-                Rem
-              </th>
-              <th className="px-2 py-1 border-r border-gray-300 text-center w-10">
-                S#
-              </th>
-              <th className="px-2 py-1 border-r border-gray-300 text-left w-28">
-                Section
-              </th>
-              <th className="px-2 py-1 border-r border-gray-300 text-left w-36">
-                Product
-              </th>
-              <th className="px-2 py-1 border-r border-gray-300 text-left">
-                Specification
-              </th>
-              <th className="px-2 py-1 border-r border-gray-300 text-center w-16">
-                Qty
-              </th>
-              <th className="px-2 py-1 border-r border-gray-300 text-center w-16">
-                Unit
-              </th>
-              <th className="px-2 py-1 border-r border-gray-300 text-right w-24">
-                Unit Price
-              </th>
-              <th className="px-2 py-1 border-r border-gray-300 text-right w-28">
-                <div className="flex items-center justify-end gap-1">
-                  <span>Disc.</span>
-                  <span className="text-[9px] font-black opacity-75">(% / ₹)</span>
-                </div>
-              </th>
-              <th className="px-2 py-1 text-right w-28">Amount (₹)</th>
+        <table className="w-full text-xs min-w-[950px] border-collapse">
+          <thead className="themed-thead border-b border-[var(--border-color)] sticky top-0 bg-[var(--bg-surface)] z-10">
+            <tr className="uppercase text-muted font-bold text-[10px] tracking-wider">
+              <th className="px-3 py-2.5 text-center w-12">#</th>
+              <th className="px-3 py-2.5 text-left w-20">Code</th>
+              <th className="px-3 py-2.5 text-left w-48">Product / Category</th>
+              <th className="px-3 py-2.5 text-left">Specification & Material</th>
+              <th className="px-3 py-2.5 text-left w-28">Section</th>
+              <th className="px-3 py-2.5 text-center w-16">Qty</th>
+              <th className="px-3 py-2.5 text-center w-16">Unit</th>
+              <th className="px-3 py-2.5 text-right w-24">Rate (₹)</th>
+              <th className="px-3 py-2.5 text-right w-20">Discount</th>
+              <th className="px-3 py-2.5 text-right w-28">Amount (₹)</th>
+              <th className="px-3 py-2.5 text-center w-20">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-[var(--border-color)]">
             {items.map((item, idx) => (
-              <tr key={item.id} className="themed-row">
-                <td className="px-2 py-1 border-r border-white/10 text-center">
-                  <div className="flex justify-center gap-2">
-                    <button
-                      onClick={() => removeItem(item.id)}
-                      className="text-red-400 hover:text-red-600 p-1"
-                      title={idx === 0 ? "Clear Row" : "Remove Row"}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </td>
-                <td className="px-2 py-1 border-r border-white/10 text-center font-bold text-gray-400">
+              <tr key={item.id} className="themed-row hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                <td className="px-3 py-2.5 text-center font-bold text-muted">
                   {idx + 1}
                 </td>
-                <td className="px-1 py-1 border-r border-white/10">
-                  <SectionInput
-                    value={item.section || ""}
-                    onChange={val => handleItemChange(item.id, "section", val)}
-                    suggestions={previouslyEnteredSections}
-                    placeholder="Section"
-                  />
+                <td className="px-3 py-2.5">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-black bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                    {item.code || `P${String(idx + 1).padStart(2, '0')}`}
+                  </span>
                 </td>
-                <td className="px-1 py-1 border-r border-white/10">
-                  <select
-                    value={item.product || ""}
-                    onChange={e => {
-                      if (e.target.value === "__MANAGE__") {
-                        openOptionsModal("products");
-                      } else {
-                        handleItemChange(item.id, "product", e.target.value);
-                      }
-                    }}
-                    className="w-full bg-transparent border-none outline-none text-themed font-bold text-xs px-1 cursor-pointer"
-                  >
-                    <option value="" className="bg-[var(--bg-surface)] text-[var(--text-muted)]">-- Select Product --</option>
-                    {productsList.map((p, i) => (
-                      <option key={i} value={p} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{p}</option>
-                    ))}
-                    {item.product && !productsList.includes(item.product) && (
-                      <option value={item.product} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{item.product}</option>
-                    )}
-                    <option value="__MANAGE__" className="bg-[var(--bg-surface)] text-amber-600 dark:text-[var(--accent)] font-bold">⚙️ Manage Options...</option>
-                  </select>
+                <td className="px-3 py-2.5 font-bold text-themed">
+                  {item.product || "—"}
                 </td>
-                <td className="px-1 py-1 border-r border-white/10">
-                  <select
-                    value={item.specification || ""}
-                    onChange={e => {
-                      if (e.target.value === "__MANAGE__") {
-                        openOptionsModal("specifications");
-                      } else {
-                        handleItemChange(item.id, "specification", e.target.value);
-                      }
-                    }}
-                    className="w-full bg-transparent border-none outline-none text-themed text-xs px-1 cursor-pointer truncate"
-                    title={item.specification || "Select Specification"}
-                  >
-                    <option value="" className="bg-[var(--bg-surface)] text-[var(--text-muted)]">-- Select Specification --</option>
-                    {specificationsList.map((s, i) => (
-                      <option key={i} value={s} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{s}</option>
-                    ))}
-                    {item.specification && !specificationsList.includes(item.specification) && (
-                      <option value={item.specification} className="bg-[var(--bg-surface)] text-[var(--text-primary)]">{item.specification}</option>
-                    )}
-                    <option value="__MANAGE__" className="bg-[var(--bg-surface)] text-amber-600 dark:text-[var(--accent)] font-bold">⚙️ Manage Options...</option>
-                  </select>
+                <td className="px-3 py-2.5 text-muted leading-relaxed whitespace-pre-wrap max-w-md">
+                  {item.specification || "—"}
                 </td>
-                <td className="px-1 py-1 border-r border-white/10">
-                  <input value={item.qty || ""} onChange={e => handleItemChange(item.id, "qty", e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0" className="w-full bg-transparent border-none outline-none text-center text-themed px-1" />
+                <td className="px-3 py-2.5">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-[var(--accent)] border border-amber-500/20">
+                    {item.section || "General"}
+                  </span>
                 </td>
-                <td className="px-1 py-1 border-r border-white/10">
-                  <select value={item.unit || "Sq.Ft"} onChange={e => handleItemChange(item.id, "unit", e.target.value)} className="w-full bg-transparent border-none outline-none text-slate-400 text-center appearance-none">
-                    <option className="bg-slate-800 text-white">Sq.Ft</option><option className="bg-slate-800 text-white">L.Ft</option><option className="bg-slate-800 text-white">Nos</option><option className="bg-slate-800 text-white">Pcs</option><option className="bg-slate-800 text-white">Set</option><option className="bg-slate-800 text-white">LS</option><option className="bg-slate-800 text-white">Rmt</option>
-                  </select>
+                <td className="px-3 py-2.5 text-center font-black text-themed">
+                  {item.qty}
                 </td>
-                <td className="px-1 py-1 border-r border-white/10">
-                  <input value={item.rate || ""} onChange={e => handleItemChange(item.id, "rate", e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0.00" className="w-full bg-transparent border-none outline-none text-right text-themed px-1" />
+                <td className="px-3 py-2.5 text-center text-muted font-medium">
+                  {item.unit || "Sq.Ft"}
                 </td>
-                <td className="px-1 py-1 border-r border-white/10">
-                  <div className="flex items-center gap-1 justify-end">
-                    <input 
-                      value={item.discountType === 'price' ? (item.discountPrice || "") : (item.discountPercent || "")} 
-                      onChange={e => {
-                        const val = e.target.value.replace(/[^0-9.]/g, '');
-                        if (item.discountType === 'price') {
-                          handleItemChange(item.id, "discountPrice", val);
-                        } else {
-                          handleItemChange(item.id, "discountPercent", val);
-                        }
-                      }} 
-                      placeholder={item.discountType === 'price' ? "0.00" : "0%"} 
-                      className="w-full bg-transparent border-none outline-none text-right text-themed px-1 text-xs font-semibold" 
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleToggleDiscountType(item.id)}
-                      className={`text-[9px] font-black px-1.5 py-0.5 rounded transition-all border shrink-0 ${
-                        item.discountType === 'price'
-                          ? "bg-blue-500/10 text-blue-500 border-blue-500/30 hover:bg-blue-500/20"
-                          : "bg-amber-500/10 text-amber-600 dark:text-[var(--accent)] border-amber-500/30 hover:bg-amber-500/20"
-                      }`}
-                      title={`Currently: ${item.discountType === 'price' ? 'Price (₹)' : 'Percentage (%)'}. Click to toggle.`}
-                    >
-                      {item.discountType === 'price' ? '₹' : '%'}
-                    </button>
-                  </div>
-                  {item.discountType !== 'price' && item.discountPercent && parseFloat(item.discountPercent) > 0 && item.rate && (
-                    <div className="text-[8px] text-right text-muted pr-6 -mt-0.5 leading-none font-medium">
-                      = ₹{parseFloat(item.discountPrice || 0).toFixed(2)}
-                    </div>
+                <td className="px-3 py-2.5 text-right font-bold text-themed">
+                  {formatINR(item.rate)}
+                </td>
+                <td className="px-3 py-2.5 text-right text-muted font-semibold">
+                  {item.discountType === 'price' && item.discountPrice && parseFloat(item.discountPrice) > 0 ? (
+                    <span className="text-blue-500 font-bold">₹{formatINR(item.discountPrice)}</span>
+                  ) : item.discountPercent && parseFloat(item.discountPercent) > 0 ? (
+                    <span className="text-amber-600 dark:text-[var(--accent)] font-bold">{item.discountPercent}%</span>
+                  ) : (
+                    "—"
                   )}
                 </td>
-                <td className="px-2 py-2 text-right font-black text-amber-700 dark:text-[var(--accent)]">
+                <td className="px-3 py-2.5 text-right font-black text-amber-700 dark:text-[var(--accent)]">
                   {formatINR(item.amount || 0)}
+                </td>
+                <td className="px-3 py-2.5 text-center">
+                  <div className="flex items-center justify-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => openEditItemModal(item)}
+                      className="p-1.5 text-blue-600 hover:text-blue-800 dark:text-blue-400 hover:bg-blue-500/10 rounded-lg transition"
+                      title="Edit Item"
+                    >
+                      <Edit3 size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeItem(item.id)}
+                      className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-500/10 rounded-lg transition"
+                      title="Delete Item"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
             {items.length === 0 && (
               <tr>
                 <td
-                  colSpan="7"
-                  className="py-20 text-center text-muted font-bold uppercase tracking-widest italic"
+                  colSpan="11"
+                  className="py-16 text-center text-muted"
                 >
-                  No work items added to quotation
+                  <div className="flex flex-col items-center justify-center gap-3">
+                    <FileText size={36} className="opacity-30" />
+                    <span className="text-xs font-bold uppercase tracking-wider">No items added to quotation</span>
+                    <button
+                      type="button"
+                      onClick={openAddItemModal}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md transition"
+                    >
+                      <Plus size={15} strokeWidth={3} /> Add First Item
+                    </button>
+                  </div>
                 </td>
               </tr>
             )}
           </tbody>
         </table>
-        
 
+        {/* Action button below table */}
+        <div className="p-3 border-t border-[var(--border-color)] bg-[var(--bg-card)] flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={openAddItemModal}
+              className="flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-md hover:shadow-lg transition-all"
+            >
+              <Plus size={16} strokeWidth={3} /> + Add
+            </button>
+            <button 
+              onClick={() => openOptionsModal("products")}
+              className="flex items-center gap-1.5 px-3 py-2 bg-[var(--bg-surface)] text-slate-600 dark:text-slate-300 rounded-xl font-bold text-xs hover:bg-black/5 dark:hover:bg-white/5 transition border border-[var(--border-color)]"
+            >
+              <Settings size={13} /> Manage Options
+            </button>
+          </div>
 
-        <div className="p-2 border-b border-[var(--border-color)] flex justify-center gap-4">
-          <button 
-            onClick={addNewRow}
-            className="flex items-center gap-2 px-4 py-1.5 bg-[var(--accent-soft)] text-amber-800 dark:text-[var(--accent)] rounded-lg font-bold text-xs hover:opacity-80 transition-all border border-[var(--accent)]/30"
-          >
-            <Plus size={14} strokeWidth={3} /> Add Row
-          </button>
-          <button 
-            onClick={() => openOptionsModal("products")}
-            className="flex items-center gap-2 px-4 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg font-bold text-xs hover:opacity-80 transition-all border border-[var(--border-color)]"
-          >
-            <Settings size={14} /> Manage Options
-          </button>
+          <div className="flex items-center gap-6 text-xs">
+            <span className="font-bold text-muted">
+              Total Items: <strong className="text-themed">{items.length}</strong>
+            </span>
+            <span className="font-bold text-muted">
+              Sub Total: <strong className="text-amber-700 dark:text-[var(--accent)] font-black">₹{formatINR(subTotal)}</strong>
+            </span>
+          </div>
+        </div>
+
+        {/* ── PAYMENT PLAN SECTION (Reference Image 2) ── */}
+        <div className="p-4 border-t border-[var(--border-color)] bg-[var(--bg-surface)]">
+          <div className="flex justify-between items-center mb-3">
+            <div>
+              <h3 className="text-xs font-black uppercase text-themed tracking-wide">
+                Payment Plan
+              </h3>
+              <p className="text-[11px] text-muted">Milestone stages and payment breakdown</p>
+            </div>
+            <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-full border border-blue-500/20">
+              Total Allocation: {paymentMilestones.reduce((s, m) => s + (parseFloat(m.percent) || 0), 0)}%
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {paymentMilestones.map((milestone, mIdx) => {
+              const pct = parseFloat(milestone.percent) || 0;
+              const milestoneAmount = (grandTotal * pct) / 100;
+              return (
+                <div 
+                  key={mIdx}
+                  className="p-3.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] shadow-sm flex flex-col justify-between"
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-xs font-bold text-themed">{milestone.name}</span>
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="text"
+                        value={milestone.percent}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9.]/g, '');
+                          setPaymentMilestones(prev => prev.map((m, i) => i === mIdx ? { ...m, percent: val } : m));
+                        }}
+                        className="w-12 text-center text-xs font-bold themed-input border border-[var(--border-color)] rounded-lg px-1 py-0.5 outline-none focus:border-blue-500"
+                      />
+                      <span className="text-xs font-bold text-muted">%</span>
+                    </div>
+                  </div>
+                  <div className="text-right pt-2 border-t border-[var(--border-color)]/60">
+                    <span className="text-sm font-black text-amber-700 dark:text-[var(--accent)] tracking-tight">
+                      INR {formatINR(milestoneAmount)}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── EXCLUSIONS SECTION (Reference Image 2) ── */}
+        <div className="p-4 border-t border-[var(--border-color)] bg-[var(--bg-surface)]">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-xs font-black uppercase text-themed tracking-wide">
+              Exclusions
+            </h3>
+            <span className="text-[10px] text-muted">Scope boundaries and terms</span>
+          </div>
+          <div className="space-y-1.5">
+            {exclusions.map((ex, exIdx) => (
+              <div key={exIdx} className="flex items-center justify-between text-xs text-muted py-0.5 hover:text-themed">
+                <div className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                  <span>{ex}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setExclusions(exclusions.filter((_, i) => i !== exIdx))}
+                  className="text-slate-400 hover:text-red-500 p-0.5 rounded transition"
+                  title="Remove"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
+            <div className="flex gap-2 mt-2 pt-2 border-t border-[var(--border-color)]/40 max-w-xl">
+              <input
+                type="text"
+                value={newExclusionText}
+                onChange={(e) => setNewExclusionText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && newExclusionText.trim()) {
+                    e.preventDefault();
+                    setExclusions([...exclusions, newExclusionText.trim()]);
+                    setNewExclusionText("");
+                  }
+                }}
+                placeholder="Add custom exclusion (e.g. Electrical fixtures) and press Enter..."
+                className="flex-1 themed-input border border-[var(--border-color)] px-3 py-1 rounded-xl text-xs outline-none focus:border-blue-500"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (newExclusionText.trim()) {
+                    setExclusions([...exclusions, newExclusionText.trim()]);
+                    setNewExclusionText("");
+                  }
+                }}
+                className="px-3 py-1 bg-slate-200 dark:bg-slate-800 hover:bg-blue-600 hover:text-white text-xs font-bold rounded-xl transition"
+              >
+                + Add
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1184,12 +1140,7 @@ export default function QuotationPage() {
         >
           <Save size={14} /> Generate
         </button>
-        <button
-          onClick={convertToInvoice}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-1.5 rounded flex items-center gap-2 text-xs font-bold transition shadow-sm"
-        >
-          <ArrowRight size={14} /> Convert to Invoice
-        </button>
+
         <button
           onClick={convertToWorkOrder}
           className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-1.5 rounded flex items-center gap-2 text-xs font-bold transition shadow-sm"
@@ -1204,6 +1155,18 @@ export default function QuotationPage() {
           data={{ customer: clientName, address: clientAddress, projectTitle, workDescription, items, quoteNo, date: quoteDate, billType, emailId, mobileNo, customerGst, deliveryTimeline, installationMaterial, deliveryLoading, transportationCharges, additionalDiscount, cgstPercent, sgstPercent }}
         />
       </div>
+      {/* ── QUOTATION ITEM MODAL ── */}
+      <QuotationItemModal
+        isOpen={isItemModalOpen}
+        onClose={() => setIsItemModalOpen(false)}
+        onSave={handleSaveItem}
+        editingItem={editingItem}
+        productsList={productsList}
+        specificationsList={specificationsList}
+        sectionSuggestions={previouslyEnteredSections}
+        onOpenManageOptions={openOptionsModal}
+      />
+
       {/* ── MANAGE OPTIONS MODAL ── */}
       <ManageOptionsModal
         isOpen={isOptionsModalOpen}

@@ -166,11 +166,7 @@ export default function SitesPage() {
   };
 
   useEffect(() => {
-    if (location.pathname.includes('waiting-floor')) {
-      setMainTab('waiting');
-    } else {
-      setMainTab('overview');
-    }
+    setMainTab('overview');
   }, [location.pathname]);
 
   useEffect(() => {
@@ -235,9 +231,6 @@ export default function SitesPage() {
   const selectedSite = sites.find((s) => s.id === selectedSiteId) || null;
 
   const filteredSites = sites.filter((s) => {
-    if (mainTab === "waiting" && s.status !== "Waiting Floor") return false;
-    if (mainTab === "overview" && s.status === "Waiting Floor") return false;
-
     const matchStatus = statusFilter === "All" || s.status === statusFilter;
     const term = searchTerm.toLowerCase();
     const matchSearch =
@@ -542,18 +535,9 @@ export default function SitesPage() {
               Manage site operations, financial links, and project progress.
             </p>
             <div className="flex items-center gap-3">
-              <button 
-                onClick={() => setMainTab("overview")} 
-                className={`px-5 py-2 rounded-full font-bold text-xs transition-colors shadow-sm ${mainTab === "overview" ? "bg-accent text-white" : "bg-[var(--bg-surface)] text-muted hover:bg-white/5 border border-[var(--border-color)]"}`}
-              >
+              <span className="px-5 py-2 rounded-full font-bold text-xs bg-accent text-white shadow-sm">
                 Projects Overview
-              </button>
-              <button 
-                onClick={() => setMainTab("waiting")} 
-                className={`px-5 py-2 rounded-full font-bold text-xs transition-colors shadow-sm ${mainTab === "waiting" ? "bg-accent text-white" : "bg-[var(--bg-surface)] text-muted hover:bg-white/5 border border-[var(--border-color)]"}`}
-              >
-                Waiting Floor
-              </button>
+              </span>
             </div>
           </div>
           <div className="flex items-center gap-3">

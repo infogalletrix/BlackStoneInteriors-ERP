@@ -32,7 +32,6 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
   
   const [expandedMenus, setExpandedMenus] = useState({
     CRM: false,
-    HR: false,
   });
 
   const toggleMenu = (name) => {
@@ -62,10 +61,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
         { path: "/crm/leads", name: "Leads" },
         { path: "/crm/customers", name: "Customers" },
         { path: "/crm/pipeline", name: "Sales Pipeline" },
-        { path: "/crm", name: "Site Surveys" },
-        { path: "/crm/schedule", name: "Schedule" },
-        { path: "/crm/telecalling", name: "Telecalling" },
-        { path: "/crm/marketing", name: "Marketing Campaigns" }
+        { path: "/crm/schedule", name: "Schedule" }
       ],
     },
     {
@@ -74,41 +70,16 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
       icon: <ClipboardList size={20} />,
       canAdd: true,
     },
-
-
     {
+      path: "/sites",
       name: "Projects",
       icon: <MapPin size={20} />,
-      subItems: [
-        { path: "/sites", name: "Work Orders" },
-        { path: "/sites/waiting-floor", name: "Waiting Floor" }
-      ]
-    },
-
-
-    {
-      path: "/billing",
-      name: "Billing",
-      icon: <FileText size={20} />,
-      canAdd: true,
     },
     { path: "/invoices", name: "History", icon: <FileStack size={20} /> },
     {
       path: "/receipts",
       name: "Payment Receipts",
       icon: <Receipt size={20} />,
-    },
-    { path: "/expenses", name: "Expenses & credits", icon: <Receipt size={20} /> },
-    { path: "/accounts", name: "Accounts", icon: <Landmark size={20} /> },
-
-    {
-      name: "HR",
-      icon: <Briefcase size={20} />,
-      subItems: [
-        { path: "/employees", name: "Employees" },
-        { path: "/attendance", name: "Attendance" },
-        { path: "/salary", name: "Payroll" }
-      ],
     },
     { path: "/reports", name: "Reports", icon: <BarChart2 size={20} /> },
   ];

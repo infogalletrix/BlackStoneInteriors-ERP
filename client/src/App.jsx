@@ -24,15 +24,9 @@ const lazyWithRetry = (componentImport) =>
 
 const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
 const CRMPage = lazyWithRetry(() => import("./pages/CRMPage"));
-const BillingPage = lazyWithRetry(() => import("./pages/BillingPage"));
 const InvoicesPage = lazyWithRetry(() => import("./pages/InvoicesPage"));
 const QuotationPage = lazyWithRetry(() => import("./pages/QuotationPage"));
-const ExpensePage = lazyWithRetry(() => import("./pages/ExpensePage"));
 const SitesPage = lazyWithRetry(() => import("./pages/SitesPage"));
-const AccountsPage = lazyWithRetry(() => import("./pages/AccountsPage"));
-const EmployeesPage = lazyWithRetry(() => import("./pages/EmployeesPage"));
-const AttendancePage = lazyWithRetry(() => import("./pages/AttendancePage"));
-const SalaryPage = lazyWithRetry(() => import("./pages/SalaryPage"));
 const ReportsPage = lazyWithRetry(() => import("./pages/ReportsPage"));
 const ReceiptPage = lazyWithRetry(() => import("./pages/ReceiptPage"));
 const LoginPage = lazyWithRetry(() => import("./pages/LoginPage"));
@@ -101,21 +95,15 @@ function App() {
                     <Route path="/crm/*" element={<CRMPage />} />
                     <Route path="/quotations" element={<QuotationPage />} />
 
-                    {/* Finance */}
-                    <Route path="/billing" element={<BillingPage />} />
-                    <Route path="/invoices" element={<InvoicesPage />} />
-                    <Route path="/expenses" element={<ExpensePage />} />
-                    <Route path="/accounts" element={<AccountsPage />} />
-                    <Route path="/receipts" element={<ReceiptPage />} />
-
                     {/* Projects */}
                     <Route path="/sites" element={<SitesPage />} />
                     <Route path="/sites/*" element={<SitesPage />} />
 
-                    {/* HR */}
-                    <Route path="/employees" element={<EmployeesPage />} />
-                    <Route path="/attendance" element={<AttendancePage />} />
-                    <Route path="/salary" element={<SalaryPage />} />
+                    {/* Financial History & Receipts */}
+                    <Route path="/invoices" element={<InvoicesPage />} />
+                    <Route path="/receipts" element={<ReceiptPage />} />
+
+                    {/* Reports */}
                     <Route path="/reports" element={<ReportsPage />} />
 
                     <Route path="*" element={<Navigate to="/" replace />} />
