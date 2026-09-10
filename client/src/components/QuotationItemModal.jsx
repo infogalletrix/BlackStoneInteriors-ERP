@@ -243,9 +243,7 @@ export default function QuotationItemModal({
               value={specification}
               onChange={(val) => setSpecification(val)}
               options={specificationsList}
-              placeholder="Search preset or type specification (e.g. 18mm BWR Ply with Laminate, soft-close hardware)..."
-              isTextArea={true}
-              rows={3}
+              placeholder="Search or select specification (e.g. 18mm BWR Ply with Laminate)..."
               onOpenManage={onOpenManageOptions ? () => onOpenManageOptions("specifications") : null}
               manageLabel="Manage Specifications"
             />
