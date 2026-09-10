@@ -13,31 +13,29 @@ namespace Blackstone_Interior.Controllers
         private readonly BlackstoneinteriorDbContext _db;
         public QuotationsController(BlackstoneinteriorDbContext db) => _db = db;
 
-        // Shared helper: compute next serial for YY-MM-XXXX within current month
-        private int ComputeNextQuoteSerial(DateTime date)
+        // Shared helper: compute next serial globally across all quotations (highest serial + 1)
+        private int ComputeNextQuoteSerial()
         {
-            string yy = date.ToString("yy");
-            string mm = date.ToString("MM");
-            string dd = date.ToString("dd");
-            string datePrefix = $"BSI-{dd}{mm}{yy}-";
-            string legacyPrefix = $"QT-{dd}{mm}{yy}-";
-
-            var currentMonthNums = _db.Quotations
-                .Where(q => q.QuoteNo != null && (q.QuoteNo.StartsWith(datePrefix) || q.QuoteNo.StartsWith(legacyPrefix)))
+            var allSerials = _db.Quotations
+                .Where(q => !string.IsNullOrEmpty(q.QuoteNo))
                 .Select(q => q.QuoteNo)
                 .AsEnumerable()
                 .Select(qno =>
                 {
-                    var parts = qno!.Split('-');
-                    return parts.Length == 3 && int.TryParse(parts[2], out int n) ? n : 0;
+                    var parts = qno!.Trim().Split('-');
+                    if (parts.Length >= 3 && int.TryParse(parts[parts.Length - 1], out int n))
+                    {
+                        return n;
+                    }
+                    return 0;
                 })
                 .ToList();
 
-            int maxSerial = currentMonthNums.Count > 0 ? currentMonthNums.Max() : 0;
+            int maxSerial = allSerials.Count > 0 ? allSerials.Max() : 0;
             return maxSerial >= 9999 ? 1 : maxSerial + 1;
         }
 
-        // GET /api/quotations/next-number  (preview only Ã¢â‚¬â€ does NOT reserve a number)
+        // GET /api/quotations/next-number  (preview only — does NOT reserve a number)
         [HttpGet("next-number")]
         public IActionResult GetNextQuoteNumber([FromQuery] string date = null)
         {
@@ -49,7 +47,7 @@ namespace Blackstone_Interior.Controllers
             string yy = parsedDate.ToString("yy");
             string mm = parsedDate.ToString("MM");
             string dd = parsedDate.ToString("dd");
-            int next = ComputeNextQuoteSerial(parsedDate);
+            int next = ComputeNextQuoteSerial();
             return Ok(new { nextNumber = $"BSI-{dd}{mm}{yy}-{next:D4}" });
         }
 
@@ -152,12 +150,12 @@ namespace Blackstone_Interior.Controllers
                 parsedDate = d;
             }
 
-            if (string.IsNullOrWhiteSpace(assignedNo))
+            if (string.IsNullOrWhiteSpace(assignedNo) || _db.Quotations.Any(q => q.QuoteNo == assignedNo))
             {
                 string yy = parsedDate.ToString("yy");
                 string mm = parsedDate.ToString("MM");
                 string dd = parsedDate.ToString("dd");
-                int next = ComputeNextQuoteSerial(parsedDate);
+                int next = ComputeNextQuoteSerial();
                 assignedNo = $"BSI-{dd}{mm}{yy}-{next:D4}";
             }
 
