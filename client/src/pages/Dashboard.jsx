@@ -151,7 +151,7 @@ const Dashboard = () => {
   const netProfit         = totalIncome - totalSpent;
   const profitPositive    = netProfit >= 0;
 
-  const fmt = (n) => `₹${Number(n).toLocaleString("en-IN")}`;
+  const fmt = (n) => `₹${Math.round(Number(n) || 0).toLocaleString("en-IN")}`;
 
   // ── Chart data ──
   const cashFlowData = (() => {
@@ -226,16 +226,16 @@ const Dashboard = () => {
 
       {/* ── Header ── */}
       <motion.div initial={{opacity:0,y:-16}} animate={{opacity:1,y:0}}
-        className="flex flex-col md:flex-row justify-between items-start md:items-center mb-7 gap-4 relative z-10">
+        className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 relative z-10">
         <div>
           <h1 className={`text-2xl font-black tracking-tight ${d?"text-white":"text-[var(--text-primary)]"}`}>
             Executive Dashboard
           </h1>
-          <p className={`${t.muted} mt-0.5 uppercase tracking-widest`}>Real-time Business Intelligence</p>
+          <p className={`${t.muted} mt-0.5 uppercase tracking-widest text-xs font-bold`}>Real-time Business Intelligence</p>
         </div>
 
         {/* Date filter pill */}
-        <div className={`${t.card} rounded-2xl px-3 py-2 flex flex-wrap items-center gap-3`}>
+        <div className={`${t.card} rounded-2xl px-3 py-2 flex flex-wrap items-center gap-3 border border-[var(--border-color)] shadow-sm`}>
           <div className="flex flex-col relative">
             <span className={`${t.label} mb-0.5`}>Period</span>
             <div className="flex items-center gap-1">
@@ -262,135 +262,109 @@ const Dashboard = () => {
 
       <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-6">
 
-        {/* ── Executive KPI Cards (Structured Two-Tier Grid) ── */}
-        <div className="space-y-6">
-          {/* Section 1: Projects & Operations Performance */}
-          <div>
-            <div className="flex items-center justify-between mb-3 px-1">
-              <h2 className={`text-xs font-black uppercase tracking-wider flex items-center gap-2 ${d ? "text-slate-400" : "text-slate-500"}`}>
-                <Building size={14} className="opacity-70 text-blue-500" /> Projects & Operations Performance
-              </h2>
-              <span className={`text-[11px] font-bold ${d ? "text-slate-500" : "text-slate-400"}`}>
-                {sites.length} Total Projects
-              </span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <KpiCard 
-                label="Work Order Revenue" 
-                value={fmt(totalWOValue)} 
-                icon={IndianRupee} 
-                color={accentMain}
-                badge="Revenue"
-                sub={`${sites.length} total contracted projects`}
-                onClick={() => navigate("/sites")}
-              />
-              <KpiCard 
-                label="Total Collections" 
-                value={fmt(receiptIncome)} 
-                icon={Wallet} 
-                color={incomeColor}
-                badge="Received"
-                sub={`${receipts.filter(r => inRange(r.date)).length} receipts in period`}
-                onClick={() => navigate("/receipts")}
-              />
-              <KpiCard 
-                label="In-Process Sites" 
-                value={inProcessSites} 
-                icon={HardHat} 
-                color={d ? "#8b5cf6" : "#3D5A8A"}
-                badge="Active"
-                sub="Under active execution"
-                onClick={() => navigate("/sites")}
-              />
-              <KpiCard 
-                label="Completed Sites" 
-                value={sites.filter(s => s.status === "Completed").length} 
-                icon={CheckCircle2} 
-                color={d ? "#10b981" : "#059669"}
-                badge="Delivered"
-                sub="Successfully completed"
-                onClick={() => navigate("/sites")}
-              />
-            </div>
-          </div>
-
-          {/* Section 2: Pipeline, Quotations & CRM */}
-          <div>
-            <div className="flex items-center justify-between mb-3 px-1">
-              <h2 className={`text-xs font-black uppercase tracking-wider flex items-center gap-2 ${d ? "text-slate-400" : "text-slate-500"}`}>
-                <Users size={14} className="opacity-70 text-purple-500" /> Sales, Pipeline & CRM
-              </h2>
-              <span className={`text-[11px] font-bold ${d ? "text-slate-500" : "text-slate-400"}`}>
-                {crm.length} Total CRM Contacts
-              </span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <KpiCard 
-                label="Pending Work Orders" 
-                value={pendingWO} 
-                icon={ClipboardCheck} 
-                color={d ? "#38bdf8" : "#0ea5e9"}
-                badge="Pre-Site"
-                sub="Pre-construction kickoff"
-                onClick={() => navigate("/sites")}
-              />
-              <KpiCard 
-                label="Pending Quotations" 
-                value={pendingQuotes} 
-                icon={FileText} 
-                color={d ? "#fb923c" : "#9E8B6E"}
-                badge="Quotations"
-                sub="Awaiting client decision"
-                onClick={() => navigate("/invoices")}
-              />
-              <KpiCard 
-                label="Active Leads" 
-                value={totalLeadsCount} 
-                icon={Users} 
-                color={d ? "#a855f7" : "#b45309"}
-                badge="Pipeline"
-                sub={`${activeLeadsCount} active in sales pipeline`}
-                onClick={() => navigate("/crm/leads")}
-              />
-              <KpiCard 
-                label="Verified Customers" 
-                value={customersCount} 
-                icon={Award} 
-                color={d ? "#10b981" : "#059669"}
-                badge="Customers"
-                sub="Active verified clients"
-                onClick={() => navigate("/crm/customers")}
-              />
-            </div>
-          </div>
+        {/* ── Executive KPI Cards (Balanced 4x2 Grid) ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <KpiCard 
+            label="Work Order Revenue" 
+            value={fmt(totalWOValue)} 
+            icon={IndianRupee} 
+            color={accentMain}
+            badge="Revenue"
+            sub={`${sites.length} total contracted projects`}
+            onClick={() => navigate("/sites")}
+          />
+          <KpiCard 
+            label="Total Collections" 
+            value={fmt(receiptIncome)} 
+            icon={Wallet} 
+            color={incomeColor}
+            badge="Received"
+            sub={`${receipts.filter(r => inRange(r.date)).length} payment receipts`}
+            onClick={() => navigate("/receipts")}
+          />
+          <KpiCard 
+            label="In-Process Sites" 
+            value={inProcessSites} 
+            icon={HardHat} 
+            color={d ? "#8b5cf6" : "#3D5A8A"}
+            badge="In Progress"
+            sub="Active site execution"
+            onClick={() => navigate("/sites")}
+          />
+          <KpiCard 
+            label="Completed Sites" 
+            value={sites.filter(s => s.status === "Completed").length} 
+            icon={CheckCircle2} 
+            color={d ? "#10b981" : "#059669"}
+            badge="Delivered"
+            sub={`${sites.length > 0 ? Math.round((sites.filter(s => s.status === "Completed").length / sites.length) * 100) : 0}% completion rate`}
+            onClick={() => navigate("/sites")}
+          />
+          <KpiCard 
+            label="Pending Work Orders" 
+            value={pendingWO} 
+            icon={ClipboardCheck} 
+            color={d ? "#38bdf8" : "#0ea5e9"}
+            badge="Pre-Site"
+            sub="Pre-construction kickoff"
+            onClick={() => navigate("/sites")}
+          />
+          <KpiCard 
+            label="Pending Quotations" 
+            value={pendingQuotes} 
+            icon={FileText} 
+            color={d ? "#fb923c" : "#9E8B6E"}
+            badge="Quotations"
+            sub="Awaiting client decision"
+            onClick={() => navigate("/invoices")}
+          />
+          <KpiCard 
+            label="Active Leads" 
+            value={totalLeadsCount} 
+            icon={Users} 
+            color={d ? "#a855f7" : "#b45309"}
+            badge="Pipeline"
+            sub={`${activeLeadsCount} active in sales pipeline`}
+            onClick={() => navigate("/crm/leads")}
+          />
+          <KpiCard 
+            label="Verified Customers" 
+            value={customersCount} 
+            icon={Award} 
+            color={d ? "#10b981" : "#059669"}
+            badge="Customers"
+            sub="Active verified clients"
+            onClick={() => navigate("/crm/customers")}
+          />
         </div>
 
         {/* ── Main Operations Section ── */}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
 
           {/* Site Status Breakdown – 7 cols */}
-          <motion.div variants={fade} className={`xl:col-span-7 ${t.card} rounded-2xl p-6 flex flex-col`}>
-            <div className="flex justify-between items-start mb-4">
+          <motion.div variants={fade} className={`xl:col-span-7 ${t.card} rounded-2xl p-6 flex flex-col border border-[var(--border-color)] shadow-sm`}>
+            <div className="flex justify-between items-start mb-5">
               <div>
                 <h3 className={`font-black text-base ${d?"text-white":"text-[var(--text-primary)]"}`}>Project Status & Work Orders</h3>
-                <p className={`${t.muted} mt-0.5`}>Active sites and operational delivery breakdown</p>
+                <p className={`${t.muted} mt-0.5 text-xs font-medium`}>Active sites and operational delivery breakdown</p>
               </div>
               <span className="text-xs font-black px-3 py-1 rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20">
                 {sites.length} Total Projects
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-              <div className="h-52 w-full relative flex items-center justify-center">
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-center flex-1">
+              <div className="sm:col-span-5 h-52 w-full relative flex items-center justify-center">
                 {siteStatusData.length > 0 ? (
                   <>
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
-                      <span className={t.label}>Total</span>
-                      <span className={`text-xl font-black ${d?"text-white":"text-[var(--text-primary)]"}`}>{sites.length}</span>
+                      <span className={`${t.label} text-[10px]`}>TOTAL</span>
+                      <span className={`text-2xl font-black ${d?"text-white":"text-[var(--text-primary)]"}`}>{sites.length}</span>
+                      <span className="text-[10px] text-slate-400 font-bold">PROJECTS</span>
                     </div>
                     <ResponsiveContainer width="100%" height={200} minWidth={1} minHeight={1}>
                       <PieChart>
-                        <Pie data={siteStatusData} cx="50%" cy="50%" innerRadius={55} outerRadius={75}
+                        <Pie data={siteStatusData} cx="50%" cy="50%" innerRadius={58} outerRadius={78}
                           paddingAngle={4} dataKey="value" stroke="none">
                           {siteStatusData.map((_,i) => <Cell key={i} fill={COLORS[i%COLORS.length]}/>)}
                         </Pie>
@@ -403,16 +377,34 @@ const Dashboard = () => {
                 )}
               </div>
 
-              <div className="space-y-2.5">
-                {siteStatusData.map((s,i) => (
-                  <div key={i} className="flex items-center justify-between p-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)]">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full" style={{background:COLORS[i%COLORS.length]}}/>
-                      <span className={`text-xs font-semibold ${d?"text-slate-300":"text-[var(--text-secondary)]"}`}>{s.name}</span>
+              <div className="sm:col-span-7 space-y-3">
+                {siteStatusData.map((s,i) => {
+                  const pct = sites.length > 0 ? Math.round((s.value / sites.length) * 100) : 0;
+                  const col = COLORS[i % COLORS.length];
+                  return (
+                    <div 
+                      key={i} 
+                      onClick={() => navigate("/sites")}
+                      className="p-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] hover:bg-black/5 dark:hover:bg-white/5 transition-all cursor-pointer group"
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm" style={{ background: col }}/>
+                          <span className={`text-xs font-bold ${d?"text-slate-200":"text-slate-700"}`}>{s.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs font-black ${d?"text-white":"text-[var(--text-primary)]"}`}>{s.value}</span>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-slate-500">
+                            {pct}%
+                          </span>
+                        </div>
+                      </div>
+                      <div className="w-full bg-black/5 dark:bg-white/5 rounded-full h-1.5 overflow-hidden">
+                        <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: col }} />
+                      </div>
                     </div>
-                    <span className={`text-xs font-black ${d?"text-white":"text-[var(--text-primary)]"}`}>{s.value}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </motion.div>
