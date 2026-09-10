@@ -4,7 +4,8 @@ import { motion } from "framer-motion";
 import {
   TrendingUp, TrendingDown, Wallet,
   FileText, Building, ChevronDown, ArrowRight,
-  HardHat, ClipboardCheck, Banknote, CalendarCheck, IndianRupee
+  HardHat, ClipboardCheck, Banknote, CalendarCheck, IndianRupee,
+  Users, Award
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -79,13 +80,14 @@ const Dashboard = () => {
   const [employees,  setEmployees]  = useState([]);
   const [quotations, setQuotations] = useState([]);
   const [attendance, setAttendance] = useState({});
+  const [crm,        setCrm]        = useState([]);
   const [loading,    setLoading]    = useState(true);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
       try {
-        const [rR, eR, sR, pR, emR, qR, aR] = await Promise.all([
+        const [rR, eR, sR, pR, emR, qR, aR, crmR] = await Promise.all([
           fetch('/api/finance/receipts').then(r => r.ok ? r.json() : []),
           fetch('/api/finance/expenses').then(r => r.ok ? r.json() : []),
           fetch('/api/sites').then(r => r.ok ? r.json() : []),
@@ -93,6 +95,7 @@ const Dashboard = () => {
           fetch('/api/employees').then(r => r.ok ? r.json() : []),
           fetch('/api/quotations').then(r => r.ok ? r.json() : []),
           fetch('/api/attendance').then(r => r.ok ? r.json() : {}),
+          fetch('/api/crm').then(r => r.ok ? r.json() : []),
         ]);
         setReceipts(Array.isArray(rR) ? rR.map(i => ({ ...i, date: (i.date||'').split('T')[0] })) : []);
         setExpenses(Array.isArray(eR) ? eR.map(i => ({ ...i, date: (i.date||'').split('T')[0] })) : []);
@@ -101,6 +104,7 @@ const Dashboard = () => {
         setEmployees(Array.isArray(emR) ? emR : []);
         setQuotations(Array.isArray(qR) ? qR : []);
         setAttendance(aR || {});
+        setCrm(Array.isArray(crmR) ? crmR : []);
       } catch(err) { console.error(err); }
       finally { setLoading(false); }
     })();
@@ -141,6 +145,9 @@ const Dashboard = () => {
   const totalAdvances     = employees.reduce((s,e) => s+(Number(e.advanceBalance)||0), 0);
   const pendingWO         = sites.filter(s => s.status === "Pre-Construction" || s.status === "Pending").length;
   const presentToday      = attendance[today] ? Object.values(attendance[today]).filter(s => s==="Present"||s==="Half-Day").length : 0;
+  const totalLeadsCount   = crm.filter(c => c.status !== "Customer").length;
+  const activeLeadsCount  = crm.filter(c => c.status !== "Customer" && c.status !== "Not Interested").length;
+  const customersCount    = crm.filter(c => c.status === "Customer").length;
   const netProfit         = totalIncome - totalSpent;
   const profitPositive    = netProfit >= 0;
 
@@ -255,8 +262,8 @@ const Dashboard = () => {
 
       <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-6">
 
-        {/* ── Operations & Work Order KPIs ── */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* ── Operations, Sales & CRM KPIs ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3.5">
           <KpiCard label="Work Order Revenue" value={fmt(totalWOValue)} icon={Building} color={accentMain}
             sub={`${sites.length} total projects`}/>
           <KpiCard label="In-Process Sites" value={inProcessSites} icon={HardHat} color={d?"#8b5cf6":"#3D5A8A"}
@@ -267,6 +274,10 @@ const Dashboard = () => {
             sub="Awaiting client approval"/>
           <KpiCard label="Completed Sites" value={sites.filter(s=>s.status==="Completed").length} icon={Building} color={incomeColor}
             sub="Successfully delivered"/>
+          <KpiCard label="Number of Leads" value={totalLeadsCount} icon={Users} color={d?"#a855f7":"#b45309"}
+            sub={`${activeLeadsCount} active in pipeline`}/>
+          <KpiCard label="Number of Customers" value={customersCount} icon={Award} color={d?"#10b981":"#059669"}
+            sub="Active verified clients"/>
         </div>
 
         {/* ── Main Operations Section ── */}
@@ -328,6 +339,7 @@ const Dashboard = () => {
               { label:"New Quotation",  sub:"Create & customize quotation", path:"/quotations", color: d?"#8b5cf6":"#9E8B6E" },
               { label:"Work Orders",    sub:"Manage projects & sites",      path:"/sites",      color: d?"#fb923c":"#6366f1" },
               { label:"Payment Receipts",sub:"View & print receipts",       path:"/receipts",   color: incomeColor },
+              { label:"Leads & Customers",sub:"Manage CRM pipeline",        path:"/crm/leads",  color: d?"#a855f7":"#b45309" },
               { label:"Quotation History",sub:"Review quotations & status", path:"/invoices",   color: d?"#38bdf8":"#0ea5e9" },
             ].map((btn,i) => (
               <motion.button key={i} variants={fade} whileHover={{scale:1.02}} whileTap={{scale:0.98}}

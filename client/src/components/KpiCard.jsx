@@ -12,20 +12,20 @@ const KpiCard = ({ label, value, icon: Icon, color, sub, hideLeftStroke }) => {
 
   return (
     <motion.div variants={fade}
-      className={`relative overflow-hidden rounded-lg p-5 ${t.card} ${t.cardHover} flex items-center gap-4 border border-[var(--border-color)]`}
+      className={`relative overflow-hidden rounded-xl p-3.5 sm:p-4.5 ${t.card} ${t.cardHover} flex items-center gap-3 border border-[var(--border-color)]`}
       style={{
         background: d ? `linear-gradient(135deg, var(--bg-card), rgba(0,0,0,0.2))` : `linear-gradient(135deg, white, #f8f9fc)`,
         borderLeft: hideLeftStroke ? 'none' : `3px solid ${color}`
       }}>
       <div className="flex-shrink-0">
-        <span className="p-3 rounded-lg shadow-sm border border-black/5 dark:border-white/5 inline-flex" style={{background: color+'22'}}>
-          <Icon size={24} style={{color}}/>
+        <span className="p-2 sm:p-2.5 rounded-xl shadow-sm border border-black/5 dark:border-white/5 inline-flex" style={{background: color+'22'}}>
+          <Icon size={20} style={{color}}/>
         </span>
       </div>
-      <div className="flex flex-col">
-        <p className={t.label}>{label}</p>
-        <p className="text-2xl font-black tracking-tight" style={{color}}>{value}</p>
-        {sub && <p className={`${t.muted} mt-0.5`}>{sub}</p>}
+      <div className="flex flex-col min-w-0">
+        <p className={`${t.label} truncate text-[10px] sm:text-xs`}>{label}</p>
+        <p className="text-lg sm:text-xl font-black tracking-tight" style={{color}}>{value}</p>
+        {sub && <p className={`${t.muted} mt-0.5 text-[10px] sm:text-[11px] truncate`}>{sub}</p>}
       </div>
     </motion.div>
   );
