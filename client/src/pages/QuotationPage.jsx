@@ -8,6 +8,7 @@ import ManageOptionsModal, {
 } from "../components/ManageOptionsModal";
 import SectionInput from "../components/SectionInput";
 import QuotationItemModal from "../components/QuotationItemModal";
+import ClientDetailsModal from "../components/ClientDetailsModal";
 
 const formatINR = (val) => {
   const num = Number(val) || 0;
@@ -25,6 +26,7 @@ import {
   X,
   Edit3,
   Settings,
+  Building,
 } from "lucide-react";
 import { useDialog } from "../contexts/DialogContext";
 import NotificationWidget from "../components/NotificationWidget";
@@ -41,6 +43,7 @@ export default function QuotationPage() {
   const [projectTitle, setProjectTitle] = useState("");
   const [workDescription, setWorkDescription] = useState("");
   const [billType, setBillType] = useState("GST"); // 'GST' | 'Non-GST'
+  const [isClientDetailsModalOpen, setIsClientDetailsModalOpen] = useState(false);
 
   const [quoteId, setQuoteId] = useState(null);
   const [quoteNo, setQuoteNo] = useState("");
@@ -617,16 +620,16 @@ export default function QuotationPage() {
           <NotificationWidget compact={true} />
         </div>
       </div>
-      {/* ── TOP INFO BAR ── */}
-      <div className="themed-card p-4 md:p-3.5 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-3.5 border-b border-[var(--border-color)] items-end">
+      {/* ── TOP INFO BAR (Compact Single Row) ── */}
+      <div className="themed-card p-3 md:p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3 border-b border-[var(--border-color)] items-end">
         <div className="md:col-span-2">
-          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Quotation Number</label>
+          <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Quote No</label>
           <input disabled value={quoteNo}
-            className="w-full bg-[var(--accent-soft)] border border-[var(--accent)]/30 text-amber-800 dark:text-[var(--accent)] px-3 py-2 text-sm font-bold outline-none rounded-lg" />
+            className="w-full bg-[var(--accent-soft)] border border-[var(--accent)]/30 text-amber-800 dark:text-[var(--accent)] px-3 py-1.5 text-xs sm:text-sm font-black outline-none rounded-lg" />
         </div>
 
         <div className="md:col-span-2">
-          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Date</label>
+          <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Date</label>
           <input 
             type="date" 
             value={quoteDate}
@@ -640,26 +643,29 @@ export default function QuotationPage() {
                   .catch(() => setQuoteNo(""));
               }
             }}
-            className="w-full bg-[var(--accent-soft)] border border-[var(--accent)]/30 text-amber-800 dark:text-[var(--accent)] px-3 py-2 text-sm font-bold rounded-lg" />
+            className="w-full bg-[var(--accent-soft)] border border-[var(--accent)]/30 text-amber-800 dark:text-[var(--accent)] px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg" />
         </div>
 
         {/* Bill Type Toggle */}
         <div className="md:col-span-2">
-          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Bill Type</label>
-          <div className="flex bg-white/10 dark:bg-black/20 rounded-lg p-1 gap-1 border border-[var(--border-color)]">
+          <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Bill Type</label>
+          <div className="flex bg-white/10 dark:bg-black/20 rounded-lg p-0.5 gap-1 border border-[var(--border-color)]">
             <button
+              type="button"
               onClick={() => setBillType("GST")}
-              className={`flex-1 py-1.5 text-xs font-black uppercase rounded-md transition ${billType === "GST" ? "bg-amber-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
+              className={`flex-1 py-1 text-xs font-black uppercase rounded-md transition ${billType === "GST" ? "bg-amber-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
             >GST</button>
             <button
+              type="button"
               onClick={() => setBillType("Non-GST")}
-              className={`flex-1 py-1.5 text-xs font-black uppercase rounded-md transition ${billType === "Non-GST" ? "bg-rose-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
+              className={`flex-1 py-1 text-xs font-black uppercase rounded-md transition ${billType === "Non-GST" ? "bg-rose-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
             >Non-GST</button>
           </div>
         </div>
 
+        {/* Client Name */}
         <div className="md:col-span-3">
-          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
+          <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
             Client Name
           </label>
           <input
@@ -677,7 +683,7 @@ export default function QuotationPage() {
                 setClientAddress(matchedClient.address || "");
               }
             }}
-            className="w-full themed-input border border-[var(--border-color)] px-3 py-2 text-sm rounded-lg outline-none focus:border-amber-400 transition"
+            className="w-full themed-input border border-[var(--border-color)] px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg outline-none focus:border-amber-400 transition"
           />
           <datalist id="crm-clients-list-quotation">
             {crmClients.map(c => (
@@ -686,95 +692,32 @@ export default function QuotationPage() {
           </datalist>
         </div>
 
-        <div className="md:col-span-3">
-          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
-            Email ID
+        {/* Client Details Dialog Trigger Button */}
+        <div className="md:col-span-2">
+          <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
+            Client Details
           </label>
-          <input
-            placeholder="client@example.com"
-            value={emailId}
-            onChange={(e) => setEmailId(e.target.value)}
-            className="w-full themed-input border border-[var(--border-color)] px-3 py-2 text-sm rounded-lg outline-none focus:border-amber-400 transition"
-          />
-        </div>
-      </div>
-
-      <div className="themed-card p-4 md:p-3.5 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-3.5 border-b border-[var(--border-color)] items-end">
-        <div className="md:col-span-3">
-          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
-            Mobile No
-          </label>
-          <input
-            placeholder="+91..."
-            value={mobileNo}
-            onChange={(e) => setMobileNo(e.target.value)}
-            className="w-full themed-input border border-[var(--border-color)] px-3 py-2 text-sm rounded-lg outline-none focus:border-amber-400 transition"
-          />
-        </div>
-        
-        <div className="md:col-span-3">
-          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
-            Customer GST
-          </label>
-          <input
-            placeholder="GSTIN..."
-            value={customerGst}
-            onChange={(e) => setCustomerGst(e.target.value)}
-            className="w-full themed-input border border-[var(--border-color)] px-3 py-2 text-sm rounded-lg outline-none focus:border-amber-400 transition"
-          />
-        </div>
-        
-        <div className="md:col-span-3">
-          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
-            Delivery Timeline
-          </label>
-          <input
-            placeholder="3 to 4 Weeks"
-            value={deliveryTimeline}
-            onChange={(e) => setDeliveryTimeline(e.target.value)}
-            className="w-full themed-input border border-[var(--border-color)] px-3 py-2 text-sm rounded-lg outline-none focus:border-amber-400 transition"
-          />
+          <button
+            type="button"
+            onClick={() => setIsClientDetailsModalOpen(true)}
+            className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg border border-[var(--border-color)] bg-white dark:bg-slate-900 hover:border-amber-500 hover:bg-amber-500/5 transition group shadow-sm"
+          >
+            <div className="flex items-center gap-1.5 truncate">
+              <Building size={14} className="text-amber-600 dark:text-[var(--accent)] shrink-0" />
+              <span className="truncate text-xs font-bold text-themed">
+                {projectTitle || (mobileNo ? `Ph: ${mobileNo}` : "Client Details")}
+              </span>
+            </div>
+            <span className="text-[9px] uppercase font-black px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-[var(--accent)] border border-amber-500/20 shrink-0 ml-1">
+              {projectTitle || mobileNo || clientAddress ? "Edit" : "+ Add"}
+            </span>
+          </button>
         </div>
 
-        <div className="md:col-span-3">
-          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
-            Organization Name (Optional)
-          </label>
-          <input
-            placeholder="e.g. Acme Corporation"
-            value={organizationName}
-            onChange={(e) => setOrganizationName(e.target.value)}
-            className="w-full themed-input border border-[var(--border-color)] px-3 py-2 text-sm rounded-lg outline-none focus:border-amber-400 transition"
-          />
-        </div>
-      </div>
-
-      <div className="themed-card p-4 md:p-3.5 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-3.5 border-b border-[var(--border-color)] items-end">
-        <div className="md:col-span-5">
-          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
-            Site Address
-          </label>
-          <input
-            placeholder="Work site / project address..."
-            value={clientAddress}
-            onChange={(e) => setClientAddress(e.target.value)}
-            className="w-full themed-input border border-[var(--border-color)] px-3 py-2 text-sm rounded-lg outline-none focus:border-amber-400 transition"
-          />
-        </div>
-
-        <div className="md:col-span-5">
-          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Project Title</label>
-          <input 
-            placeholder="e.g. 3BHK Apartment Interior" 
-            value={projectTitle}
-            onChange={(e) => setProjectTitle(e.target.value)}
-            className="w-full themed-input border border-[var(--border-color)] px-3 py-2 text-sm rounded-lg outline-none focus:border-amber-500 font-bold transition" 
-          />
-        </div>
-
-        <div className="md:col-span-2 flex flex-col md:items-end justify-start md:justify-end pb-1">
-          <span className="text-xs font-bold text-amber-700 dark:text-[var(--accent)] uppercase tracking-wider mb-0.5">Sub Total</span>
-          <span className="text-lg font-black text-amber-700 dark:text-[var(--accent)]">₹{formatINR(subTotal)}</span>
+        {/* Sub Total */}
+        <div className="md:col-span-1 flex flex-col md:items-end justify-center pb-0.5">
+          <span className="text-[10px] font-bold text-amber-700 dark:text-[var(--accent)] uppercase tracking-wider">Sub Total</span>
+          <span className="text-sm md:text-base font-black text-amber-700 dark:text-[var(--accent)] whitespace-nowrap">₹{formatINR(subTotal)}</span>
         </div>
       </div>
 
@@ -1061,6 +1004,26 @@ export default function QuotationPage() {
         specificationsList={specificationsList}
         setSpecificationsList={setSpecificationsList}
         onRenameOption={handleRenameOption}
+      />
+
+      {/* ── CLIENT & PROJECT DETAILS MODAL ── */}
+      <ClientDetailsModal
+        isOpen={isClientDetailsModalOpen}
+        onClose={() => setIsClientDetailsModalOpen(false)}
+        organizationName={organizationName}
+        setOrganizationName={setOrganizationName}
+        mobileNo={mobileNo}
+        setMobileNo={setMobileNo}
+        emailId={emailId}
+        setEmailId={setEmailId}
+        customerGst={customerGst}
+        setCustomerGst={setCustomerGst}
+        deliveryTimeline={deliveryTimeline}
+        setDeliveryTimeline={setDeliveryTimeline}
+        clientAddress={clientAddress}
+        setClientAddress={setClientAddress}
+        projectTitle={projectTitle}
+        setProjectTitle={setProjectTitle}
       />
 
     </div>
