@@ -807,18 +807,12 @@ export default function QuotationPage() {
               <tr>
                 <td
                   colSpan="10"
-                  className="py-20 text-center text-muted"
+                  className="py-16 text-center text-muted"
                 >
-                  <div className="flex flex-col items-center justify-center gap-3">
-                    <FileText size={42} className="opacity-30" />
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <FileText size={38} className="opacity-30" />
                     <span className="text-sm font-bold uppercase tracking-wider">No items added to quotation</span>
-                    <button
-                      type="button"
-                      onClick={openAddItemModal}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-[#C9A227] hover:bg-[#B8911F] text-white rounded-xl text-sm font-bold shadow-md shadow-amber-900/15 transition"
-                    >
-                      <Plus size={16} strokeWidth={3} /> Add First Item
-                    </button>
+                    <p className="text-xs text-muted font-medium">Click "Add Item" below to add your first item.</p>
                   </div>
                 </td>
               </tr>
@@ -833,7 +827,7 @@ export default function QuotationPage() {
               onClick={openAddItemModal}
               className="flex items-center gap-2 px-6 py-2.5 bg-[#C9A227] hover:bg-[#B8911F] text-white rounded-xl font-bold text-sm shadow-md hover:shadow-lg shadow-amber-900/15 transition-all"
             >
-              <Plus size={18} strokeWidth={3} /> + Add
+              <Plus size={16} strokeWidth={2.5} /> Add Item
             </button>
             <button 
               onClick={() => openOptionsModal("products")}
