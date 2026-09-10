@@ -728,7 +728,7 @@ export default function QuotationPage() {
           <thead className="border-b-2 border-slate-200 dark:border-slate-800 sticky top-0 bg-white dark:bg-slate-900 z-10 shadow-sm">
             <tr className="uppercase text-slate-900 dark:text-white font-black text-xs tracking-wider">
               <th className="px-3.5 py-3.5 text-center w-14 font-black">SI</th>
-              <th className="px-3.5 py-3.5 text-left w-32 font-black">Section</th>
+              <th className="px-3.5 py-3.5 text-left w-36 font-black">Section</th>
               <th className="px-3.5 py-3.5 text-left w-52 font-black">Product / Category</th>
               <th className="px-3.5 py-3.5 text-left font-black">Specification & Material</th>
               <th className="px-3.5 py-3.5 text-center w-16 font-black">Qty</th>
@@ -747,7 +747,7 @@ export default function QuotationPage() {
                 </td>
                 <td className="px-3.5 py-3.5">
                   {item.section ? (
-                    <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-amber-500/10 text-amber-700 dark:text-[var(--accent)] border border-amber-500/20">
+                    <span className="font-bold text-black dark:text-white text-sm whitespace-pre-wrap">
                       {item.section}
                     </span>
                   ) : (
