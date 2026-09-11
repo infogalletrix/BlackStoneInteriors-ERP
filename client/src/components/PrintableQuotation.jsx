@@ -38,7 +38,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
     </>
   );
 
-  // 2. Primary Header (Page 1)
+  // 2. Primary Header (Used consistently on ALL pages)
   const renderPrimaryHeader = (pageNumber = 1, totalPages = 1) => (
     <div className="flex justify-between items-start pb-4 border-b border-slate-200 relative z-10">
       {/* Company Info & Logo */}
@@ -106,34 +106,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
     </div>
   );
 
-  // 3. Continuation Header (Page 2+)
-  const renderContinuationHeader = (pageNumber = 2, totalPages = 2) => (
-    <div className="flex justify-between items-center pb-3 border-b border-slate-200 mb-4 relative z-10">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-slate-900 rounded-xl p-1.5 flex items-center justify-center shadow-sm">
-          <img src="/logo.png" alt="BSI" className="w-full h-full object-contain" />
-        </div>
-        <div>
-          <h2 className="text-sm font-black tracking-wider text-[#0b1e36] uppercase">
-            BLACK STONE INTERIORS
-          </h2>
-          <p className="text-slate-500 font-medium text-[8px]">
-            Quotation Continuation • Quote No: <span className="font-bold text-[#0b1e36]">{safeData.quoteNo || "—"}</span>
-          </p>
-        </div>
-      </div>
-      <div className="text-right">
-        <span className="px-2.5 py-1 rounded-full text-[8px] font-black uppercase bg-slate-100 text-slate-700 border border-slate-200">
-          Page {pageNumber} of {totalPages}
-        </span>
-        <p className="text-[8px] text-slate-500 mt-1 font-semibold">
-          Client: {safeData.customer || "—"}
-        </p>
-      </div>
-    </div>
-  );
-
-  // 4. Client & Project Details Box
+  // 3. Client & Project Details Box (Page 1)
   const renderClientProjectDetails = () => (
     <div className="grid grid-cols-2 gap-3.5 my-3.5">
       {/* Client Info */}
@@ -205,8 +178,8 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
     </div>
   );
 
-  // 5. Work Items Table
-  const renderItemsTable = (itemsSlice, startIdxOffset = 0) => {
+  // 4. Work Items Table with continuous serial numbering
+  const renderItemsTable = (itemsSlice) => {
     if (!itemsSlice || itemsSlice.length === 0) return null;
     const grouped = itemsSlice.reduce((acc, item) => {
       const sec = item.section || "General";
@@ -250,7 +223,9 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
                 <tbody className="divide-y divide-slate-100 text-[8.5px]">
                   {secItems.map((item, idx) => (
                     <tr key={idx} className="hover:bg-slate-50/50">
-                      <td className="py-1 px-2 text-center text-slate-400 font-bold">{startIdxOffset + idx + 1}</td>
+                      <td className="py-1 px-2 text-center text-slate-400 font-bold">
+                        {item._globalIndex !== undefined ? item._globalIndex : idx + 1}
+                      </td>
                       <td className="py-1 px-2 align-top font-bold text-slate-900">{item.product || "—"}</td>
                       <td className="py-1 px-2 align-top text-slate-600 leading-snug">{item.specification || "Standard Material & Hardware"}</td>
                       <td className="py-1 px-1.5 text-center align-top font-bold text-slate-800">{item.qty || 1}</td>
@@ -272,7 +247,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
     );
   };
 
-  // 6. Bank Transfer Details Card
+  // 5. Bank Transfer Details Card
   const renderBankDetailsCard = () => (
     <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 shadow-sm">
       <div className="flex items-center gap-1.5 text-[8.5px] font-black text-[#0b1e36] uppercase tracking-wider mb-1.5 border-b border-slate-200 pb-1">
@@ -292,7 +267,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
     </div>
   );
 
-  // 7. Terms & Conditions Card
+  // 6. Terms & Conditions Card
   const renderTermsConditionsCard = () => (
     <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 shadow-sm text-[8px]">
       <div className="text-[8.5px] font-black text-[#0b1e36] uppercase tracking-wider mb-1 border-b border-slate-200 pb-1">
@@ -307,7 +282,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
     </div>
   );
 
-  // 8. Thank you & Digitally Approved Notice Card
+  // 7. Thank you & Digitally Approved Notice Card
   const renderDigitalApprovalCard = () => (
     <div className="pt-2 flex justify-between items-end pr-1 border-t border-slate-200/80 mt-1">
       <div>
@@ -330,7 +305,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
     </div>
   );
 
-  // 9. Financial Breakdown Table Card
+  // 8. Financial Breakdown Table Card
   const renderFinancialBreakdownCard = () => (
     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
       <table className="w-full text-[8.5px]">
@@ -421,7 +396,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
     </div>
   );
 
-  // 10. Standard Payment Plan Card
+  // 9. Standard Payment Plan Card
   const renderPaymentPlanCard = () => (
     <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 shadow-sm text-[8px]">
       <div className="text-[8.5px] font-black text-[#0b1e36] uppercase tracking-wider mb-1.5 border-b border-slate-200 pb-1">
@@ -448,7 +423,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
     </div>
   );
 
-  // 11. Bottom Brand Footer Banner
+  // 10. Bottom Brand Footer Banner
   const renderBottomBrandBanner = () => (
     <div className="pt-2 border-t border-slate-200 mt-auto">
       <div className="bg-gradient-to-r from-[#0b1e36] via-[#0d5c63] to-[#0b1e36] text-white rounded-xl px-4 py-1.5 flex flex-wrap justify-between items-center text-[8px] font-semibold shadow-md">
@@ -468,12 +443,102 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
     </div>
   );
 
-  // ── DYNAMIC MULTI-PAGE & OVERFLOW SPECIFICATION ──────────────────
-  // User Requirements:
-  // - Case 1: If there is enough room on Page 1 (<= 4 items), place everything at bottom of page 1.
-  // - Case 2: If not enough room (5 to 6 items), push STANDARD PAYMENT PLAN and Thank You / Digital Approval to next page bottom.
-  // - Case 3: If again not enough room (>= 7 items), push BANK DETAILS, TERMS & CONDITIONS, SUB TOTAL... ESTIMATED TOTAL, PAYMENT PLAN and DIGITAL APPROVAL all to next page bottom.
-  const itemCount = items.length;
+  // ── DYNAMIC MULTI-PAGE PAGINATION CALCULATION ────────────────────
+  const paginateQuotation = (allItems) => {
+    if (!allItems || allItems.length === 0) {
+      return [{ pageNum: 1, totalPages: 1, items: [], isFirst: true, isLast: true }];
+    }
+
+    // Attach continuous 1-based serial number across all items in quotation
+    const taggedItems = allItems.map((item, index) => ({
+      ...item,
+      _globalIndex: index + 1,
+    }));
+
+    // If 6 or fewer items, everything fits cleanly on 1 page with all summary cards
+    if (taggedItems.length <= 6) {
+      return [{ pageNum: 1, totalPages: 1, items: taggedItems, isFirst: true, isLast: true }];
+    }
+
+    // Group items by section to preserve cohesive section groups
+    const sections = [];
+    taggedItems.forEach((item) => {
+      const secName = item.section || "General";
+      const lastSec = sections[sections.length - 1];
+      if (lastSec && lastSec.name === secName) {
+        lastSec.items.push(item);
+      } else {
+        sections.push({ name: secName, items: [item] });
+      }
+    });
+
+    const pages = [];
+    let currentPage = [];
+    let isFirst = true;
+
+    for (let s = 0; s < sections.length; s++) {
+      const sec = sections[s];
+      let remaining = [...sec.items];
+
+      while (remaining.length > 0) {
+        // Page 1 has Header + Client Details box: comfortable capacity is ~11 items.
+        // Subsequent pages can comfortably hold ~14 items.
+        const pageLimit = isFirst ? 11 : 14;
+        const spaceLeft = pageLimit - currentPage.length;
+
+        if (remaining.length <= spaceLeft) {
+          currentPage.push(...remaining);
+          remaining = [];
+        } else {
+          // If current page already has a good amount of items (>= 6) and next section doesn't fit,
+          // push current page and start fresh rather than awkwardly splitting a small section
+          if (currentPage.length >= 6) {
+            pages.push(currentPage);
+            currentPage = [];
+            isFirst = false;
+          } else {
+            const take = Math.max(1, spaceLeft);
+            currentPage.push(...remaining.slice(0, take));
+            remaining = remaining.slice(take);
+            if (currentPage.length >= pageLimit) {
+              pages.push(currentPage);
+              currentPage = [];
+              isFirst = false;
+            }
+          }
+        }
+      }
+    }
+
+    if (currentPage.length > 0) {
+      pages.push(currentPage);
+    }
+
+    // Balance check: if there is only 1 page resulting but items > 6, split evenly
+    if (pages.length === 1 && taggedItems.length > 6) {
+      const half = Math.ceil(taggedItems.length / 2);
+      pages[0] = taggedItems.slice(0, half);
+      pages.push(taggedItems.slice(half));
+    } else if (pages.length > 1) {
+      // If the last page has > 9 items alongside summary cards, move excess items to an earlier page
+      const lastIdx = pages.length - 1;
+      if (pages[lastIdx].length > 9) {
+        const excess = pages[lastIdx].splice(0, pages[lastIdx].length - 8);
+        pages.splice(lastIdx, 0, excess);
+      }
+    }
+
+    const totalPages = pages.length;
+    return pages.map((pageItems, idx) => ({
+      pageNum: idx + 1,
+      totalPages,
+      items: pageItems,
+      isFirst: idx === 0,
+      isLast: idx === totalPages - 1,
+    }));
+  };
+
+  const paginatedPages = paginateQuotation(items);
 
   return (
     <div ref={ref} className="print-document bg-white text-slate-800 font-sans text-[10px]">
@@ -501,7 +566,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
             display: flex !important;
             flex-direction: column !important;
             justify-content: space-between !important;
-            padding: 14mm 14mm 10mm 14mm !important;
+            padding: 12mm 14mm 8mm 14mm !important;
             box-sizing: border-box !important;
             position: relative !important;
             overflow: hidden !important;
@@ -517,7 +582,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
             min-height: 297mm;
             height: 297mm;
             box-sizing: border-box;
-            padding: 14mm 14mm 10mm 14mm;
+            padding: 12mm 14mm 8mm 14mm;
             margin: 0 auto 24px auto;
             box-shadow: 0 4px 25px rgba(0,0,0,0.12);
             position: relative;
@@ -530,163 +595,73 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         }
       `}</style>
 
-      {/* ── CASE 1: COMPACT (<= 4 items) -> Everything placed at bottom of Page 1 ── */}
-      {itemCount <= 4 && (
-        <div className="print-page">
+      {paginatedPages.map((page) => (
+        <div key={page.pageNum} className="print-page">
           {renderDecorativeCurves()}
+
           <div>
-            {renderPrimaryHeader(1, 1)}
-            {renderClientProjectDetails()}
-            {renderItemsTable(items)}
+            {/* Primary Header on EVERY page for consistent official branding */}
+            {renderPrimaryHeader(page.pageNum, page.totalPages)}
+
+            {/* Client & Project Details ONLY on Page 1 */}
+            {page.isFirst && renderClientProjectDetails()}
+
+            {/* If continuation page (Page 2+), show a sleek context reference */}
+            {!page.isFirst && (
+              <div className="flex justify-between items-center bg-slate-50 border border-slate-200/80 rounded-lg px-3 py-1 my-2.5 text-[8px] text-slate-600">
+                <div>
+                  <span className="text-slate-400 font-semibold uppercase">Client: </span>
+                  <span className="font-bold text-[#0b1e36]">{safeData.customer || "Valued Client"}</span>
+                  {safeData.projectTitle && (
+                    <>
+                      <span className="text-slate-300 mx-2">•</span>
+                      <span className="text-slate-400 font-semibold uppercase">Project: </span>
+                      <span className="font-bold text-slate-800">{safeData.projectTitle}</span>
+                    </>
+                  )}
+                </div>
+                <div className="font-bold text-[#0d5c63]">
+                  Quotation Continuation • Page {page.pageNum} of {page.totalPages}
+                </div>
+              </div>
+            )}
+
+            {/* Items Table for this page */}
+            {renderItemsTable(page.items)}
           </div>
 
-          {/* Bottom of Page 1 */}
+          {/* Bottom Section */}
           <div className="mt-auto pt-2">
-            <div className="grid grid-cols-2 gap-3.5 items-start mb-2.5">
-              {/* Left Column */}
-              <div className="space-y-2">
-                {renderBankDetailsCard()}
-                {renderTermsConditionsCard()}
-                {renderDigitalApprovalCard()}
+            {/* If NOT the last page, show continuation notice */}
+            {!page.isLast && (
+              <div className="text-right text-[8px] text-slate-400 font-bold uppercase tracking-wider mb-2">
+                Quotation Items & Financial Summary Continue on Page {page.pageNum + 1} →
               </div>
+            )}
 
-              {/* Right Column */}
-              <div className="space-y-2">
-                {renderFinancialBreakdownCard()}
-                {renderPaymentPlanCard()}
+            {/* If THIS IS the last page, render all summary cards */}
+            {page.isLast && (
+              <div className="grid grid-cols-2 gap-3.5 items-start mb-2.5">
+                {/* Left Column: Bank Details, Terms, Digital Approval */}
+                <div className="space-y-2">
+                  {renderBankDetailsCard()}
+                  {renderTermsConditionsCard()}
+                  {renderDigitalApprovalCard()}
+                </div>
+
+                {/* Right Column: Financial Breakdown, Payment Plan */}
+                <div className="space-y-2">
+                  {renderFinancialBreakdownCard()}
+                  {renderPaymentPlanCard()}
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Bottom Brand Banner on EVERY page */}
             {renderBottomBrandBanner()}
           </div>
         </div>
-      )}
-
-      {/* ── CASE 2: MEDIUM (5 to 6 items) -> Payment Plan & Digital Approval pushed to Page 2 bottom ── */}
-      {(itemCount === 5 || itemCount === 6) && (
-        <>
-          {/* Page 1 */}
-          <div className="print-page">
-            {renderDecorativeCurves()}
-            <div>
-              {renderPrimaryHeader(1, 2)}
-              {renderClientProjectDetails()}
-              {renderItemsTable(items)}
-            </div>
-
-            {/* Bottom of Page 1: Bank Details, Terms, and Financial Breakdown */}
-            <div className="mt-auto pt-2">
-              <div className="grid grid-cols-2 gap-3.5 items-start mb-2.5">
-                <div className="space-y-2">
-                  {renderBankDetailsCard()}
-                  {renderTermsConditionsCard()}
-                </div>
-                <div>
-                  {renderFinancialBreakdownCard()}
-                </div>
-              </div>
-              {renderBottomBrandBanner()}
-            </div>
-          </div>
-
-          {/* Page 2 */}
-          <div className="print-page">
-            {renderDecorativeCurves()}
-            <div>
-              {renderContinuationHeader(2, 2)}
-
-              {/* Scope Acceptance / Summary Overview */}
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 shadow-sm mb-4">
-                <div className="text-[9px] font-black text-[#0b1e36] uppercase tracking-wider mb-2 border-b border-slate-200 pb-1 flex justify-between items-center">
-                  <span>Project Scope & Estimate Confirmation</span>
-                  <span className="text-[7.5px] text-slate-400 font-semibold">Quote Ref: {safeData.quoteNo || "—"}</span>
-                </div>
-                <div className="text-[8.5px] text-slate-600 leading-relaxed space-y-1.5">
-                  <p>
-                    This document represents the formal quotation estimate from <strong>Black Stone Interiors</strong> for <strong>{safeData.customer || "Valued Client"}</strong>.
-                  </p>
-                  <p>
-                    All items and technical specifications listed on Page 1 are covered by our comprehensive woodwork and OEM hardware warranty standards. Please review the payment plan and bank credentials below to initiate production.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Bottom of Page 2: Standard Payment Plan & Digital Approval pushed to bottom */}
-            <div className="mt-auto pt-4">
-              <div className="grid grid-cols-2 gap-4 items-start mb-4">
-                {/* Left Column: Customer Acceptance & Digital Approval */}
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 shadow-sm space-y-2.5">
-                  <div className="text-[8.5px] font-black text-[#0b1e36] uppercase tracking-wider border-b border-slate-200 pb-1">
-                    Customer Acceptance & Digital Sign-off
-                  </div>
-                  <div className="text-[8px] text-slate-600 leading-normal">
-                    We hereby confirm and approve the estimate and payment milestones for <strong>{safeData.projectTitle || "Interior Woodwork Project"}</strong>.
-                  </div>
-                  {renderDigitalApprovalCard()}
-                </div>
-
-                {/* Right Column: Standard Payment Plan */}
-                <div>
-                  {renderPaymentPlanCard()}
-                </div>
-              </div>
-              {renderBottomBrandBanner()}
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* ── CASE 3: LARGE (>= 7 items) -> ALL financial details & bank info pushed to Page 2 bottom ── */}
-      {itemCount >= 7 && (
-        <>
-          {/* Page 1 */}
-          <div className="print-page">
-            {renderDecorativeCurves()}
-            <div>
-              {renderPrimaryHeader(1, 2)}
-              {renderClientProjectDetails()}
-              {/* Show first 7 items on Page 1 */}
-              {renderItemsTable(items.slice(0, 7), 0)}
-            </div>
-
-            <div className="mt-auto pt-2">
-              <div className="text-right text-[8px] text-slate-400 font-bold uppercase tracking-wider mb-2">
-                Quotation Items & Financial Summary Continue on Page 2 →
-              </div>
-              {renderBottomBrandBanner()}
-            </div>
-          </div>
-
-          {/* Page 2 */}
-          <div className="print-page">
-            {renderDecorativeCurves()}
-            <div>
-              {renderContinuationHeader(2, 2)}
-              {/* Render remaining items on Page 2 if any */}
-              {items.length > 7 && renderItemsTable(items.slice(7), 7)}
-            </div>
-
-            {/* Bottom of Page 2: ALL Financial Breakdown, Bank, Terms, Payment Plan & Approval */}
-            <div className="mt-auto pt-2">
-              <div className="grid grid-cols-2 gap-3.5 items-start mb-2.5">
-                {/* Left Column */}
-                <div className="space-y-2">
-                  {renderBankDetailsCard()}
-                  {renderTermsConditionsCard()}
-                  {renderDigitalApprovalCard()}
-                </div>
-
-                {/* Right Column */}
-                <div className="space-y-2">
-                  {renderFinancialBreakdownCard()}
-                  {renderPaymentPlanCard()}
-                </div>
-              </div>
-              {renderBottomBrandBanner()}
-            </div>
-          </div>
-        </>
-      )}
+      ))}
     </div>
   );
 });
