@@ -12,35 +12,30 @@ import {
   RotateCcw,
   Sparkles,
   FolderTree,
-  Sliders,
+  DollarSign,
+  ChevronRight,
+  ArrowRight,
+  Info,
+  Tag,
+  Hash,
+  SlidersHorizontal,
   CheckCircle2,
-  ArrowRight
+  AlertCircle
 } from "lucide-react";
 import { useDialog } from "../contexts/DialogContext";
 import { useThemeClasses } from "../hooks/useThemeClasses";
 
-export const DEFAULT_PRODUCTS = [
-  "Kitchen Cabinets",
-  "Wardrobe",
-  "TV Unit",
-  "False Ceiling",
-  "Shoe Rack",
-  "Study Table & Bookshelf",
-  "Dresser & Mirror",
-  "Crockery Unit",
-  "Wall Paneling",
-  "Foyer Console",
-  "Pooja Unit",
-  "Vanity Cabinet",
-  "Bed with Storage",
-  "Headboard Cushioning",
-  "Loose Furniture",
-  "Civil & Flooring",
-  "Electrical & Lighting",
-  "Painting & Polish"
+export const STANDARD_UNITS = [
+  "Sq.Ft",
+  "R.Ft",
+  "Nos",
+  "Sets",
+  "L.S",
+  "R.Mtr",
+  "Sq.Mtr"
 ];
 
-export const DEFAULT_CATEGORIES = [
+export const PRESET_CATEGORIES = [
   "Carcass / Core Structure",
   "Shutters & Fascia",
   "Hardware & Hinges",
@@ -55,554 +50,1145 @@ export const DEFAULT_CATEGORIES = [
   "Finishing & PU / Melamine Polish"
 ];
 
-export const DEFAULT_SPECIFICATIONS = [
-  "Commercial Plywood with 0.8mm Mica Finish & Soft-close Hardware",
-  "BWP Marine Ply with 1mm Laminate & Telescopic Channels",
-  "HDHMR with Acrylic Finish & Hafele Soft-Close Hinges",
-  "18mm BWP Boiling Water Resistant ply with .8mm Internal Laminate",
-  "Glass Shutter - Tinted Glass/Looking Mirror in 45mm Profile",
-  "25mm HDHMR with CNC + PU Finish",
-  "Hinge - Hettich - 32mm - 0 Crank - Made in Germany",
-  "Hettich - Innotech Drawer - Soft Close - Made in Germany",
-  "CNC V Groove Handle / Profile Handle",
-  "PVC Cutlery Tray - Hettich - 900mm",
-  "Higold Matt Black Bottle Pullout - 2 layer - 300mm",
-  "Rolling Shutter - Rehau 600mm Aluminium",
-  "Built-in Profile light with Adaptor",
-  "Quartz Stone Countertop with Beveled Edge & Sink Cutout",
-  "Natural Teak Veneer with Melamine Matte Polish",
-  "Solid Wood Frame with Brass Inlay Detailing",
-  "Custom Design & Fabrication as per Approved 3D Views",
-  "Standard Material & Hardware as per Site Specifications"
+export const INITIAL_DEFAULT_TREE = [
+  {
+    id: "prod-1",
+    name: "Kitchen Cabinets",
+    categories: [
+      {
+        id: "cat-1-1",
+        name: "Carcass / Core Structure",
+        specifications: [
+          { id: "spec-1-1-1", name: "18mm BWP Marine Ply with 0.8mm White Internal Laminate", unitPrice: 1850, unit: "Sq.Ft" },
+          { id: "spec-1-1-2", name: "HDHMR Board with 0.8mm Internal Balancer", unitPrice: 1650, unit: "Sq.Ft" },
+          { id: "spec-1-1-3", name: "Commercial Plywood with 0.8mm Mica Finish", unitPrice: 1450, unit: "Sq.Ft" }
+        ]
+      },
+      {
+        id: "cat-1-2",
+        name: "Shutters & Fascia",
+        specifications: [
+          { id: "spec-1-2-1", name: "Acrylic Finish (2mm) on HDHMR with Edge Banding", unitPrice: 2350, unit: "Sq.Ft" },
+          { id: "spec-1-2-2", name: "PU Matte / Gloss Paint Finish on CNC HDHMR", unitPrice: 2600, unit: "Sq.Ft" },
+          { id: "spec-1-2-3", name: "Tinted Glass Shutter with 45mm Aluminum Profile", unitPrice: 2800, unit: "Sq.Ft" },
+          { id: "spec-1-2-4", name: "1mm High Gloss Laminate with 2mm PVC Edgeband", unitPrice: 1950, unit: "Sq.Ft" }
+        ]
+      },
+      {
+        id: "cat-1-3",
+        name: "Hardware & Hinges",
+        specifications: [
+          { id: "spec-1-3-1", name: "Hettich Soft-Close Hinges (Sensys 110 Degree)", unitPrice: 420, unit: "Nos" },
+          { id: "spec-1-3-2", name: "Hafele Metalla Soft-Close Concealed Hinges", unitPrice: 380, unit: "Nos" }
+        ]
+      },
+      {
+        id: "cat-1-4",
+        name: "Drawers & Runners",
+        specifications: [
+          { id: "spec-1-4-1", name: "Hettich Innotech Soft-Close Drawer System (900mm)", unitPrice: 3400, unit: "Sets" },
+          { id: "spec-1-4-2", name: "Hafele Matrix Box Drawer Runner with Soft Close", unitPrice: 3100, unit: "Sets" },
+          { id: "spec-1-4-3", name: "Telescopic Soft-Close Channels (20 Inch / Heavy Duty)", unitPrice: 950, unit: "Sets" }
+        ]
+      },
+      {
+        id: "cat-1-5",
+        name: "Countertop & Splashback",
+        specifications: [
+          { id: "spec-1-5-1", name: "Quartz Stone Countertop with Edge Chamfering", unitPrice: 480, unit: "R.Ft" },
+          { id: "spec-1-5-2", name: "Nano White Engineered Marble Countertop", unitPrice: 550, unit: "R.Ft" }
+        ]
+      },
+      {
+        id: "cat-1-6",
+        name: "Internal Accessories & Wirework",
+        specifications: [
+          { id: "spec-1-6-1", name: "Higold SS304 Matt Black 2-Tier Bottle Pullout (300mm)", unitPrice: 4500, unit: "Nos" },
+          { id: "spec-1-6-2", name: "PVC Cutlery Organizer Tray - 900mm", unitPrice: 1800, unit: "Nos" }
+        ]
+      }
+    ]
+  },
+  {
+    id: "prod-2",
+    name: "Wardrobe",
+    categories: [
+      {
+        id: "cat-2-1",
+        name: "Carcass / Core Structure",
+        specifications: [
+          { id: "spec-2-1-1", name: "18mm BWP Marine Ply with 0.8mm Fabric Texture Laminate", unitPrice: 1750, unit: "Sq.Ft" },
+          { id: "spec-2-1-2", name: "Commercial Plywood with 0.8mm Internal Mica", unitPrice: 1400, unit: "Sq.Ft" }
+        ]
+      },
+      {
+        id: "cat-2-2",
+        name: "Shutters & Fascia",
+        specifications: [
+          { id: "spec-2-2-1", name: "Sliding Shutters with Heavy Duty Aluminum Track System", unitPrice: 2450, unit: "Sq.Ft" },
+          { id: "spec-2-2-2", name: "Hinged Full-Height Shutters with Gold Profile Handles", unitPrice: 2100, unit: "Sq.Ft" },
+          { id: "spec-2-2-3", name: "Tinted Fluted Glass in Slim Aluminum Frame", unitPrice: 2900, unit: "Sq.Ft" },
+          { id: "spec-2-2-4", name: "Natural Teak Veneer with Melamine Matte Polish", unitPrice: 2750, unit: "Sq.Ft" }
+        ]
+      },
+      {
+        id: "cat-2-3",
+        name: "Internal Accessories & Wirework",
+        specifications: [
+          { id: "spec-2-3-1", name: "Pull-out Trouser & Tie Rack", unitPrice: 3800, unit: "Nos" },
+          { id: "spec-2-3-2", name: "Built-in Profile Light with Motion Sensor & Driver", unitPrice: 350, unit: "R.Ft" },
+          { id: "spec-2-3-3", name: "Jewelry & Valuables Soft Velvet Drawer", unitPrice: 2800, unit: "Nos" }
+        ]
+      }
+    ]
+  },
+  {
+    id: "prod-3",
+    name: "TV Unit",
+    categories: [
+      {
+        id: "cat-3-1",
+        name: "Paneling & Framing",
+        specifications: [
+          { id: "spec-3-1-1", name: "Fluted Charcoal Louver Paneling with Brass Inlay", unitPrice: 650, unit: "Sq.Ft" },
+          { id: "spec-3-1-2", name: "Natural Teak Veneer Wall Paneling with PU Finish", unitPrice: 850, unit: "Sq.Ft" },
+          { id: "spec-3-1-3", name: "Large Format Tile Cladding on Plywood Backing", unitPrice: 1200, unit: "Sq.Ft" }
+        ]
+      },
+      {
+        id: "cat-3-2",
+        name: "Drawers & Runners",
+        specifications: [
+          { id: "spec-3-2-1", name: "Floating Console with Soft-Close Drawers & Chamfered Edge", unitPrice: 1650, unit: "R.Ft" },
+          { id: "spec-3-2-2", name: "CNC Geometric Grooving on HDHMR with PU Polish", unitPrice: 1950, unit: "R.Ft" }
+        ]
+      }
+    ]
+  },
+  {
+    id: "prod-4",
+    name: "False Ceiling",
+    categories: [
+      {
+        id: "cat-4-1",
+        name: "Carcass / Core Structure",
+        specifications: [
+          { id: "spec-4-1-1", name: "Gyproc Saint-Gobain Gypsum Board Ceiling with GI Framing", unitPrice: 135, unit: "Sq.Ft" },
+          { id: "spec-4-1-2", name: "POP Punning with Designer Grooving", unitPrice: 85, unit: "Sq.Ft" }
+        ]
+      },
+      {
+        id: "cat-4-2",
+        name: "Cove & Accent Lighting",
+        specifications: [
+          { id: "spec-4-2-1", name: "Indirect Perimeter Cove with Concealed Profile Channel", unitPrice: 180, unit: "R.Ft" },
+          { id: "spec-4-2-2", name: "Wooden Rafter Ceiling Detail with Melamine Polish", unitPrice: 450, unit: "R.Ft" }
+        ]
+      }
+    ]
+  },
+  {
+    id: "prod-5",
+    name: "Shoe Rack",
+    categories: [
+      {
+        id: "cat-5-1",
+        name: "Carcass / Core Structure",
+        specifications: [
+          { id: "spec-5-1-1", name: "Commercial Plywood with Louvered Ventilation Shutters", unitPrice: 1600, unit: "Sq.Ft" },
+          { id: "spec-5-1-2", name: "Cushioned Top Seating Bench with Drawer Storage", unitPrice: 1850, unit: "R.Ft" }
+        ]
+      }
+    ]
+  },
+  {
+    id: "prod-6",
+    name: "Study Table & Bookshelf",
+    categories: [
+      {
+        id: "cat-6-1",
+        name: "Carcass / Core Structure",
+        specifications: [
+          { id: "spec-6-1-1", name: "Plywood Study Desktop with Wire Grommet & Soft-Close Drawers", unitPrice: 1850, unit: "R.Ft" },
+          { id: "spec-6-1-2", name: "Overhead Open Display Bookshelf with Built-in Light", unitPrice: 1550, unit: "Sq.Ft" }
+        ]
+      }
+    ]
+  },
+  {
+    id: "prod-7",
+    name: "Pooja Unit",
+    categories: [
+      {
+        id: "cat-7-1",
+        name: "Finishing & Detailing",
+        specifications: [
+          { id: "spec-7-1-1", name: "Solid Teak Wood Jali Cutting with CNC Detailing & Bell Inlay", unitPrice: 1450, unit: "Sq.Ft" },
+          { id: "spec-7-1-2", name: "Backlit Onyx Marble Panel with LED Warm Illumination", unitPrice: 2200, unit: "Sq.Ft" }
+        ]
+      }
+    ]
+  },
+  {
+    id: "prod-8",
+    name: "Vanity Cabinet",
+    categories: [
+      {
+        id: "cat-8-1",
+        name: "Carcass / Core Structure",
+        specifications: [
+          { id: "spec-8-1-1", name: "100% Water-Resistant PVC / Foam Board with Acrylic Finish", unitPrice: 2100, unit: "Sq.Ft" },
+          { id: "spec-8-1-2", name: "LED Backlit Touch Sensor Mirror (Custom Size)", unitPrice: 4500, unit: "Nos" }
+        ]
+      }
+    ]
+  },
+  {
+    id: "prod-9",
+    name: "Bed with Storage",
+    categories: [
+      {
+        id: "cat-9-1",
+        name: "Carcass / Core Structure",
+        specifications: [
+          { id: "spec-9-1-1", name: "Hydraulic Lift-up Bed Frame with Heavy Duty Gas Struts (King Size)", unitPrice: 48000, unit: "Nos" },
+          { id: "spec-9-1-2", name: "Drawer Storage Bed with 18mm Plywood Structure", unitPrice: 38000, unit: "Nos" }
+        ]
+      },
+      {
+        id: "cat-9-2",
+        name: "Cushioning & Upholstery",
+        specifications: [
+          { id: "spec-9-2-1", name: "Full-Height Fluted Headboard in Velvet / Suede Upholstery", unitPrice: 650, unit: "Sq.Ft" },
+          { id: "spec-9-2-2", name: "Geometric Diamond Tufted Headboard Cushioning", unitPrice: 750, unit: "Sq.Ft" }
+        ]
+      }
+    ]
+  }
 ];
+
+export const DEFAULT_PRODUCTS = INITIAL_DEFAULT_TREE.map(p => p.name);
+export const DEFAULT_CATEGORIES = PRESET_CATEGORIES;
+export const DEFAULT_SPECIFICATIONS = INITIAL_DEFAULT_TREE.flatMap(p => 
+  p.categories.flatMap(c => c.specifications.map(s => s.name))
+);
 
 export default function CatalogPage() {
   const { showDialog } = useDialog();
   const t = useThemeClasses();
 
-  const [activeTab, setActiveTab] = useState("products"); // 'products' | 'categories' | 'specifications'
-  const [products, setProducts] = useState(() => {
+  const [catalogTree, setCatalogTree] = useState(() => {
     try {
-      const s = localStorage.getItem("quote_products");
-      return s ? JSON.parse(s) : DEFAULT_PRODUCTS;
-    } catch {
-      return DEFAULT_PRODUCTS;
-    }
+      const saved = localStorage.getItem("quote_catalog_tree");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return INITIAL_DEFAULT_TREE;
   });
 
-  const [categories, setCategories] = useState(() => {
-    try {
-      const s = localStorage.getItem("quote_categories");
-      return s ? JSON.parse(s) : DEFAULT_CATEGORIES;
-    } catch {
-      return DEFAULT_CATEGORIES;
-    }
-  });
+  // Selected hierarchy state
+  const [selectedProductId, setSelectedProductId] = useState(() => INITIAL_DEFAULT_TREE[0]?.id || "");
+  const [selectedCategoryId, setSelectedCategoryId] = useState("");
 
-  const [specifications, setSpecifications] = useState(() => {
-    try {
-      const s = localStorage.getItem("quote_specifications");
-      return s ? JSON.parse(s) : DEFAULT_SPECIFICATIONS;
-    } catch {
-      return DEFAULT_SPECIFICATIONS;
-    }
-  });
+  // Input states for adding new items
+  const [newProductName, setNewProductName] = useState("");
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [presetCategorySelect, setPresetCategorySelect] = useState("");
 
+  const [newSpecName, setNewSpecName] = useState("");
+  const [newSpecPrice, setNewSpecPrice] = useState("");
+  const [newSpecUnit, setNewSpecUnit] = useState("Sq.Ft");
+
+  // Editing modal/inline states
+  const [editingItem, setEditingItem] = useState(null); // { type: 'product'|'category'|'spec', id, name, unitPrice, unit }
+
+  // Global search query
   const [searchQuery, setSearchQuery] = useState("");
-  const [newItemText, setNewItemText] = useState("");
-  const [editingIdx, setEditingIdx] = useState(null);
-  const [editText, setEditText] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccessMsg, setSaveSuccessMsg] = useState("");
 
-  // Sync with backend on mount
+  // Load from backend on mount
   useEffect(() => {
     fetch("/api/catalog")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data) {
-          if (Array.isArray(data.products) && data.products.length > 0) {
-            setProducts(data.products);
-            localStorage.setItem("quote_products", JSON.stringify(data.products));
-          }
-          if (Array.isArray(data.categories) && data.categories.length > 0) {
-            setCategories(data.categories);
-            localStorage.setItem("quote_categories", JSON.stringify(data.categories));
-          }
-          if (Array.isArray(data.specifications) && data.specifications.length > 0) {
-            setSpecifications(data.specifications);
-            localStorage.setItem("quote_specifications", JSON.stringify(data.specifications));
-          }
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data && Array.isArray(data.tree) && data.tree.length > 0) {
+          setCatalogTree(data.tree);
+          localStorage.setItem("quote_catalog_tree", JSON.stringify(data.tree));
         }
       })
-      .catch((err) => console.log("Catalog offline/local fallback:", err));
+      .catch(err => console.error("Failed to load catalog tree:", err));
   }, []);
 
-  // Save to backend + localStorage
-  const saveCatalogState = async (newP = products, newC = categories, newS = specifications) => {
-    localStorage.setItem("quote_products", JSON.stringify(newP));
-    localStorage.setItem("quote_categories", JSON.stringify(newC));
-    localStorage.setItem("quote_specifications", JSON.stringify(newS));
-
+  // Sync to localStorage
+  useEffect(() => {
     try {
-      setIsSaving(true);
-      await fetch("/api/catalog", {
+      localStorage.setItem("quote_catalog_tree", JSON.stringify(catalogTree));
+      // Also sync flat arrays for legacy compatibility
+      const flatProducts = catalogTree.map(p => p.name).filter(Boolean);
+      const flatCategories = Array.from(new Set(catalogTree.flatMap(p => (p.categories || []).map(c => c.name)).filter(Boolean)));
+      const flatSpecs = Array.from(new Set(catalogTree.flatMap(p => (p.categories || []).flatMap(c => (c.specifications || []).map(s => s.name))).filter(Boolean)));
+      localStorage.setItem("quote_products", JSON.stringify(flatProducts));
+      localStorage.setItem("quote_categories", JSON.stringify(flatCategories));
+      localStorage.setItem("quote_specifications", JSON.stringify(flatSpecs));
+    } catch (e) {
+      console.error("Local sync error:", e);
+    }
+  }, [catalogTree]);
+
+  // Persist to backend helper
+  const persistToServer = async (newTree) => {
+    setIsSaving(true);
+    try {
+      const res = await fetch("/api/catalog", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          products: newP,
-          categories: newC,
-          specifications: newS,
-        }),
+        body: JSON.stringify({ tree: newTree })
       });
-    } catch (e) {
-      console.warn("Failed to sync catalog to server:", e);
+      if (res.ok) {
+        setSaveSuccessMsg("Saved to cloud");
+        setTimeout(() => setSaveSuccessMsg(""), 3000);
+      }
+    } catch (err) {
+      console.warn("Failed to persist catalog to server:", err);
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Active list definition
-  const currentTabConfig = useMemo(() => {
-    if (activeTab === "products") {
-      return {
-        key: "products",
-        title: "Products",
-        singular: "Product",
-        icon: <Package size={18} />,
-        list: products,
-        setList: (newList) => {
-          setProducts(newList);
-          saveCatalogState(newList, categories, specifications);
-        },
-        placeholder: "Enter new product (e.g. Wardrobe, Kitchen Cabinets, TV Unit)...",
-        color: "from-amber-600 to-amber-700",
-        badgeColor: "bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-300 border-amber-300/40",
-      };
+  // Derive active selected items
+  const activeProduct = useMemo(() => {
+    return catalogTree.find(p => p.id === selectedProductId) || catalogTree[0] || null;
+  }, [catalogTree, selectedProductId]);
+
+  // Auto-select first category if current selection becomes invalid
+  useEffect(() => {
+    if (activeProduct && activeProduct.categories && activeProduct.categories.length > 0) {
+      const exists = activeProduct.categories.some(c => c.id === selectedCategoryId);
+      if (!exists) {
+        setSelectedCategoryId(activeProduct.categories[0].id);
+      }
+    } else {
+      setSelectedCategoryId("");
     }
-    if (activeTab === "categories") {
-      return {
-        key: "categories",
-        title: "Categories",
-        singular: "Category",
-        icon: <FolderTree size={18} />,
-        list: categories,
-        setList: (newList) => {
-          setCategories(newList);
-          saveCatalogState(products, newList, specifications);
-        },
-        placeholder: "Enter new category (e.g. Carcass, Shutters, Hardware, Accessories)...",
-        color: "from-teal-600 to-teal-700",
-        badgeColor: "bg-teal-100 text-teal-900 dark:bg-teal-900/30 dark:text-teal-300 border-teal-300/40",
-      };
+  }, [activeProduct, selectedCategoryId]);
+
+  const activeCategory = useMemo(() => {
+    if (!activeProduct || !activeProduct.categories) return null;
+    return activeProduct.categories.find(c => c.id === selectedCategoryId) || null;
+  }, [activeProduct, selectedCategoryId]);
+
+  // ── PRODUCT ACTIONS ──────────────────────────────────────────
+  const handleAddProduct = (e) => {
+    e.preventDefault();
+    const name = newProductName.trim();
+    if (!name) return;
+    if (catalogTree.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+      showDialog({ title: "Product Exists", message: `A product named "${name}" already exists.`, type: "alert" });
+      return;
     }
-    return {
-      key: "specifications",
-      title: "Specifications",
-      singular: "Specification",
-      icon: <FileText size={18} />,
-      list: specifications,
-      setList: (newList) => {
-        setSpecifications(newList);
-        saveCatalogState(products, categories, newList);
-      },
-      placeholder: "Enter new specification (e.g. 18mm BWP Marine Ply with 1mm Laminate)...",
-      color: "from-blue-600 to-blue-700",
-      badgeColor: "bg-blue-100 text-blue-900 dark:bg-blue-900/30 dark:text-blue-300 border-blue-300/40",
+
+    const newProd = {
+      id: "prod-" + Date.now(),
+      name,
+      categories: [
+        {
+          id: "cat-" + Date.now(),
+          name: "Carcass / Core Structure",
+          specifications: []
+        }
+      ]
     };
-  }, [activeTab, products, categories, specifications]);
-
-  // Filtered items
-  const filteredList = useMemo(() => {
-    if (!searchQuery.trim()) return currentTabConfig.list;
-    const q = searchQuery.toLowerCase();
-    return currentTabConfig.list.filter((item) => item.toLowerCase().includes(q));
-  }, [currentTabConfig.list, searchQuery]);
-
-  // Actions
-  const handleAddItem = (e) => {
-    e?.preventDefault();
-    const val = newItemText.trim();
-    if (!val) return;
-
-    if (currentTabConfig.list.some((item) => item.toLowerCase() === val.toLowerCase())) {
-      showDialog({
-        title: "Duplicate Item",
-        message: `"${val}" is already in ${currentTabConfig.title}.`,
-        type: "alert",
-      });
-      return;
-    }
-
-    const updated = [...currentTabConfig.list, val];
-    currentTabConfig.setList(updated);
-    setNewItemText("");
+    const updated = [...catalogTree, newProd];
+    setCatalogTree(updated);
+    setSelectedProductId(newProd.id);
+    setSelectedCategoryId(newProd.categories[0].id);
+    setNewProductName("");
+    persistToServer(updated);
   };
 
-  const handleStartEdit = (idx, text) => {
-    setEditingIdx(idx);
-    setEditText(text);
-  };
-
-  const handleSaveEdit = (idx) => {
-    const val = editText.trim();
-    if (!val) return;
-
-    const oldVal = currentTabConfig.list[idx];
-    if (val !== oldVal && currentTabConfig.list.some((item, i) => i !== idx && item.toLowerCase() === val.toLowerCase())) {
-      showDialog({
-        title: "Duplicate Item",
-        message: `"${val}" already exists in ${currentTabConfig.title}.`,
-        type: "alert",
-      });
-      return;
-    }
-
-    const updated = [...currentTabConfig.list];
-    updated[idx] = val;
-    currentTabConfig.setList(updated);
-    setEditingIdx(null);
-    setEditText("");
-  };
-
-  const handleDeleteItem = (idx) => {
-    const itemToDelete = currentTabConfig.list[idx];
+  const handleDeleteProduct = (prodId, prodName) => {
     showDialog({
-      title: `Delete ${currentTabConfig.singular}`,
-      message: `Are you sure you want to remove "${itemToDelete}" from ${currentTabConfig.title}?`,
+      title: "Delete Product",
+      message: `Are you sure you want to delete "${prodName}" and all its categories and specifications?`,
       type: "confirm",
       onConfirm: () => {
-        const updated = currentTabConfig.list.filter((_, i) => i !== idx);
-        currentTabConfig.setList(updated);
-      },
+        const updated = catalogTree.filter(p => p.id !== prodId);
+        setCatalogTree(updated);
+        if (selectedProductId === prodId) {
+          const next = updated[0];
+          setSelectedProductId(next ? next.id : "");
+          setSelectedCategoryId(next && next.categories[0] ? next.categories[0].id : "");
+        }
+        persistToServer(updated);
+      }
     });
   };
 
-  const handleResetToDefaults = () => {
+  // ── CATEGORY ACTIONS ─────────────────────────────────────────
+  const handleAddCategory = (catNameToAdd = null) => {
+    if (!activeProduct) {
+      showDialog({ title: "No Product Selected", message: "Please select or create a product first.", type: "alert" });
+      return;
+    }
+    const name = (catNameToAdd || newCategoryName).trim();
+    if (!name) return;
+
+    if (activeProduct.categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+      showDialog({ title: "Category Exists", message: `Category "${name}" already exists under ${activeProduct.name}.`, type: "alert" });
+      return;
+    }
+
+    const newCat = {
+      id: "cat-" + Date.now(),
+      name,
+      specifications: []
+    };
+
+    const updated = catalogTree.map(p => {
+      if (p.id === activeProduct.id) {
+        return {
+          ...p,
+          categories: [...(p.categories || []), newCat]
+        };
+      }
+      return p;
+    });
+
+    setCatalogTree(updated);
+    setSelectedCategoryId(newCat.id);
+    setNewCategoryName("");
+    setPresetCategorySelect("");
+    persistToServer(updated);
+  };
+
+  const handleDeleteCategory = (catId, catName) => {
     showDialog({
-      title: "Reset Catalog",
-      message: "Reset all Products, Categories, and Specifications to factory defaults?",
+      title: "Delete Category",
+      message: `Are you sure you want to remove "${catName}" from ${activeProduct.name}?`,
+      type: "confirm",
+      onConfirm: () => {
+        const updated = catalogTree.map(p => {
+          if (p.id === activeProduct.id) {
+            return {
+              ...p,
+              categories: (p.categories || []).filter(c => c.id !== catId)
+            };
+          }
+          return p;
+        });
+        setCatalogTree(updated);
+        persistToServer(updated);
+      }
+    });
+  };
+
+  // ── SPECIFICATION ACTIONS ────────────────────────────────────
+  const handleAddSpecification = (e) => {
+    e.preventDefault();
+    if (!activeProduct || !activeCategory) {
+      showDialog({ title: "Selection Missing", message: "Please select both a Product and a Category first.", type: "alert" });
+      return;
+    }
+
+    const name = newSpecName.trim();
+    if (!name) return;
+
+    const price = parseFloat(newSpecPrice) || 0;
+    const unit = newSpecUnit.trim() || "Sq.Ft";
+
+    const newSpec = {
+      id: "spec-" + Date.now(),
+      name,
+      unitPrice: price,
+      unit
+    };
+
+    const updated = catalogTree.map(p => {
+      if (p.id === activeProduct.id) {
+        return {
+          ...p,
+          categories: (p.categories || []).map(c => {
+            if (c.id === activeCategory.id) {
+              return {
+                ...c,
+                specifications: [...(c.specifications || []), newSpec]
+              };
+            }
+            return c;
+          })
+        };
+      }
+      return p;
+    });
+
+    setCatalogTree(updated);
+    setNewSpecName("");
+    setNewSpecPrice("");
+    setNewSpecUnit("Sq.Ft");
+    persistToServer(updated);
+  };
+
+  const handleDeleteSpecification = (specId, specName) => {
+    showDialog({
+      title: "Delete Specification",
+      message: `Delete "${specName}"?`,
+      type: "confirm",
+      onConfirm: () => {
+        const updated = catalogTree.map(p => {
+          if (p.id === activeProduct.id) {
+            return {
+              ...p,
+              categories: (p.categories || []).map(c => {
+                if (c.id === activeCategory.id) {
+                  return {
+                    ...c,
+                    specifications: (c.specifications || []).filter(s => s.id !== specId)
+                  };
+                }
+                return c;
+              })
+            };
+          }
+          return p;
+        });
+        setCatalogTree(updated);
+        persistToServer(updated);
+      }
+    });
+  };
+
+  // ── EDIT ITEM SAVE ───────────────────────────────────────────
+  const handleSaveEdit = () => {
+    if (!editingItem) return;
+    const { type, id, name, unitPrice, unit } = editingItem;
+    if (!name.trim()) return;
+
+    let updated = [...catalogTree];
+    if (type === "product") {
+      updated = updated.map(p => p.id === id ? { ...p, name: name.trim() } : p);
+    } else if (type === "category") {
+      updated = updated.map(p => {
+        if (p.id === activeProduct?.id) {
+          return {
+            ...p,
+            categories: (p.categories || []).map(c => c.id === id ? { ...c, name: name.trim() } : c)
+          };
+        }
+        return p;
+      });
+    } else if (type === "specification") {
+      updated = updated.map(p => {
+        if (p.id === activeProduct?.id) {
+          return {
+            ...p,
+            categories: (p.categories || []).map(c => {
+              if (c.id === activeCategory?.id) {
+                return {
+                  ...c,
+                  specifications: (c.specifications || []).map(s => 
+                    s.id === id ? { ...s, name: name.trim(), unitPrice: parseFloat(unitPrice) || 0, unit: unit || "Sq.Ft" } : s
+                  )
+                };
+              }
+              return c;
+            })
+          };
+        }
+        return p;
+      });
+    }
+
+    setCatalogTree(updated);
+    setEditingItem(null);
+    persistToServer(updated);
+  };
+
+  // ── RESET DEFAULTS ───────────────────────────────────────────
+  const handleResetDefaults = () => {
+    showDialog({
+      title: "Reset Catalog to Defaults",
+      message: "This will reset all products, categories, specifications, and unit prices back to company defaults. Are you sure?",
       type: "confirm",
       onConfirm: async () => {
-        setProducts(DEFAULT_PRODUCTS);
-        setCategories(DEFAULT_CATEGORIES);
-        setSpecifications(DEFAULT_SPECIFICATIONS);
-        await saveCatalogState(DEFAULT_PRODUCTS, DEFAULT_CATEGORIES, DEFAULT_SPECIFICATIONS);
+        setIsSaving(true);
         try {
-          await fetch("/api/catalog/reset", { method: "POST" });
-        } catch {}
-      },
+          const res = await fetch("/api/catalog/reset", { method: "POST" });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.data?.tree) {
+              setCatalogTree(data.data.tree);
+              setSelectedProductId(data.data.tree[0]?.id || "");
+              setSelectedCategoryId(data.data.tree[0]?.categories[0]?.id || "");
+            }
+          } else {
+            setCatalogTree(INITIAL_DEFAULT_TREE);
+            setSelectedProductId(INITIAL_DEFAULT_TREE[0].id);
+            setSelectedCategoryId(INITIAL_DEFAULT_TREE[0].categories[0].id);
+          }
+        } catch {
+          setCatalogTree(INITIAL_DEFAULT_TREE);
+        } finally {
+          setIsSaving(false);
+        }
+      }
     });
   };
 
+  // Filtered products based on search
+  const filteredProducts = useMemo(() => {
+    if (!searchQuery.trim()) return catalogTree;
+    const q = searchQuery.toLowerCase();
+    return catalogTree.filter(p => {
+      const matchProd = p.name.toLowerCase().includes(q);
+      const matchCat = (p.categories || []).some(c => 
+        c.name.toLowerCase().includes(q) || 
+        (c.specifications || []).some(s => s.name.toLowerCase().includes(q))
+      );
+      return matchProd || matchCat;
+    });
+  }, [catalogTree, searchQuery]);
+
   return (
-    <div className="page-wrapper min-h-screen p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
-      {/* ── HEADER ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--border-color)] pb-5">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0b1e36] via-[#0d5c63] to-[#C9A227] flex items-center justify-center text-white shadow-md">
-              <Package size={22} />
+    <div className={`p-4 md:p-6 space-y-6 max-w-7xl mx-auto ${t.text}`}>
+      {/* ── HEADER BANNER ── */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-[#1e293b] to-slate-900 border border-slate-800 p-6 shadow-xl text-white">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-400 text-xs font-bold uppercase tracking-wider">
+              <Sparkles size={13} />
+              Hierarchical Catalog & Unit Rates
             </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-black text-themed tracking-tight uppercase">
-                Catalog Management
-              </h1>
-              <p className="text-xs text-muted font-medium">
-                Master database for Products, Categories, and Technical Specifications
-              </p>
-            </div>
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white flex items-center gap-3">
+              <Package className="text-[#C9A227]" size={28} />
+              Master Catalog Management
+            </h1>
+            <p className="text-xs md:text-sm text-slate-300 max-w-2xl font-medium">
+              3-Level Layered Structure: <span className="text-amber-300 font-bold">Product</span> → <span className="text-amber-300 font-bold">Category</span> → <span className="text-amber-300 font-bold">Specification with Unit Price (₹)</span>. Automatically auto-fills rates and units in quotations!
+            </p>
           </div>
-        </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={handleResetToDefaults}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 bg-slate-100 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition border border-[var(--border-color)] shadow-sm"
-          >
-            <RotateCcw size={14} /> Reset Defaults
-          </button>
-        </div>
-      </div>
-
-      {/* ── HIERARCHY EXPLANATION BANNER ── */}
-      <div className="bg-gradient-to-r from-amber-500/10 via-teal-500/10 to-blue-500/10 border border-[var(--border-color)] rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 text-xs">
-        <div className="flex items-center gap-3">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#C9A227] animate-pulse"></span>
-          <span className="font-extrabold text-themed uppercase tracking-wider text-[11px]">
-            Catalog Hierarchy Structure:
-          </span>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 text-slate-700 dark:text-slate-200 font-bold">
-          <span className="px-3 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-800 dark:text-amber-300">
-            1. Product (e.g. Wardrobe, Kitchen)
-          </span>
-          <ArrowRight size={14} className="text-slate-400" />
-          <span className="px-3 py-1 rounded-lg bg-teal-500/15 border border-teal-500/30 text-teal-800 dark:text-teal-300">
-            2. Category (e.g. Carcass, Shutters, Hardware)
-          </span>
-          <ArrowRight size={14} className="text-slate-400" />
-          <span className="px-3 py-1 rounded-lg bg-blue-500/15 border border-blue-500/30 text-blue-800 dark:text-blue-300">
-            3. Specification & Material (e.g. 18mm BWP Marine Ply...)
-          </span>
-        </div>
-      </div>
-
-      {/* ── TABS NAVIGATION ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {/* Tab 1: Products */}
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab("products");
-            setEditingIdx(null);
-            setSearchQuery("");
-          }}
-          className={`p-4 rounded-2xl border text-left transition-all relative overflow-hidden flex items-center justify-between ${
-            activeTab === "products"
-              ? "bg-amber-500/10 border-amber-500/60 ring-2 ring-amber-500/30 shadow-md"
-              : "bg-white dark:bg-slate-900 border-[var(--border-color)] hover:border-amber-400/50"
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <div
-              className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${
-                activeTab === "products"
-                  ? "bg-amber-600 text-white shadow"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-500"
-              }`}
-            >
-              <Package size={20} />
-            </div>
-            <div>
-              <div className="text-xs font-bold uppercase text-slate-500 tracking-wider">Level 1</div>
-              <div className="text-sm sm:text-base font-black text-themed">Products</div>
-            </div>
-          </div>
-          <span className="px-2.5 py-1 rounded-full text-xs font-black bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
-            {products.length}
-          </span>
-        </button>
-
-        {/* Tab 2: Categories */}
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab("categories");
-            setEditingIdx(null);
-            setSearchQuery("");
-          }}
-          className={`p-4 rounded-2xl border text-left transition-all relative overflow-hidden flex items-center justify-between ${
-            activeTab === "categories"
-              ? "bg-teal-500/10 border-teal-500/60 ring-2 ring-teal-500/30 shadow-md"
-              : "bg-white dark:bg-slate-900 border-[var(--border-color)] hover:border-teal-400/50"
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <div
-              className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${
-                activeTab === "categories"
-                  ? "bg-teal-600 text-white shadow"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-500"
-              }`}
-            >
-              <FolderTree size={20} />
-            </div>
-            <div>
-              <div className="text-xs font-bold uppercase text-slate-500 tracking-wider">Level 2 (Middle)</div>
-              <div className="text-sm sm:text-base font-black text-themed">Categories</div>
-            </div>
-          </div>
-          <span className="px-2.5 py-1 rounded-full text-xs font-black bg-teal-500/15 text-teal-700 dark:text-teal-300 border border-teal-500/30">
-            {categories.length}
-          </span>
-        </button>
-
-        {/* Tab 3: Specifications */}
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab("specifications");
-            setEditingIdx(null);
-            setSearchQuery("");
-          }}
-          className={`p-4 rounded-2xl border text-left transition-all relative overflow-hidden flex items-center justify-between ${
-            activeTab === "specifications"
-              ? "bg-blue-500/10 border-blue-500/60 ring-2 ring-blue-500/30 shadow-md"
-              : "bg-white dark:bg-slate-900 border-[var(--border-color)] hover:border-blue-400/50"
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <div
-              className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${
-                activeTab === "specifications"
-                  ? "bg-blue-600 text-white shadow"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-500"
-              }`}
-            >
-              <FileText size={20} />
-            </div>
-            <div>
-              <div className="text-xs font-bold uppercase text-slate-500 tracking-wider">Level 3</div>
-              <div className="text-sm sm:text-base font-black text-themed">Specifications</div>
-            </div>
-          </div>
-          <span className="px-2.5 py-1 rounded-full text-xs font-black bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/30">
-            {specifications.length}
-          </span>
-        </button>
-      </div>
-
-      {/* ── ACTIONS BAR (ADD & SEARCH) ── */}
-      <div className="themed-card p-4 sm:p-5 rounded-2xl border border-[var(--border-color)] space-y-4 shadow-sm">
-        {/* Add Input Form */}
-        <form onSubmit={handleAddItem} className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <input
-              type="text"
-              value={newItemText}
-              onChange={(e) => setNewItemText(e.target.value)}
-              placeholder={currentTabConfig.placeholder}
-              className="w-full pl-4 pr-10 py-2.5 rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-900 text-sm font-semibold text-themed outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition shadow-inner"
-            />
-            {newItemText && (
-              <button
-                type="button"
-                onClick={() => setNewItemText("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-              >
-                <X size={16} />
-              </button>
+          <div className="flex flex-wrap items-center gap-3">
+            {saveSuccessMsg && (
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-bold border border-emerald-500/30">
+                <CheckCircle2 size={14} /> {saveSuccessMsg}
+              </span>
             )}
+            <button
+              onClick={handleResetDefaults}
+              disabled={isSaving}
+              className="flex items-center gap-2 px-3.5 py-2 text-xs font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition"
+              title="Reset to initial default catalog"
+            >
+              <RotateCcw size={14} /> Reset Defaults
+            </button>
           </div>
-          <button
-            type="submit"
-            disabled={!newItemText.trim()}
-            className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#0b1e36] to-[#0d5c63] hover:from-[#112d52] hover:to-[#127a85] text-white font-bold text-sm shadow-md transition disabled:opacity-40 shrink-0"
-          >
-            <Plus size={16} strokeWidth={2.5} /> Add {currentTabConfig.singular}
-          </button>
-        </form>
-
-        {/* Search Bar & Count */}
-        <div className="flex items-center justify-between gap-3 pt-2 border-t border-[var(--border-color)]">
-          <div className="relative flex-1 max-w-md">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={`Filter ${currentTabConfig.title.toLowerCase()}...`}
-              className="w-full pl-9 pr-4 py-1.5 rounded-lg border border-[var(--border-color)] bg-slate-50 dark:bg-slate-900/60 text-xs text-themed outline-none focus:border-amber-500 transition"
-            />
-          </div>
-          <span className="text-xs font-bold text-muted">
-            Showing {filteredList.length} of {currentTabConfig.list.length} entries
-          </span>
         </div>
       </div>
 
-      {/* ── LIST OF ITEMS ── */}
-      <div className="themed-card rounded-2xl border border-[var(--border-color)] overflow-hidden shadow-sm">
-        <div className="px-5 py-3.5 bg-slate-50/80 dark:bg-slate-900/80 border-b border-[var(--border-color)] flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="font-black text-xs uppercase tracking-wider text-themed">
-              {currentTabConfig.title} Master Records
-            </span>
-          </div>
-          <span className="text-[11px] font-semibold text-slate-400">
-            Click edit icon to modify • Changes reflect immediately across all quotations
+      {/* ── SEARCH & BREADCRUMBS BAR ── */}
+      <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        {/* Breadcrumb path */}
+        <div className="flex items-center gap-2 text-xs md:text-sm font-bold overflow-x-auto w-full md:w-auto">
+          <span className="flex items-center gap-1.5 text-slate-400">
+            <Package size={15} /> All Products ({catalogTree.length})
+          </span>
+          <ChevronRight size={14} className="text-slate-400 flex-shrink-0" />
+          <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 flex-shrink-0">
+            {activeProduct ? activeProduct.name : "No Product"}
+          </span>
+          <ChevronRight size={14} className="text-slate-400 flex-shrink-0" />
+          <span className="px-2.5 py-1 rounded-lg bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/20 flex-shrink-0">
+            {activeCategory ? activeCategory.name : "Select Category"}
           </span>
         </div>
 
-        <div className="divide-y divide-[var(--border-color)]">
-          {filteredList.length === 0 ? (
-            <div className="p-12 text-center text-muted">
-              <Package size={36} className="mx-auto mb-2.5 opacity-30" />
-              <p className="font-bold text-sm">No {currentTabConfig.title.toLowerCase()} found</p>
-              <p className="text-xs text-slate-400 mt-1">
-                {searchQuery ? "Try a different search term" : "Add your first entry above"}
-              </p>
-            </div>
-          ) : (
-            filteredList.map((item, idx) => {
-              const realIndex = currentTabConfig.list.indexOf(item);
-              const isEditing = editingIdx === realIndex;
-
-              return (
-                <div
-                  key={idx}
-                  className="px-5 py-3.5 flex items-center justify-between gap-4 hover:bg-slate-50/70 dark:hover:bg-slate-900/40 transition group"
-                >
-                  <div className="flex items-center gap-3.5 flex-1 min-w-0">
-                    <span className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center text-xs font-bold shrink-0">
-                      {idx + 1}
-                    </span>
-
-                    {isEditing ? (
-                      <div className="flex items-center gap-2 flex-1 max-w-2xl">
-                        <input
-                          type="text"
-                          value={editText}
-                          onChange={(e) => setEditText(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") handleSaveEdit(realIndex);
-                            if (e.key === "Escape") setEditingIdx(null);
-                          }}
-                          className="flex-1 px-3 py-1.5 rounded-lg border border-amber-500 bg-white dark:bg-slate-900 text-sm font-bold text-themed outline-none ring-2 ring-amber-500/20"
-                          autoFocus
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleSaveEdit(realIndex)}
-                          className="p-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition"
-                          title="Save"
-                        >
-                          <Check size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditingIdx(null)}
-                          className="p-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 transition"
-                          title="Cancel"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-                    ) : (
-                      <span className="text-sm font-bold text-themed leading-snug break-words">
-                        {item}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Row Actions */}
-                  {!isEditing && (
-                    <div className="flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => handleStartEdit(realIndex, item)}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition"
-                        title="Edit name"
-                      >
-                        <Edit3 size={15} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteItem(realIndex)}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition"
-                        title="Delete"
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })
+        {/* Global Search */}
+        <div className="relative w-full md:w-72">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search products, specs..."
+            className="w-full pl-9 pr-4 py-2 text-xs font-medium rounded-xl border border-[var(--border-color)] bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            >
+              <X size={13} />
+            </button>
           )}
         </div>
       </div>
+
+      {/* ── 3-COLUMN CASCADING EXPLORER ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+        {/* ── COLUMN 1: PRODUCTS (Level 1) ── */}
+        <div className="lg:col-span-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-sm flex flex-col overflow-hidden">
+          {/* Header */}
+          <div className="p-4 bg-slate-100/70 dark:bg-slate-800/60 border-b border-[var(--border-color)] flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-6 h-6 rounded-lg bg-[#C9A227] text-white flex items-center justify-center text-xs font-black">
+                1
+              </span>
+              <h2 className="text-sm font-black uppercase tracking-wider text-themed flex items-center gap-1.5">
+                <Package size={15} className="text-[#C9A227]" /> Products
+              </h2>
+            </div>
+            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+              {filteredProducts.length}
+            </span>
+          </div>
+
+          {/* Quick Add Product Form */}
+          <form onSubmit={handleAddProduct} className="p-3 border-b border-[var(--border-color)] bg-slate-50/50 dark:bg-slate-900/50">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newProductName}
+                onChange={(e) => setNewProductName(e.target.value)}
+                placeholder="New product (e.g. Bar Counter)..."
+                className="flex-1 px-3 py-2 text-xs font-medium rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+              />
+              <button
+                type="submit"
+                disabled={!newProductName.trim()}
+                className="px-3.5 py-2 bg-[#C9A227] hover:bg-[#B8911F] disabled:opacity-40 text-white rounded-xl font-bold text-xs shadow-sm flex items-center gap-1 transition"
+              >
+                <Plus size={14} /> Add
+              </button>
+            </div>
+          </form>
+
+          {/* Product Items List */}
+          <div className="divide-y divide-[var(--border-color)] max-h-[580px] overflow-y-auto">
+            {filteredProducts.map((prod) => {
+              const isSelected = prod.id === selectedProductId;
+              const totalCats = (prod.categories || []).length;
+              const totalSpecs = (prod.categories || []).reduce((sum, c) => sum + (c.specifications || []).length, 0);
+
+              return (
+                <div
+                  key={prod.id}
+                  onClick={() => {
+                    setSelectedProductId(prod.id);
+                    if (prod.categories && prod.categories.length > 0) {
+                      setSelectedCategoryId(prod.categories[0].id);
+                    } else {
+                      setSelectedCategoryId("");
+                    }
+                  }}
+                  className={`group p-3 flex items-center justify-between cursor-pointer transition-all ${
+                    isSelected
+                      ? "bg-amber-500/10 border-l-4 border-l-[#C9A227] shadow-inner font-bold"
+                      : "hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                  }`}
+                >
+                  <div className="flex-1 min-w-0 pr-2">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-sm truncate ${isSelected ? "text-amber-800 dark:text-amber-300 font-black" : "text-themed font-semibold"}`}>
+                        {prod.name}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1 text-[10px] text-muted">
+                      <span>{totalCats} {totalCats === 1 ? "category" : "categories"}</span>
+                      <span>•</span>
+                      <span>{totalSpecs} specs</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingItem({ type: "product", id: prod.id, name: prod.name });
+                      }}
+                      className="p-1.5 text-slate-400 hover:text-amber-600 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+                      title="Rename Product"
+                    >
+                      <Edit3 size={13} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteProduct(prod.id, prod.name);
+                      }}
+                      className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-500/10 transition"
+                      title="Delete Product"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                    <ChevronRight size={14} className={`ml-1 transition ${isSelected ? "text-amber-600 translate-x-0.5" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} />
+                  </div>
+                </div>
+              );
+            })}
+
+            {filteredProducts.length === 0 && (
+              <div className="p-8 text-center text-muted text-xs font-semibold">
+                No products found matching "{searchQuery}".
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── COLUMN 2: CATEGORIES (Level 2) ── */}
+        <div className="lg:col-span-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-sm flex flex-col overflow-hidden">
+          {/* Header */}
+          <div className="p-4 bg-slate-100/70 dark:bg-slate-800/60 border-b border-[var(--border-color)] flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-6 h-6 rounded-lg bg-teal-600 text-white flex items-center justify-center text-xs font-black">
+                2
+              </span>
+              <div className="min-w-0">
+                <h2 className="text-sm font-black uppercase tracking-wider text-themed flex items-center gap-1.5 truncate">
+                  <FolderTree size={15} className="text-teal-600" /> Categories
+                </h2>
+                {activeProduct && (
+                  <p className="text-[10px] text-muted truncate">
+                    under <strong className="text-themed">{activeProduct.name}</strong>
+                  </p>
+                )}
+              </div>
+            </div>
+            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+              {activeProduct ? (activeProduct.categories || []).length : 0}
+            </span>
+          </div>
+
+          {/* Add Category Controls */}
+          {activeProduct ? (
+            <div className="p-3 border-b border-[var(--border-color)] bg-slate-50/50 dark:bg-slate-900/50 space-y-2">
+              {/* Preset Quick-Selector */}
+              <div className="flex gap-2">
+                <select
+                  value={presetCategorySelect}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setPresetCategorySelect(val);
+                    if (val) handleAddCategory(val);
+                  }}
+                  className="flex-1 px-3 py-2 text-xs font-medium rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-900 focus:outline-none"
+                >
+                  <option value="">+ Add from standard categories...</option>
+                  {PRESET_CATEGORIES.filter(p => !activeProduct.categories?.some(c => c.name.toLowerCase() === p.toLowerCase())).map((preset, idx) => (
+                    <option key={idx} value={preset}>{preset}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Or Custom Category Name */}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  placeholder="Or type custom category..."
+                  className="flex-1 px-3 py-1.5 text-xs font-medium rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/30"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleAddCategory()}
+                  disabled={!newCategoryName.trim()}
+                  className="px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white rounded-xl font-bold text-xs shadow-sm flex items-center gap-1 transition"
+                >
+                  <Plus size={13} /> Add
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 text-center text-xs text-muted font-medium bg-slate-50/50 dark:bg-slate-900/50">
+              Select a Product first
+            </div>
+          )}
+
+          {/* Categories List */}
+          <div className="divide-y divide-[var(--border-color)] max-h-[580px] overflow-y-auto">
+            {activeProduct && (activeProduct.categories || []).map((cat) => {
+              const isSelected = cat.id === selectedCategoryId;
+              const specCount = (cat.specifications || []).length;
+
+              return (
+                <div
+                  key={cat.id}
+                  onClick={() => setSelectedCategoryId(cat.id)}
+                  className={`group p-3 flex items-center justify-between cursor-pointer transition-all ${
+                    isSelected
+                      ? "bg-teal-500/10 border-l-4 border-l-teal-600 shadow-inner font-bold"
+                      : "hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                  }`}
+                >
+                  <div className="flex-1 min-w-0 pr-2">
+                    <span className={`text-xs md:text-sm truncate block ${isSelected ? "text-teal-800 dark:text-teal-300 font-black" : "text-themed font-semibold"}`}>
+                      {cat.name}
+                    </span>
+                    <span className="text-[10px] text-muted">
+                      {specCount} {specCount === 1 ? "specification" : "specifications"}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingItem({ type: "category", id: cat.id, name: cat.name });
+                      }}
+                      className="p-1.5 text-slate-400 hover:text-teal-600 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+                      title="Rename Category"
+                    >
+                      <Edit3 size={13} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteCategory(cat.id, cat.name);
+                      }}
+                      className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-500/10 transition"
+                      title="Delete Category"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                    <ChevronRight size={14} className={`ml-1 transition ${isSelected ? "text-teal-600 translate-x-0.5" : "text-slate-300 opacity-0 group-hover:opacity-100"}`} />
+                  </div>
+                </div>
+              );
+            })}
+
+            {activeProduct && (!activeProduct.categories || activeProduct.categories.length === 0) && (
+              <div className="p-8 text-center text-muted text-xs font-semibold">
+                No categories added to {activeProduct.name} yet.
+                <p className="text-[11px] mt-1 text-slate-400">Add a category using the inputs above.</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── COLUMN 3: SPECIFICATIONS & RATES (Level 3) ── */}
+        <div className="lg:col-span-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-sm flex flex-col overflow-hidden">
+          {/* Header */}
+          <div className="p-4 bg-slate-100/70 dark:bg-slate-800/60 border-b border-[var(--border-color)] flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-xs font-black">
+                3
+              </span>
+              <div className="min-w-0">
+                <h2 className="text-sm font-black uppercase tracking-wider text-themed flex items-center gap-1.5 truncate">
+                  <FileText size={15} className="text-emerald-600" /> Specifications
+                </h2>
+                {activeCategory && (
+                  <p className="text-[10px] text-muted truncate">
+                    under <strong className="text-themed">{activeCategory.name}</strong>
+                  </p>
+                )}
+              </div>
+            </div>
+            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+              {activeCategory ? (activeCategory.specifications || []).length : 0}
+            </span>
+          </div>
+
+          {/* Add Specification Form */}
+          {activeCategory ? (
+            <form onSubmit={handleAddSpecification} className="p-3 border-b border-[var(--border-color)] bg-slate-50/50 dark:bg-slate-900/50 space-y-2">
+              <div>
+                <input
+                  type="text"
+                  value={newSpecName}
+                  onChange={(e) => setNewSpecName(e.target.value)}
+                  placeholder="Specification / Material description..."
+                  className="w-full px-3 py-1.5 text-xs font-medium rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-12 gap-2">
+                <div className="col-span-7 relative">
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
+                  <input
+                    type="number"
+                    step="any"
+                    value={newSpecPrice}
+                    onChange={(e) => setNewSpecPrice(e.target.value)}
+                    placeholder="Unit Price"
+                    className="w-full pl-6 pr-2 py-1.5 text-xs font-bold rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 text-emerald-700 dark:text-emerald-400"
+                  />
+                </div>
+                <div className="col-span-5">
+                  <select
+                    value={newSpecUnit}
+                    onChange={(e) => setNewSpecUnit(e.target.value)}
+                    className="w-full px-2 py-1.5 text-xs font-bold rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-900 focus:outline-none text-slate-700 dark:text-slate-200"
+                  >
+                    {STANDARD_UNITS.map((u, idx) => (
+                      <option key={idx} value={u}>{u}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={!newSpecName.trim()}
+                className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white rounded-xl font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 transition"
+              >
+                <Plus size={13} /> Add Specification & Unit Rate
+              </button>
+            </form>
+          ) : (
+            <div className="p-4 text-center text-xs text-muted font-medium bg-slate-50/50 dark:bg-slate-900/50">
+              ← Select a Category to view or add specifications
+            </div>
+          )}
+
+          {/* Specifications List */}
+          <div className="divide-y divide-[var(--border-color)] max-h-[580px] overflow-y-auto">
+            {activeCategory && (activeCategory.specifications || []).map((spec) => (
+              <div
+                key={spec.id}
+                className="p-3 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition group"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-themed leading-snug">
+                      {spec.name}
+                    </p>
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-black bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                        ₹{Number(spec.unitPrice || 0).toLocaleString("en-IN")} / {spec.unit || "Sq.Ft"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setEditingItem({
+                        type: "specification",
+                        id: spec.id,
+                        name: spec.name,
+                        unitPrice: spec.unitPrice || 0,
+                        unit: spec.unit || "Sq.Ft"
+                      })}
+                      className="p-1.5 text-slate-400 hover:text-emerald-600 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+                      title="Edit Specification & Rate"
+                    >
+                      <Edit3 size={13} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteSpecification(spec.id, spec.name)}
+                      className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-500/10 transition"
+                      title="Delete Specification"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {activeCategory && (!activeCategory.specifications || activeCategory.specifications.length === 0) && (
+              <div className="p-8 text-center text-muted text-xs font-semibold">
+                No specifications configured for {activeCategory.name}.
+                <p className="text-[11px] mt-1 text-slate-400">Use the form above to add specifications and default unit rates.</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+      </div>
+
+      {/* ── EDIT ITEM MODAL ── */}
+      {editingItem && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
+              <h3 className="text-sm font-black uppercase text-themed tracking-wide flex items-center gap-2">
+                <Edit3 size={16} className="text-[#C9A227]" />
+                Edit {editingItem.type}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditingItem(null)}
+                className="p-1 text-slate-400 hover:text-slate-600"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                  Name / Title
+                </label>
+                <input
+                  type="text"
+                  value={editingItem.name}
+                  onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
+                  className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-[var(--border-color)] bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  autoFocus
+                />
+              </div>
+
+              {editingItem.type === "specification" && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                      Unit Price (₹)
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={editingItem.unitPrice}
+                      onChange={(e) => setEditingItem({ ...editingItem, unitPrice: e.target.value })}
+                      className="w-full px-3 py-2 text-xs font-bold text-emerald-600 rounded-xl border border-[var(--border-color)] bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                      Unit
+                    </label>
+                    <select
+                      value={editingItem.unit}
+                      onChange={(e) => setEditingItem({ ...editingItem, unit: e.target.value })}
+                      className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-[var(--border-color)] bg-slate-50 dark:bg-slate-900 focus:outline-none"
+                    >
+                      {STANDARD_UNITS.map((u, idx) => (
+                        <option key={idx} value={u}>{u}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border-color)]">
+              <button
+                type="button"
+                onClick={() => setEditingItem(null)}
+                className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveEdit}
+                className="px-5 py-2 bg-[#C9A227] hover:bg-[#B8911F] text-white text-xs font-bold rounded-xl shadow-sm transition"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

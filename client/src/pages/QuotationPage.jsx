@@ -105,6 +105,17 @@ export default function QuotationPage() {
     }
   });
 
+  const [catalogTree, setCatalogTree] = useState(() => {
+    try {
+      const saved = localStorage.getItem("quote_catalog_tree");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return [];
+  });
+
   useEffect(() => {
     localStorage.setItem("quote_products", JSON.stringify(productsList));
   }, [productsList]);
@@ -123,6 +134,10 @@ export default function QuotationPage() {
       .then(res => res.ok ? res.json() : null)
       .then(data => {
         if (data) {
+          if (Array.isArray(data.tree) && data.tree.length > 0) {
+            setCatalogTree(data.tree);
+            localStorage.setItem("quote_catalog_tree", JSON.stringify(data.tree));
+          }
           if (Array.isArray(data.products) && data.products.length > 0) {
             setProductsList(data.products);
           }
@@ -1098,6 +1113,7 @@ export default function QuotationPage() {
         onClose={() => setIsItemModalOpen(false)}
         onSave={handleSaveItem}
         editingItem={editingItem}
+        catalogTree={catalogTree}
         productsList={productsList}
         categoriesList={categoriesList}
         specificationsList={specificationsList}

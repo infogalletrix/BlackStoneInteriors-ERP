@@ -8,6 +8,7 @@ export default function QuotationItemModal({
   onClose,
   onSave,
   editingItem = null,
+  catalogTree = [],
   productsList = [],
   categoriesList = [],
   specificationsList = [],
@@ -24,11 +25,69 @@ export default function QuotationItemModal({
   const [discountPercent, setDiscountPercent] = useState("");
   const [discountPrice, setDiscountPrice] = useState("");
 
+  // 1. Available Products
   const cleanProductsList = React.useMemo(() => {
+    if (catalogTree && catalogTree.length > 0) {
+      return catalogTree.map(p => p.name).filter(Boolean);
+    }
     return (productsList || []).filter(
       p => p && typeof p === "string" && !p.toLowerCase().includes("product / category")
     );
-  }, [productsList]);
+  }, [catalogTree, productsList]);
+
+  // 2. Cascading Categories based on selected Product
+  const cascadingCategories = React.useMemo(() => {
+    if (product && catalogTree && catalogTree.length > 0) {
+      const match = catalogTree.find(p => p.name.trim().toLowerCase() === product.trim().toLowerCase());
+      if (match && Array.isArray(match.categories) && match.categories.length > 0) {
+        return match.categories.map(c => c.name).filter(Boolean);
+      }
+    }
+    if (categoriesList && categoriesList.length > 0) return categoriesList;
+    if (catalogTree && catalogTree.length > 0) {
+      return Array.from(new Set(catalogTree.flatMap(p => (p.categories || []).map(c => c.name)).filter(Boolean)));
+    }
+    return [];
+  }, [product, catalogTree, categoriesList]);
+
+  // 3. Matching Specifications objects based on selected Product & Category
+  const matchingSpecObjects = React.useMemo(() => {
+    if (catalogTree && catalogTree.length > 0) {
+      let matchedCategoryObj = null;
+
+      if (product) {
+        const prodMatch = catalogTree.find(p => p.name.trim().toLowerCase() === product.trim().toLowerCase());
+        if (prodMatch && Array.isArray(prodMatch.categories)) {
+          if (category) {
+            matchedCategoryObj = prodMatch.categories.find(c => c.name.trim().toLowerCase() === category.trim().toLowerCase());
+          } else {
+            return prodMatch.categories.flatMap(c => c.specifications || []);
+          }
+        }
+      } else if (category) {
+        for (const p of catalogTree) {
+          const cat = (p.categories || []).find(c => c.name.trim().toLowerCase() === category.trim().toLowerCase());
+          if (cat) {
+            matchedCategoryObj = cat;
+            break;
+          }
+        }
+      }
+
+      if (matchedCategoryObj && Array.isArray(matchedCategoryObj.specifications)) {
+        return matchedCategoryObj.specifications;
+      }
+    }
+    return [];
+  }, [product, category, catalogTree]);
+
+  // Available specification names for dropdown
+  const cascadingSpecifications = React.useMemo(() => {
+    if (matchingSpecObjects.length > 0) {
+      return matchingSpecObjects.map(s => typeof s === "object" ? s.name : s).filter(Boolean);
+    }
+    return specificationsList || [];
+  }, [matchingSpecObjects, specificationsList]);
 
   useEffect(() => {
     if (isOpen) {
@@ -167,6 +226,24 @@ export default function QuotationItemModal({
     setDiscountPrice("");
   };
 
+  const handleSpecificationChange = (selectedSpecName) => {
+    setSpecification(selectedSpecName);
+    if (!selectedSpecName) return;
+
+    const found = matchingSpecObjects.find(
+      s => (typeof s === "object" ? s.name : s).trim().toLowerCase() === selectedSpecName.trim().toLowerCase()
+    );
+
+    if (found && typeof found === "object") {
+      if (found.unitPrice !== undefined && found.unitPrice !== null && Number(found.unitPrice) > 0) {
+        handleRateChange(String(found.unitPrice));
+      }
+      if (found.unit) {
+        setUnit(found.unit);
+      }
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
       <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[92vh]">
@@ -225,26 +302,40 @@ export default function QuotationItemModal({
 
           {/* Row 3: Category (between Product and Specification) */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1 flex items-center gap-1">
-              <FolderTree size={12} /> Category
-            </label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="text-[11px] font-bold text-slate-500 uppercase flex items-center gap-1">
+                <FolderTree size={12} /> Category
+              </label>
+              {product && cascadingCategories.length > 0 && (
+                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">
+                  {cascadingCategories.length} categories for {product}
+                </span>
+              )}
+            </div>
             <ComboboxSelect
               value={category}
               onChange={(val) => setCategory(val)}
-              options={categoriesList}
+              options={cascadingCategories}
               placeholder="Search or select category (e.g. Carcass, Shutters, Hardware, Accessories)..."
             />
           </div>
 
           {/* Row 4: Specification & Material Details */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1 flex items-center gap-1">
-              <FileText size={12} /> Specification & Material
-            </label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="text-[11px] font-bold text-slate-500 uppercase flex items-center gap-1">
+                <FileText size={12} /> Specification & Material
+              </label>
+              {category && cascadingSpecifications.length > 0 && (
+                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
+                  {cascadingSpecifications.length} specs with preset rates
+                </span>
+              )}
+            </div>
             <ComboboxSelect
               value={specification}
-              onChange={(val) => setSpecification(val)}
-              options={specificationsList}
+              onChange={handleSpecificationChange}
+              options={cascadingSpecifications}
               placeholder="Search or select specification (e.g. 18mm BWR Ply with Laminate)..."
             />
           </div>
