@@ -606,28 +606,10 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
             {/* Client & Project Details ONLY on Page 1 */}
             {page.isFirst && renderClientProjectDetails()}
 
-            {/* If continuation page (Page 2+), show a sleek context reference */}
-            {!page.isFirst && (
-              <div className="flex justify-between items-center bg-slate-50 border border-slate-200/80 rounded-lg px-3 py-1 my-2.5 text-[8px] text-slate-600">
-                <div>
-                  <span className="text-slate-400 font-semibold uppercase">Client: </span>
-                  <span className="font-bold text-[#0b1e36]">{safeData.customer || "Valued Client"}</span>
-                  {safeData.projectTitle && (
-                    <>
-                      <span className="text-slate-300 mx-2">•</span>
-                      <span className="text-slate-400 font-semibold uppercase">Project: </span>
-                      <span className="font-bold text-slate-800">{safeData.projectTitle}</span>
-                    </>
-                  )}
-                </div>
-                <div className="font-bold text-[#0d5c63]">
-                  Quotation Continuation • Page {page.pageNum} of {page.totalPages}
-                </div>
-              </div>
-            )}
-
             {/* Items Table for this page */}
-            {renderItemsTable(page.items)}
+            <div className={page.isFirst ? "" : "mt-3.5"}>
+              {renderItemsTable(page.items)}
+            </div>
           </div>
 
           {/* Bottom Section */}
