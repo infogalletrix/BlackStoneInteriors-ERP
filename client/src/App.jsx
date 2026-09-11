@@ -26,6 +26,7 @@ const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
 const CRMPage = lazyWithRetry(() => import("./pages/CRMPage"));
 const InvoicesPage = lazyWithRetry(() => import("./pages/InvoicesPage"));
 const QuotationPage = lazyWithRetry(() => import("./pages/QuotationPage"));
+const CatalogPage = lazyWithRetry(() => import("./pages/CatalogPage"));
 const SitesPage = lazyWithRetry(() => import("./pages/SitesPage"));
 const ReportsPage = lazyWithRetry(() => import("./pages/ReportsPage"));
 const ReceiptPage = lazyWithRetry(() => import("./pages/ReceiptPage"));
@@ -94,6 +95,7 @@ function App() {
                     <Route path="/crm" element={<CRMPage />} />
                     <Route path="/crm/*" element={<CRMPage />} />
                     <Route path="/quotations" element={<QuotationPage />} />
+                    <Route path="/catalog" element={<CatalogPage />} />
 
                     {/* Projects */}
                     <Route path="/sites" element={<SitesPage />} />

@@ -226,7 +226,14 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
                       <td className="py-1 px-2 text-center text-slate-400 font-bold">
                         {item._globalIndex !== undefined ? item._globalIndex : idx + 1}
                       </td>
-                      <td className="py-1 px-2 align-top font-bold text-slate-900">{item.product || "—"}</td>
+                      <td className="py-1 px-2 align-top text-slate-900">
+                        <div className="font-bold">{item.product || "—"}</div>
+                        {item.category && (
+                          <div className="text-[7.5px] font-semibold text-[#0d5c63] mt-0.5 inline-block bg-teal-50 px-1 py-0.5 rounded border border-teal-100">
+                            {item.category}
+                          </div>
+                        )}
+                      </td>
                       <td className="py-1 px-2 align-top text-slate-600 leading-snug">{item.specification || "Standard Material & Hardware"}</td>
                       <td className="py-1 px-1.5 text-center align-top font-bold text-slate-800">{item.qty || 1}</td>
                       <td className="py-1 px-1.5 text-center align-top text-slate-500">{item.unit || "Sq.Ft"}</td>

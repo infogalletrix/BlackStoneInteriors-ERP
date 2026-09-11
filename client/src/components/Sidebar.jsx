@@ -19,6 +19,7 @@ import {
   ChevronRight,
   LogOut,
   Settings,
+  Package,
 } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useThemeClasses } from "../hooks/useThemeClasses";
@@ -69,6 +70,11 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
       name: "Quotations",
       icon: <ClipboardList size={20} />,
       canAdd: true,
+    },
+    {
+      path: "/catalog",
+      name: "Catalog",
+      icon: <Package size={20} />,
     },
     {
       path: "/sites",

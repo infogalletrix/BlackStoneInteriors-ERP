@@ -2,10 +2,11 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { useReactToPrint } from "react-to-print";
 import { useNavigate, useLocation } from "react-router-dom";
 import PrintableQuotation from "../components/PrintableQuotation";
-import ManageOptionsModal, {
+import {
   DEFAULT_PRODUCTS,
+  DEFAULT_CATEGORIES,
   DEFAULT_SPECIFICATIONS
-} from "../components/ManageOptionsModal";
+} from "./CatalogPage";
 import SectionInput from "../components/SectionInput";
 import QuotationItemModal from "../components/QuotationItemModal";
 import ClientDetailsModal from "../components/ClientDetailsModal";
@@ -25,7 +26,6 @@ import {
   Plus,
   X,
   Edit3,
-  Settings,
   Building,
 } from "lucide-react";
 import { useDialog } from "../contexts/DialogContext";
@@ -73,19 +73,36 @@ export default function QuotationPage() {
 
   const [crmClients, setCrmClients] = useState([]);
 
-  // Dropdown Options Management (Products, Specifications)
+  // Dropdown Options Management (Products, Categories, Specifications)
   const [productsList, setProductsList] = useState(() => {
-    const saved = localStorage.getItem("quote_products");
-    let list = saved ? JSON.parse(saved) : DEFAULT_PRODUCTS;
-    if (Array.isArray(list)) {
-      list = list.filter(p => p && typeof p === "string" && !p.toLowerCase().includes("product / category"));
+    try {
+      const saved = localStorage.getItem("quote_products");
+      let list = saved ? JSON.parse(saved) : DEFAULT_PRODUCTS;
+      if (Array.isArray(list)) {
+        list = list.filter(p => p && typeof p === "string" && !p.toLowerCase().includes("product / category"));
+      }
+      return list;
+    } catch {
+      return DEFAULT_PRODUCTS;
     }
-    return list;
+  });
+
+  const [categoriesList, setCategoriesList] = useState(() => {
+    try {
+      const saved = localStorage.getItem("quote_categories");
+      return saved ? JSON.parse(saved) : DEFAULT_CATEGORIES;
+    } catch {
+      return DEFAULT_CATEGORIES;
+    }
   });
 
   const [specificationsList, setSpecificationsList] = useState(() => {
-    const saved = localStorage.getItem("quote_specifications");
-    return saved ? JSON.parse(saved) : DEFAULT_SPECIFICATIONS;
+    try {
+      const saved = localStorage.getItem("quote_specifications");
+      return saved ? JSON.parse(saved) : DEFAULT_SPECIFICATIONS;
+    } catch {
+      return DEFAULT_SPECIFICATIONS;
+    }
   });
 
   useEffect(() => {
@@ -93,8 +110,32 @@ export default function QuotationPage() {
   }, [productsList]);
 
   useEffect(() => {
+    localStorage.setItem("quote_categories", JSON.stringify(categoriesList));
+  }, [categoriesList]);
+
+  useEffect(() => {
     localStorage.setItem("quote_specifications", JSON.stringify(specificationsList));
   }, [specificationsList]);
+
+  // Load catalog options from server
+  useEffect(() => {
+    fetch("/api/catalog")
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data) {
+          if (Array.isArray(data.products) && data.products.length > 0) {
+            setProductsList(data.products);
+          }
+          if (Array.isArray(data.categories) && data.categories.length > 0) {
+            setCategoriesList(data.categories);
+          }
+          if (Array.isArray(data.specifications) && data.specifications.length > 0) {
+            setSpecificationsList(data.specifications);
+          }
+        }
+      })
+      .catch(err => console.error("Failed to load catalog in quotation:", err));
+  }, []);
 
   // Derive suggestions for Section strictly from previously entered data (current items & saved history)
   const previouslyEnteredSections = useMemo(() => {
@@ -168,21 +209,6 @@ export default function QuotationPage() {
     loadHistoricalSections();
   }, []);
 
-  const [isOptionsModalOpen, setIsOptionsModalOpen] = useState(false);
-  const [activeOptionsTab, setActiveOptionsTab] = useState("products");
-
-  const openOptionsModal = (tab = "products") => {
-    setActiveOptionsTab(tab);
-    setIsOptionsModalOpen(true);
-  };
-
-  const handleRenameOption = (type, oldVal, newVal) => {
-    if (type === "products") {
-      setItems(prev => prev.map(i => i.product === oldVal ? { ...i, product: newVal } : i));
-    } else if (type === "specifications") {
-      setItems(prev => prev.map(i => i.specification === oldVal ? { ...i, specification: newVal } : i));
-    }
-  };
 
   // Fetch CRM clients on mount
   useEffect(() => {
@@ -798,13 +824,6 @@ export default function QuotationPage() {
           >
             <Plus size={14} strokeWidth={2.5} /> Add Item
           </button>
-          <button 
-            type="button"
-            onClick={() => openOptionsModal("products")}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg font-semibold text-xs border border-[var(--border-color)] hover:bg-slate-100 dark:hover:bg-slate-700 transition"
-          >
-            <Settings size={13} /> Options
-          </button>
         </div>
       </div>
 
@@ -815,7 +834,8 @@ export default function QuotationPage() {
             <tr className="uppercase text-slate-900 dark:text-white font-black text-xs tracking-wider">
               <th className="px-3.5 py-3.5 text-center w-14 font-black">SI</th>
               <th className="px-3.5 py-3.5 text-left w-36 font-black">Section</th>
-              <th className="px-3.5 py-3.5 text-left w-52 font-black">Product / Category</th>
+              <th className="px-3.5 py-3.5 text-left w-48 font-black">Product</th>
+              <th className="px-3.5 py-3.5 text-left w-40 font-black">Category</th>
               <th className="px-3.5 py-3.5 text-left font-black">Specification & Material</th>
               <th className="px-3.5 py-3.5 text-center w-16 font-black">Qty</th>
               <th className="px-3.5 py-3.5 text-center w-16 font-black">Unit</th>
@@ -849,6 +869,15 @@ export default function QuotationPage() {
                 </td>
                 <td className="px-3.5 py-3.5 font-bold text-themed text-sm">
                   {item.product || "—"}
+                </td>
+                <td className="px-3.5 py-3.5 text-sm">
+                  {item.category ? (
+                    <span className="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+                      {item.category}
+                    </span>
+                  ) : (
+                    <span className="text-muted text-xs">—</span>
+                  )}
                 </td>
                 <td className="px-3.5 py-3.5 text-muted leading-relaxed whitespace-pre-wrap max-w-md text-sm">
                   {item.specification || "—"}
@@ -899,7 +928,7 @@ export default function QuotationPage() {
             {items.length === 0 && (
               <tr>
                 <td
-                  colSpan="10"
+                  colSpan="11"
                   className="py-16 text-center text-muted"
                 >
                   <div className="flex flex-col items-center justify-center gap-2">
@@ -1076,22 +1105,9 @@ export default function QuotationPage() {
         onSave={handleSaveItem}
         editingItem={editingItem}
         productsList={productsList}
+        categoriesList={categoriesList}
         specificationsList={specificationsList}
         sectionSuggestions={previouslyEnteredSections}
-        onOpenManageOptions={openOptionsModal}
-      />
-
-      {/* ── MANAGE OPTIONS MODAL ── */}
-      <ManageOptionsModal
-        isOpen={isOptionsModalOpen}
-        onClose={() => setIsOptionsModalOpen(false)}
-        activeTab={activeOptionsTab}
-        setActiveTab={setActiveOptionsTab}
-        productsList={productsList}
-        setProductsList={setProductsList}
-        specificationsList={specificationsList}
-        setSpecificationsList={setSpecificationsList}
-        onRenameOption={handleRenameOption}
       />
 
       {/* ── CLIENT & PROJECT DETAILS MODAL ── */}

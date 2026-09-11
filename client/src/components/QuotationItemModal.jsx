@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Check, Settings, Tag, Layers, FileText, Plus } from "lucide-react";
+import { X, Check, Tag, Layers, FolderTree, FileText, Plus } from "lucide-react";
 import SectionInput from "./SectionInput";
 import ComboboxSelect from "./ComboboxSelect";
 
@@ -9,12 +9,13 @@ export default function QuotationItemModal({
   onSave,
   editingItem = null,
   productsList = [],
+  categoriesList = [],
   specificationsList = [],
   sectionSuggestions = [],
-  onOpenManageOptions
 }) {
   const [section, setSection] = useState("");
   const [product, setProduct] = useState("");
+  const [category, setCategory] = useState("");
   const [specification, setSpecification] = useState("");
   const [qty, setQty] = useState("");
   const [unit, setUnit] = useState("Sq.Ft");
@@ -34,6 +35,7 @@ export default function QuotationItemModal({
       if (editingItem) {
         setSection(editingItem.section || "");
         setProduct(editingItem.product || "");
+        setCategory(editingItem.category || "");
         setSpecification(editingItem.specification || "");
         setQty(editingItem.qty !== undefined && editingItem.qty !== null ? String(editingItem.qty) : "");
         setUnit(editingItem.unit || "Sq.Ft");
@@ -44,6 +46,7 @@ export default function QuotationItemModal({
       } else {
         setSection("");
         setProduct("");
+        setCategory("");
         setSpecification("");
         setQty("");
         setUnit("Sq.Ft");
@@ -129,6 +132,7 @@ export default function QuotationItemModal({
       code: editingItem?.code || "",
       section: section.trim(),
       product: product.trim(),
+      category: category.trim(),
       specification: specification.trim(),
       qty: qty || "0",
       unit: unit || "Sq.Ft",
@@ -155,6 +159,7 @@ export default function QuotationItemModal({
     onSave(item);
     // Keep section/area for quick continuous adding in the same area, but reset product inputs
     setProduct("");
+    setCategory("");
     setSpecification("");
     setQty("");
     setRate("");
@@ -204,56 +209,43 @@ export default function QuotationItemModal({
             />
           </div>
 
-          {/* Row 2: Product / Category */}
+          {/* Row 2: Product */}
           <div>
-            <div className="flex justify-between items-center mb-1">
-              <label className="text-[11px] font-bold text-slate-500 uppercase flex items-center gap-1">
-                <Layers size={12} /> Product / Category <span className="text-red-500">*</span>
-              </label>
-              {onOpenManageOptions && (
-                <button
-                  type="button"
-                  onClick={() => onOpenManageOptions("products")}
-                  className="text-[10px] font-bold text-amber-700 dark:text-[var(--accent)] hover:text-amber-800 flex items-center gap-1 transition"
-                >
-                  <Settings size={11} /> Manage Products
-                </button>
-              )}
-            </div>
+            <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1 flex items-center gap-1">
+              <Layers size={12} /> Product <span className="text-red-500">*</span>
+            </label>
             <ComboboxSelect
               value={product}
               onChange={(val) => setProduct(val)}
               options={cleanProductsList}
-              placeholder="Search or type product (e.g. Wardrobe, Kitchen Cabinets)..."
-              onOpenManage={onOpenManageOptions ? () => onOpenManageOptions("products") : null}
-              manageLabel="Manage Products"
+              placeholder="Search or select product (e.g. Wardrobe, Kitchen Cabinets)..."
               required
             />
           </div>
 
-          {/* Row 3: Specification & Material Details */}
+          {/* Row 3: Category (between Product and Specification) */}
           <div>
-            <div className="flex justify-between items-center mb-1">
-              <label className="text-[11px] font-bold text-slate-500 uppercase flex items-center gap-1">
-                <FileText size={12} /> Specification & Material
-              </label>
-              {onOpenManageOptions && (
-                <button
-                  type="button"
-                  onClick={() => onOpenManageOptions("specifications")}
-                  className="text-[10px] font-bold text-amber-700 dark:text-[var(--accent)] hover:text-amber-800 flex items-center gap-1 transition"
-                >
-                  <Settings size={11} /> Manage Specifications
-                </button>
-              )}
-            </div>
+            <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1 flex items-center gap-1">
+              <FolderTree size={12} /> Category
+            </label>
+            <ComboboxSelect
+              value={category}
+              onChange={(val) => setCategory(val)}
+              options={categoriesList}
+              placeholder="Search or select category (e.g. Carcass, Shutters, Hardware, Accessories)..."
+            />
+          </div>
+
+          {/* Row 4: Specification & Material Details */}
+          <div>
+            <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1 flex items-center gap-1">
+              <FileText size={12} /> Specification & Material
+            </label>
             <ComboboxSelect
               value={specification}
               onChange={(val) => setSpecification(val)}
               options={specificationsList}
               placeholder="Search or select specification (e.g. 18mm BWR Ply with Laminate)..."
-              onOpenManage={onOpenManageOptions ? () => onOpenManageOptions("specifications") : null}
-              manageLabel="Manage Specifications"
             />
           </div>
 
