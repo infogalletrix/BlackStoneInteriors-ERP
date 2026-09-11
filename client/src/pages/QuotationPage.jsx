@@ -952,12 +952,6 @@ export default function QuotationPage() {
             >
               <Plus size={16} strokeWidth={2.5} /> Add Item
             </button>
-            <button 
-              onClick={() => openOptionsModal("products")}
-              className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition border border-[var(--border-color)]"
-            >
-              <Settings size={15} /> Manage Options
-            </button>
           </div>
 
           <div className="flex items-center gap-6 text-sm">
