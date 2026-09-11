@@ -5,7 +5,7 @@ import {
   TrendingUp, TrendingDown, Wallet,
   FileText, Building, ChevronDown, ArrowRight,
   HardHat, ClipboardCheck, Banknote, CalendarCheck, IndianRupee,
-  Users, Award, CheckCircle2
+  Users, Award, CheckCircle2, FileCheck
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -17,10 +17,9 @@ import { useThemeClasses } from "../hooks/useThemeClasses";
 import NotificationWidget from "../components/NotificationWidget";
 import KpiCard from "../components/KpiCard";
 
-// Light: gold / navy palette  |  Dark: violet palette
-// Light: gold / navy palette  |  Dark: violet palette
-const CHART_COLORS_LIGHT = ['#9E8B6E', '#1C2B4B', '#3D5A8A', '#E5C558', '#8F7A33', '#0F1A30'];
-const CHART_COLORS_DARK  = ['#8b5cf6', '#6366f1', '#a855f7', '#3b82f6', '#ec4899', '#c084fc'];
+// Brand Palette: Black Stone Gold (#C9A227), Deep Navy (#1C2B4B), Sapphire (#2563EB), Emerald (#10B981), Amber (#F59E0B), Violet (#7C3AED)
+const CHART_COLORS_LIGHT = ['#C9A227', '#1C2B4B', '#2563EB', '#10B981', '#F59E0B', '#7C3AED'];
+const CHART_COLORS_DARK  = ['#C9A227', '#8B5CF6', '#38BDF8', '#10B981', '#F59E0B', '#EC4899'];
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -28,9 +27,9 @@ const Dashboard = () => {
   const d = t.isDark;
   const COLORS = d ? CHART_COLORS_DARK : CHART_COLORS_LIGHT;
 
-  // accent colours derived from theme
-  const accentMain   = d ? '#8b5cf6' : '#9E8B6E';
-  const accentSecond = d ? '#38bdf8' : '#3D5A8A';
+  // Accent colors aligned with Black Stone brand design system
+  const accentMain   = '#C9A227';
+  const accentSecond = d ? '#38bdf8' : '#1C2B4B';
   const incomeColor  = '#10b981';
   const expenseColor = d ? '#f43f5e' : '#ef4444';
 
@@ -123,23 +122,10 @@ const Dashboard = () => {
   const totalIncome       = receiptIncome + creditExpenses;
   const totalSpent        = debitExpenses + totalPayroll;
   const totalWOValue      = sites.reduce((s,st) => s+(Number(st.budget)||0), 0);
-  const pendingQuotes = quotations.filter(q => {
-    if (q.status === "Pending" || !q.status) return true;
-    if (q.status === "Approved") {
-      const qClient = (q.clientName || "").trim().toLowerCase();
-      const qProject = (q.projectTitle || "").trim().toLowerCase();
-      const hasSite = sites.some(s => {
-        const sClient = (s.clientName || "").trim().toLowerCase();
-        const sName = (s.name || "").trim().toLowerCase();
-        if (sClient && sClient === qClient) {
-          if (qProject && (sName.includes(qProject) || qProject.includes(sName))) return true;
-          if (Number(s.budget) === Number(q.total) && Number(q.total) > 0) return true;
-        }
-        return false;
-      });
-      return !hasSite;
-    }
-    return false;
+  const approvedQuotes    = quotations.filter(q => (q.status || "").trim().toLowerCase() === "approved").length;
+  const pendingQuotes     = quotations.filter(q => {
+    const s = (q.status || "Pending").trim().toLowerCase();
+    return s === "pending" || s === "draft" || s === "negotiating";
   }).length;
   const inProcessSites    = sites.filter(s => s.status === "In Progress" || s.status === "Currently working" || s.status === "Active").length;
   const totalAdvances     = employees.reduce((s,e) => s+(Number(e.advanceBalance)||0), 0);
@@ -268,7 +254,7 @@ const Dashboard = () => {
             label="Work Order Revenue" 
             value={fmt(totalWOValue)} 
             icon={IndianRupee} 
-            color={accentMain}
+            color="#C9A227"
             badge="Revenue"
             sub={`${sites.length} total contracted projects`}
             onClick={() => navigate("/sites")}
@@ -277,7 +263,7 @@ const Dashboard = () => {
             label="In-Process Sites" 
             value={inProcessSites} 
             icon={HardHat} 
-            color={d ? "#8b5cf6" : "#3D5A8A"}
+            color={d ? "#38bdf8" : "#2563EB"}
             badge="In Progress"
             sub="Active site execution"
             onClick={() => navigate("/sites")}
@@ -295,25 +281,34 @@ const Dashboard = () => {
             label="Pending Work Orders" 
             value={pendingWO} 
             icon={ClipboardCheck} 
-            color={d ? "#38bdf8" : "#0ea5e9"}
+            color={d ? "#a855f7" : "#7C3AED"}
             badge="Pre-Site"
             sub="Pre-construction kickoff"
             onClick={() => navigate("/sites")}
           />
           <KpiCard 
+            label="Approved Quotations" 
+            value={approvedQuotes} 
+            icon={FileCheck} 
+            color={d ? "#10b981" : "#10B981"}
+            badge="Approved"
+            sub={`${quotations.length > 0 ? Math.round((approvedQuotes / quotations.length) * 100) : 0}% of all quotations`}
+            onClick={() => navigate("/invoices", { state: { activeTab: "quotations" } })}
+          />
+          <KpiCard 
             label="Pending Quotations" 
             value={pendingQuotes} 
             icon={FileText} 
-            color={d ? "#fb923c" : "#9E8B6E"}
+            color={d ? "#f59e0b" : "#D97706"}
             badge="Quotations"
             sub="Awaiting client decision"
-            onClick={() => navigate("/invoices")}
+            onClick={() => navigate("/invoices", { state: { activeTab: "quotations" } })}
           />
           <KpiCard 
             label="Active Leads" 
             value={totalLeadsCount} 
             icon={Users} 
-            color={d ? "#a855f7" : "#b45309"}
+            color={d ? "#38bdf8" : "#0284C7"}
             badge="Pipeline"
             sub={`${activeLeadsCount} active in sales pipeline`}
             onClick={() => navigate("/crm/leads")}
@@ -322,7 +317,7 @@ const Dashboard = () => {
             label="Verified Customers" 
             value={customersCount} 
             icon={Award} 
-            color={d ? "#10b981" : "#059669"}
+            color={d ? "#ec4899" : "#C9A227"}
             badge="Customers"
             sub="Active verified clients"
             onClick={() => navigate("/crm/customers")}
@@ -339,7 +334,7 @@ const Dashboard = () => {
                 <h3 className={`font-black text-base ${d?"text-white":"text-[var(--text-primary)]"}`}>Project Status & Work Orders</h3>
                 <p className={`${t.muted} mt-0.5 text-xs font-medium`}>Active sites and operational delivery breakdown</p>
               </div>
-              <span className="text-xs font-black px-3 py-1 rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20">
+              <span className="text-xs font-black px-3 py-1 rounded-full bg-[var(--accent-soft)] text-amber-800 dark:text-[var(--accent)] border border-[var(--accent)]/30">
                 {sites.length} Total Projects
               </span>
             </div>
@@ -404,11 +399,11 @@ const Dashboard = () => {
           <motion.div variants={fade} className="xl:col-span-5 flex flex-col gap-3">
             <h3 className={`font-black text-base ${d?"text-white":"text-[var(--text-primary)]"}`}>Quick Actions</h3>
             {[
-              { label:"New Quotation",  sub:"Create & customize quotation", path:"/quotations", color: d?"#8b5cf6":"#9E8B6E" },
-              { label:"Work Orders",    sub:"Manage projects & sites",      path:"/sites",      color: d?"#fb923c":"#6366f1" },
+              { label:"New Quotation",  sub:"Create & customize quotation", path:"/quotations", color: "#C9A227" },
+              { label:"Work Orders",    sub:"Manage projects & sites",      path:"/sites",      color: d?"#38bdf8":"#2563EB" },
               { label:"Payment Receipts",sub:"View & print receipts",       path:"/receipts",   color: incomeColor },
-              { label:"Leads & Customers",sub:"Manage CRM pipeline",        path:"/crm/leads",  color: d?"#a855f7":"#b45309" },
-              { label:"Quotation History",sub:"Review quotations & status", path:"/invoices",   color: d?"#38bdf8":"#0ea5e9" },
+              { label:"Leads & Customers",sub:"Manage CRM pipeline",        path:"/crm/leads",  color: d?"#a855f7":"#7C3AED" },
+              { label:"Quotation History",sub:"Review quotations & status", path:"/invoices",   color: d?"#f59e0b":"#D97706" },
             ].map((btn,i) => (
               <motion.button key={i} variants={fade} whileHover={{scale:1.02}} whileTap={{scale:0.98}}
                 onClick={()=>navigate(btn.path)}

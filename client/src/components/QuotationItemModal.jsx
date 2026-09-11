@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Check, Settings, Tag, Layers, FileText } from "lucide-react";
+import { X, Check, Settings, Tag, Layers, FileText, Plus } from "lucide-react";
 import SectionInput from "./SectionInput";
 import ComboboxSelect from "./ComboboxSelect";
 
@@ -118,14 +118,13 @@ export default function QuotationItemModal({
     setDiscountType(newType);
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const constructItem = () => {
     if (!product && !specification) {
       alert("Please enter or select at least a Product or Specification.");
-      return;
+      return null;
     }
 
-    onSave({
+    return {
       id: editingItem ? editingItem.id : Date.now() + Math.random(),
       code: editingItem?.code || "",
       section: section.trim(),
@@ -138,8 +137,29 @@ export default function QuotationItemModal({
       discountPercent,
       discountPrice,
       amount: itemAmount
-    });
+    };
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const item = constructItem();
+    if (!item) return;
+    onSave(item);
     onClose();
+  };
+
+  const handleSaveAndAddAnother = (e) => {
+    e.preventDefault();
+    const item = constructItem();
+    if (!item) return;
+    onSave(item);
+    // Keep section/area for quick continuous adding in the same area, but reset product inputs
+    setProduct("");
+    setSpecification("");
+    setQty("");
+    setRate("");
+    setDiscountPercent("");
+    setDiscountPrice("");
   };
 
   return (
@@ -342,7 +362,7 @@ export default function QuotationItemModal({
           </div>
 
           {/* Modal Actions */}
-          <div className="pt-3 border-t border-[var(--border-color)] flex justify-end gap-3">
+          <div className="pt-3 border-t border-[var(--border-color)] flex flex-wrap justify-end gap-2.5">
             <button
               type="button"
               onClick={onClose}
@@ -350,6 +370,16 @@ export default function QuotationItemModal({
             >
               Cancel
             </button>
+            {!editingItem && (
+              <button
+                type="button"
+                onClick={handleSaveAndAddAnother}
+                className="px-5 py-2.5 rounded-xl text-sm font-bold text-amber-800 dark:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 active:scale-95 transition flex items-center gap-1.5"
+                title="Add this item and stay in modal to add another"
+              >
+                <Plus size={15} strokeWidth={2.5} /> Save & Add Another
+              </button>
+            )}
             <button
               type="submit"
               className="px-7 py-2.5 rounded-xl text-sm font-black text-white bg-[#C9A227] hover:bg-[#B8911F] active:scale-95 transition shadow-lg shadow-amber-900/20 flex items-center gap-2"

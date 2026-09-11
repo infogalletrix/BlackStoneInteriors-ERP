@@ -88,9 +88,9 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
           <div className="flex justify-between items-center gap-2">
             <span className="text-slate-400 font-bold uppercase text-[8px]">Type:</span>
             <span className={`px-1.5 py-0.5 rounded-full text-[7.5px] font-extrabold uppercase ${
-              isGST ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-700"
+              isGST ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-900 border border-amber-300/80"
             }`}>
-              {isGST ? "GST Billing" : "Non-GST"}
+              {isGST ? "GST Billing" : "GST - Extra"}
             </span>
           </div>
           {totalPages > 1 && (
@@ -406,10 +406,10 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       <div className="bg-[#0b1e36] text-white p-2.5 flex justify-between items-center">
         <div>
           <div className="text-[7.5px] uppercase tracking-widest text-slate-300 font-bold">
-            {isGST ? "ESTIMATED TOTAL (INCL. GST)" : "ESTIMATED TOTAL"}
+            {isGST ? "ESTIMATED TOTAL (INCL. GST)" : "ESTIMATED TOTAL (GST - EXTRA)"}
           </div>
           <div className="text-[7px] text-teal-300 font-medium">
-            {isGST ? `Inclusive of ${cgstRate + sgstRate}% GST` : "Zero Tax Non-GST Quote"}
+            {isGST ? `Inclusive of ${cgstRate + sgstRate}% GST` : "GST - Extra as Applicable"}
           </div>
         </div>
         <div className="text-right">

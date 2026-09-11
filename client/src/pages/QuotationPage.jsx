@@ -303,6 +303,12 @@ export default function QuotationPage() {
 
   const componentRef = useRef();
   const descRef = useRef();
+  const addItemButtonRef = useRef();
+  const bottomActionRef = useRef();
+  const tableContainerRef = useRef();
+  const shouldScrollToBottomRef = useRef(false);
+  const [newlyAddedItemId, setNewlyAddedItemId] = useState(null);
+
   const handlePrint = useReactToPrint({ contentRef: componentRef });
 
   useEffect(() => {
@@ -362,6 +368,7 @@ export default function QuotationPage() {
   };
 
   const handleSaveItem = (savedItem) => {
+    const isNew = !items.some(i => i.id === savedItem.id);
     setItems(prev => {
       const exists = prev.some(i => i.id === savedItem.id);
       if (exists) {
@@ -371,7 +378,38 @@ export default function QuotationPage() {
       }
     });
     persistEnteredSections([savedItem]);
+
+    if (isNew) {
+      shouldScrollToBottomRef.current = true;
+      setNewlyAddedItemId(savedItem.id);
+      setTimeout(() => {
+        setNewlyAddedItemId(null);
+      }, 2500);
+    }
   };
+
+  // Automatically scroll down to the bottom / Add Item button when a new product is added
+  useEffect(() => {
+    if (shouldScrollToBottomRef.current) {
+      shouldScrollToBottomRef.current = false;
+      const timer = setTimeout(() => {
+        if (tableContainerRef.current) {
+          tableContainerRef.current.scrollTo({
+            top: tableContainerRef.current.scrollHeight,
+            behavior: "smooth"
+          });
+        }
+        if (addItemButtonRef.current) {
+          addItemButtonRef.current.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+            inline: "nearest"
+          });
+        }
+      }, 80);
+      return () => clearTimeout(timer);
+    }
+  }, [items]);
 
   const removeItem = (id) => {
     showDialog({
@@ -722,8 +760,56 @@ export default function QuotationPage() {
       </div>
 
 
+      {/* ── ITEMS HEADER / TOP TOOLBAR ── */}
+      <div className="px-4 py-2 bg-slate-50/90 dark:bg-slate-900/90 border-b border-[var(--border-color)] flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200">
+            Quotation Items ({items.length})
+          </span>
+          {items.length > 0 && (
+            <span className="text-[11px] font-bold text-amber-700 dark:text-[var(--accent)] bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+              ₹{formatINR(subTotal)}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {items.length > 8 && (
+            <button
+              type="button"
+              onClick={() => {
+                if (tableContainerRef.current) {
+                  tableContainerRef.current.scrollTo({
+                    top: tableContainerRef.current.scrollHeight,
+                    behavior: "smooth"
+                  });
+                }
+                addItemButtonRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+              }}
+              className="hidden sm:flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-amber-700 dark:hover:text-amber-400 hover:bg-slate-200/70 dark:hover:bg-slate-800 rounded-lg transition"
+              title="Scroll to bottom of items"
+            >
+              ↓ Scroll to Bottom
+            </button>
+          )}
+          <button 
+            type="button"
+            onClick={openAddItemModal}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#C9A227] hover:bg-[#B8911F] text-white rounded-lg font-bold text-xs shadow-sm hover:shadow transition-all"
+          >
+            <Plus size={14} strokeWidth={2.5} /> Add Item
+          </button>
+          <button 
+            type="button"
+            onClick={() => openOptionsModal("products")}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg font-semibold text-xs border border-[var(--border-color)] hover:bg-slate-100 dark:hover:bg-slate-700 transition"
+          >
+            <Settings size={13} /> Options
+          </button>
+        </div>
+      </div>
+
       {/* ── MAIN TABLE ── */}
-      <div className="flex-grow bg-white dark:bg-slate-950 overflow-x-auto overflow-y-auto">
+      <div ref={tableContainerRef} className="flex-grow bg-white dark:bg-slate-950 overflow-x-auto overflow-y-auto">
         <table className="w-full text-sm min-w-[1050px] border-collapse">
           <thead className="border-b-2 border-slate-200 dark:border-slate-800 sticky top-0 bg-white dark:bg-slate-900 z-10 shadow-sm">
             <tr className="uppercase text-slate-900 dark:text-white font-black text-xs tracking-wider">
@@ -741,7 +827,14 @@ export default function QuotationPage() {
           </thead>
           <tbody className="divide-y divide-[var(--border-color)]">
             {items.map((item, idx) => (
-              <tr key={item.id} className="themed-row bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+              <tr 
+                key={item.id} 
+                className={`themed-row transition-colors duration-700 ${
+                  newlyAddedItemId === item.id 
+                    ? "bg-amber-100/70 dark:bg-amber-500/25 ring-2 ring-inset ring-amber-500/60" 
+                    : "bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-white/5"
+                }`}
+              >
                 <td className="px-3.5 py-3.5 text-center font-bold text-muted text-sm">
                   {idx + 1}
                 </td>
@@ -821,9 +914,10 @@ export default function QuotationPage() {
         </table>
 
         {/* Action button below table */}
-        <div className="p-4 border-t border-[var(--border-color)] bg-white dark:bg-slate-900 flex flex-wrap items-center justify-between gap-4">
+        <div ref={bottomActionRef} className="p-4 border-t border-[var(--border-color)] bg-white dark:bg-slate-900 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <button 
+              ref={addItemButtonRef}
               onClick={openAddItemModal}
               className="flex items-center gap-2 px-6 py-2.5 bg-[#C9A227] hover:bg-[#B8911F] text-white rounded-xl font-bold text-sm shadow-md hover:shadow-lg shadow-amber-900/15 transition-all"
             >
