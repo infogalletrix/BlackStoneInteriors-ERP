@@ -657,10 +657,6 @@ export default function CatalogPage() {
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-[#1e293b] to-slate-900 border border-slate-800 p-6 shadow-xl text-white">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-400 text-xs font-bold uppercase tracking-wider">
-              <Sparkles size={13} />
-              Hierarchical Catalog & Unit Rates
-            </div>
             <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white flex items-center gap-3">
               <Package className="text-[#C9A227]" size={28} />
               Master Catalog Management
