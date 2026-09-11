@@ -455,76 +455,48 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       _globalIndex: index + 1,
     }));
 
-    // Group items by section to preserve cohesive section groups
-    const sections = [];
-    taggedItems.forEach((item) => {
-      const secName = item.section || "General";
-      const lastSec = sections[sections.length - 1];
-      if (lastSec && lastSec.name === secName) {
-        lastSec.items.push(item);
-      } else {
-        sections.push({ name: secName, items: [item] });
-      }
-    });
-
-    // Calculate estimated item area height:
-    // Each section has a header bar (~22px) + table thead (~18px) + spacing (~8px) = ~48px.
-    // Each item row is ~20px.
-    const estimatedItemsHeight = sections.reduce((acc, s) => acc + 48 + (s.items.length * 20), 0);
-
-    // If all items fit within 620px (comfortably holds up to 18 items with summary cards):
-    // Render on ONE SINGLE COMPLETE PAGE! This eliminates all awkward blank space.
-    if (estimatedItemsHeight <= 620 && taggedItems.length <= 18) {
+    // If 8 or fewer items, everything fits cleanly on 1 page with all summary cards and footer fully visible
+    if (taggedItems.length <= 8) {
       return [{ pageNum: 1, totalPages: 1, items: taggedItems, isFirst: true, isLast: true }];
     }
 
-    // Otherwise, if 19+ items, distribute across multiple pages gracefully:
-    // Page 1 holds up to 14-16 items so Page 1 is NEVER half-empty.
+    // Multi-page layout:
+    // Page 1 target is 11-13 items (fills ~85% of Page 1 so there is NO large blank space).
+    // Last page holds the remaining items (usually 4 to 8 items) + all summary cards + footer.
     const pages = [];
-    let currentPage = [];
+    let remainingItems = [...taggedItems];
     let isFirst = true;
 
-    for (let s = 0; s < sections.length; s++) {
-      const sec = sections[s];
-      let remaining = [...sec.items];
+    while (remainingItems.length > 0) {
+      // If remaining items can fit on the last page alongside summary cards (<= 7 items):
+      if (!isFirst && remainingItems.length <= 7) {
+        pages.push(remainingItems);
+        remainingItems = [];
+        break;
+      }
 
-      while (remaining.length > 0) {
-        const pageLimit = isFirst ? 14 : 16;
-        const spaceLeft = pageLimit - currentPage.length;
-
-        if (remaining.length <= spaceLeft) {
-          currentPage.push(...remaining);
-          remaining = [];
+      // Determine how many items to place on this page:
+      let take;
+      if (isFirst) {
+        if (taggedItems.length <= 13) {
+          // Balance across 2 pages evenly, e.g. 10 items -> 6 on P1, 4 on P2
+          take = Math.ceil(taggedItems.length / 2);
         } else {
-          if (currentPage.length >= 11) {
-            pages.push(currentPage);
-            currentPage = [];
-            isFirst = false;
-          } else {
-            const take = Math.max(1, spaceLeft);
-            currentPage.push(...remaining.slice(0, take));
-            remaining = remaining.slice(take);
-            if (currentPage.length >= pageLimit) {
-              pages.push(currentPage);
-              currentPage = [];
-              isFirst = false;
-            }
-          }
+          // If 14+ items (like 17 items), fill Page 1 with 12 items
+          take = 12;
+        }
+        isFirst = false;
+      } else {
+        // Middle or second page:
+        if (remainingItems.length > 7) {
+          take = Math.min(14, remainingItems.length - 6);
+        } else {
+          take = remainingItems.length;
         }
       }
-    }
 
-    if (currentPage.length > 0) {
-      pages.push(currentPage);
-    }
-
-    // Ensure last page has space for summary cards (<= 11 items on last page)
-    if (pages.length > 1) {
-      const lastIdx = pages.length - 1;
-      if (pages[lastIdx].length > 11) {
-        const excess = pages[lastIdx].splice(0, pages[lastIdx].length - 9);
-        pages.splice(lastIdx, 0, excess);
-      }
+      pages.push(remainingItems.slice(0, take));
+      remainingItems = remainingItems.slice(take);
     }
 
     const totalPages = pages.length;
@@ -565,7 +537,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
             display: flex !important;
             flex-direction: column !important;
             justify-content: space-between !important;
-            padding: 8mm 12mm 6mm 12mm !important;
+            padding: 12mm 14mm 10mm 14mm !important;
             box-sizing: border-box !important;
             position: relative !important;
             overflow: hidden !important;
@@ -581,7 +553,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
             min-height: 297mm;
             height: 297mm;
             box-sizing: border-box;
-            padding: 8mm 12mm 6mm 12mm;
+            padding: 12mm 14mm 10mm 14mm;
             margin: 0 auto 24px auto;
             box-shadow: 0 4px 25px rgba(0,0,0,0.12);
             position: relative;
