@@ -9,7 +9,6 @@ import {
   Check,
   X,
   Search,
-  RotateCcw,
   Sparkles,
   FolderTree,
   DollarSign,
@@ -606,37 +605,6 @@ export default function CatalogPage() {
     persistToServer(updated);
   };
 
-  // ── RESET DEFAULTS ───────────────────────────────────────────
-  const handleResetDefaults = () => {
-    showDialog({
-      title: "Reset Catalog to Defaults",
-      message: "This will reset all products, categories, specifications, and unit prices back to company defaults. Are you sure?",
-      type: "confirm",
-      onConfirm: async () => {
-        setIsSaving(true);
-        try {
-          const res = await fetch("/api/catalog/reset", { method: "POST" });
-          if (res.ok) {
-            const data = await res.json();
-            if (data.data?.tree) {
-              setCatalogTree(data.data.tree);
-              setSelectedProductId(data.data.tree[0]?.id || "");
-              setSelectedCategoryId(data.data.tree[0]?.categories[0]?.id || "");
-            }
-          } else {
-            setCatalogTree(INITIAL_DEFAULT_TREE);
-            setSelectedProductId(INITIAL_DEFAULT_TREE[0].id);
-            setSelectedCategoryId(INITIAL_DEFAULT_TREE[0].categories[0].id);
-          }
-        } catch {
-          setCatalogTree(INITIAL_DEFAULT_TREE);
-        } finally {
-          setIsSaving(false);
-        }
-      }
-    });
-  };
-
   // Filtered products based on search
   const filteredProducts = useMemo(() => {
     if (!searchQuery.trim()) return catalogTree;
@@ -672,14 +640,6 @@ export default function CatalogPage() {
                 <CheckCircle2 size={14} /> {saveSuccessMsg}
               </span>
             )}
-            <button
-              onClick={handleResetDefaults}
-              disabled={isSaving}
-              className="flex items-center gap-2 px-3.5 py-2 text-xs font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition"
-              title="Reset to initial default catalog"
-            >
-              <RotateCcw size={14} /> Reset Defaults
-            </button>
           </div>
         </div>
       </div>
