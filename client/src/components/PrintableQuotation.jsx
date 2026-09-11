@@ -455,11 +455,6 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       _globalIndex: index + 1,
     }));
 
-    // If 6 or fewer items, everything fits cleanly on 1 page with all summary cards
-    if (taggedItems.length <= 6) {
-      return [{ pageNum: 1, totalPages: 1, items: taggedItems, isFirst: true, isLast: true }];
-    }
-
     // Group items by section to preserve cohesive section groups
     const sections = [];
     taggedItems.forEach((item) => {
@@ -472,6 +467,19 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       }
     });
 
+    // Calculate estimated item area height:
+    // Each section has a header bar (~22px) + table thead (~18px) + spacing (~8px) = ~48px.
+    // Each item row is ~20px.
+    const estimatedItemsHeight = sections.reduce((acc, s) => acc + 48 + (s.items.length * 20), 0);
+
+    // If all items fit within 620px (comfortably holds up to 18 items with summary cards):
+    // Render on ONE SINGLE COMPLETE PAGE! This eliminates all awkward blank space.
+    if (estimatedItemsHeight <= 620 && taggedItems.length <= 18) {
+      return [{ pageNum: 1, totalPages: 1, items: taggedItems, isFirst: true, isLast: true }];
+    }
+
+    // Otherwise, if 19+ items, distribute across multiple pages gracefully:
+    // Page 1 holds up to 14-16 items so Page 1 is NEVER half-empty.
     const pages = [];
     let currentPage = [];
     let isFirst = true;
@@ -481,18 +489,14 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       let remaining = [...sec.items];
 
       while (remaining.length > 0) {
-        // Page 1 has Header + Client Details box: comfortable capacity is ~11 items.
-        // Subsequent pages can comfortably hold ~14 items.
-        const pageLimit = isFirst ? 11 : 14;
+        const pageLimit = isFirst ? 14 : 16;
         const spaceLeft = pageLimit - currentPage.length;
 
         if (remaining.length <= spaceLeft) {
           currentPage.push(...remaining);
           remaining = [];
         } else {
-          // If current page already has a good amount of items (>= 6) and next section doesn't fit,
-          // push current page and start fresh rather than awkwardly splitting a small section
-          if (currentPage.length >= 6) {
+          if (currentPage.length >= 11) {
             pages.push(currentPage);
             currentPage = [];
             isFirst = false;
@@ -514,16 +518,11 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       pages.push(currentPage);
     }
 
-    // Balance check: if there is only 1 page resulting but items > 6, split evenly
-    if (pages.length === 1 && taggedItems.length > 6) {
-      const half = Math.ceil(taggedItems.length / 2);
-      pages[0] = taggedItems.slice(0, half);
-      pages.push(taggedItems.slice(half));
-    } else if (pages.length > 1) {
-      // If the last page has > 9 items alongside summary cards, move excess items to an earlier page
+    // Ensure last page has space for summary cards (<= 11 items on last page)
+    if (pages.length > 1) {
       const lastIdx = pages.length - 1;
-      if (pages[lastIdx].length > 9) {
-        const excess = pages[lastIdx].splice(0, pages[lastIdx].length - 8);
+      if (pages[lastIdx].length > 11) {
+        const excess = pages[lastIdx].splice(0, pages[lastIdx].length - 9);
         pages.splice(lastIdx, 0, excess);
       }
     }
@@ -566,7 +565,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
             display: flex !important;
             flex-direction: column !important;
             justify-content: space-between !important;
-            padding: 12mm 14mm 8mm 14mm !important;
+            padding: 8mm 12mm 6mm 12mm !important;
             box-sizing: border-box !important;
             position: relative !important;
             overflow: hidden !important;
@@ -582,7 +581,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
             min-height: 297mm;
             height: 297mm;
             box-sizing: border-box;
-            padding: 12mm 14mm 8mm 14mm;
+            padding: 8mm 12mm 6mm 12mm;
             margin: 0 auto 24px auto;
             box-shadow: 0 4px 25px rgba(0,0,0,0.12);
             position: relative;
@@ -607,32 +606,32 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
             {page.isFirst && renderClientProjectDetails()}
 
             {/* Items Table for this page */}
-            <div className={page.isFirst ? "" : "mt-3.5"}>
+            <div className={page.isFirst ? "" : "mt-2.5"}>
               {renderItemsTable(page.items)}
             </div>
           </div>
 
           {/* Bottom Section */}
-          <div className="mt-auto pt-2">
+          <div className="mt-auto pt-1.5">
             {/* If NOT the last page, show continuation notice */}
             {!page.isLast && (
-              <div className="text-right text-[8px] text-slate-400 font-bold uppercase tracking-wider mb-2">
+              <div className="text-right text-[8px] text-slate-400 font-bold uppercase tracking-wider mb-1.5">
                 Quotation Items & Financial Summary Continue on Page {page.pageNum + 1} →
               </div>
             )}
 
             {/* If THIS IS the last page, render all summary cards */}
             {page.isLast && (
-              <div className="grid grid-cols-2 gap-3.5 items-start mb-2.5">
+              <div className="grid grid-cols-2 gap-2.5 items-start mb-1.5">
                 {/* Left Column: Bank Details, Terms, Digital Approval */}
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {renderBankDetailsCard()}
                   {renderTermsConditionsCard()}
                   {renderDigitalApprovalCard()}
                 </div>
 
                 {/* Right Column: Financial Breakdown, Payment Plan */}
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {renderFinancialBreakdownCard()}
                   {renderPaymentPlanCard()}
                 </div>
