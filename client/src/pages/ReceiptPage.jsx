@@ -18,7 +18,8 @@ import {
   Calendar,
   IndianRupee,
   CreditCard,
-  Plus
+  Plus,
+  ArrowUpDown
 } from "lucide-react";
 import { useDialog } from "../contexts/DialogContext";
 import NotificationWidget from "../components/NotificationWidget";
@@ -44,6 +45,7 @@ export default function ReceiptPage() {
 
   const [receipts, setReceipts] = useState([]);
   const [selectedReceipts, setSelectedReceipts] = useState([]);
+  const [sortOrder, setSortOrder] = useState("desc"); // 'desc' (Recent transactions on top by default) | 'asc'
 
   const fetchNextNumber = async () => {
     try {
@@ -368,23 +370,34 @@ export default function ReceiptPage() {
 
   const isAllWorkOrders = !selectedSiteId || selectedSiteId === "all";
 
-  const filteredReceipts = receipts.filter((r) => {
-    const matchesFilter = historyFilter === "All" || r.status === historyFilter;
-    const matchesSite =
-      isAllWorkOrders || r.siteId === selectedSiteId?.toString() || r.siteId === selectedSiteId;
-    const q = historySearchTerm.toLowerCase();
-    const matchesSearch =
-      !q ||
-      r.receiptNo?.toLowerCase().includes(q) ||
-      r.clientName?.toLowerCase().includes(q) ||
-      r.organizationName?.toLowerCase().includes(q) ||
-      r.category?.toLowerCase().includes(q) ||
-      r.description?.toLowerCase().includes(q) ||
-      (r.siteId && `wo: ${r.siteId}`.includes(q)) ||
-      (r.siteId && `wo ${r.siteId}`.includes(q));
+  const filteredReceipts = receipts
+    .filter((r) => {
+      const matchesFilter = historyFilter === "All" || r.status === historyFilter;
+      const matchesSite =
+        isAllWorkOrders || r.siteId === selectedSiteId?.toString() || r.siteId === selectedSiteId;
+      const q = historySearchTerm.toLowerCase();
+      const matchesSearch =
+        !q ||
+        r.receiptNo?.toLowerCase().includes(q) ||
+        r.clientName?.toLowerCase().includes(q) ||
+        r.organizationName?.toLowerCase().includes(q) ||
+        r.category?.toLowerCase().includes(q) ||
+        r.description?.toLowerCase().includes(q) ||
+        (r.siteId && `wo: ${r.siteId}`.includes(q)) ||
+        (r.siteId && `wo ${r.siteId}`.includes(q));
 
-    return matchesFilter && matchesSite && matchesSearch;
-  });
+      return matchesFilter && matchesSite && matchesSearch;
+    })
+    .sort((a, b) => {
+      const timeA = a.date ? new Date(a.date).getTime() : 0;
+      const timeB = b.date ? new Date(b.date).getTime() : 0;
+      if (timeA !== timeB) {
+        return sortOrder === "desc" ? timeB - timeA : timeA - timeB;
+      }
+      const idA = Number(a.id) || 0;
+      const idB = Number(b.id) || 0;
+      return sortOrder === "desc" ? idB - idA : idA - idB;
+    });
 
   const totalCollectedAmount = receipts.reduce(
     (sum, r) => sum + parseFloat(r.amountPaid || r.totalAmount || 0),
@@ -474,6 +487,7 @@ export default function ReceiptPage() {
                   (s.organizationName && s.organizationName.toLowerCase().includes(searchTerm.toLowerCase()))
                 );
               })
+              .sort((a, b) => (Number(b.id) || 0) - (Number(a.id) || 0))
               .map((site) => {
                 const countForSite = receipts.filter(
                   (r) => r.siteId === site.id?.toString() || r.siteId === site.id
@@ -601,15 +615,30 @@ export default function ReceiptPage() {
                     )}
                   </div>
 
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={14} />
-                    <input
-                      type="text"
-                      placeholder="Search receipt #, client, WO..."
-                      value={historySearchTerm}
-                      onChange={(e) => setHistorySearchTerm(e.target.value)}
-                      className="w-full sm:w-56 lg:w-64 pl-8 pr-3 py-1.5 rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-800 text-xs font-bold outline-none transition-all"
-                    />
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <div className="relative flex-1 sm:flex-initial">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={14} />
+                      <input
+                        type="text"
+                        placeholder="Search receipt #, client, WO..."
+                        value={historySearchTerm}
+                        onChange={(e) => setHistorySearchTerm(e.target.value)}
+                        className="w-full sm:w-56 lg:w-64 pl-8 pr-3 py-1.5 rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-800 text-xs font-bold outline-none transition-all"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"))}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm shrink-0 ${
+                        sortOrder === "desc"
+                          ? "bg-[var(--accent)]/10 border-[var(--accent)]/30 text-[var(--accent)] hover:bg-[var(--accent)]/20"
+                          : "bg-indigo-500/10 border-indigo-500/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20"
+                      }`}
+                      title={`Sort Receipts: Currently ${sortOrder === "desc" ? "Recent Transactions First" : "Oldest Transactions First"}. Click to switch.`}
+                    >
+                      <ArrowUpDown size={14} />
+                      <span>{sortOrder === "desc" ? "Recent First" : "Oldest First"}</span>
+                    </button>
                   </div>
                 </div>
 
@@ -970,15 +999,30 @@ export default function ReceiptPage() {
                         </button>
                       )}
                     </div>
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={14} />
-                      <input
-                        type="text"
-                        placeholder="Search Receipts..."
-                        value={historySearchTerm}
-                        onChange={(e) => setHistorySearchTerm(e.target.value)}
-                        className="w-full sm:w-48 lg:w-64 pl-8 pr-3 py-1.5 rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-800 text-xs font-bold outline-none transition-all"
-                      />
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                      <div className="relative flex-1 sm:flex-initial">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={14} />
+                        <input
+                          type="text"
+                          placeholder="Search Receipts..."
+                          value={historySearchTerm}
+                          onChange={(e) => setHistorySearchTerm(e.target.value)}
+                          className="w-full sm:w-48 lg:w-64 pl-8 pr-3 py-1.5 rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-800 text-xs font-bold outline-none transition-all"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"))}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm shrink-0 ${
+                          sortOrder === "desc"
+                            ? "bg-[var(--accent)]/10 border-[var(--accent)]/30 text-[var(--accent)] hover:bg-[var(--accent)]/20"
+                            : "bg-indigo-500/10 border-indigo-500/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20"
+                        }`}
+                        title={`Sort Receipts: Currently ${sortOrder === "desc" ? "Recent Transactions First" : "Oldest Transactions First"}. Click to switch.`}
+                      >
+                        <ArrowUpDown size={14} />
+                        <span>{sortOrder === "desc" ? "Recent First" : "Oldest First"}</span>
+                      </button>
                     </div>
                   </div>
                   <div className="flex-1 overflow-y-auto custom-scrollbar bg-white dark:bg-slate-900">

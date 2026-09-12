@@ -141,20 +141,27 @@ export default function HistoryPage() {
     return q.clientName?.toLowerCase().includes(s) || q.quoteNo?.toLowerCase().includes(s);
   });
 
-  const filteredReceipts = receipts.filter((r) => {
-    const s = searchTerm.toLowerCase();
-    const matchSearch =
-      !s ||
-      r.clientName?.toLowerCase().includes(s) ||
-      r.organizationName?.toLowerCase().includes(s) ||
-      r.receiptNo?.toLowerCase().includes(s) ||
-      r.description?.toLowerCase().includes(s) ||
-      (r.siteId && `wo: ${r.siteId}`.includes(s)) ||
-      (r.siteId && `wo ${r.siteId}`.includes(s));
+  const filteredReceipts = receipts
+    .filter((r) => {
+      const s = searchTerm.toLowerCase();
+      const matchSearch =
+        !s ||
+        r.clientName?.toLowerCase().includes(s) ||
+        r.organizationName?.toLowerCase().includes(s) ||
+        r.receiptNo?.toLowerCase().includes(s) ||
+        r.description?.toLowerCase().includes(s) ||
+        (r.siteId && `wo: ${r.siteId}`.includes(s)) ||
+        (r.siteId && `wo ${r.siteId}`.includes(s));
 
-    const matchFilter = receiptsFilter === "All" || r.status === receiptsFilter;
-    return matchSearch && matchFilter;
-  });
+      const matchFilter = receiptsFilter === "All" || r.status === receiptsFilter;
+      return matchSearch && matchFilter;
+    })
+    .sort((a, b) => {
+      const timeA = a.date ? new Date(a.date).getTime() : 0;
+      const timeB = b.date ? new Date(b.date).getTime() : 0;
+      if (timeA !== timeB) return timeB - timeA;
+      return (Number(b.id) || 0) - (Number(a.id) || 0);
+    });
 
   const totalReceiptsAmount = receipts.reduce(
     (sum, r) => sum + parseFloat(r.amountPaid || r.totalAmount || 0),
