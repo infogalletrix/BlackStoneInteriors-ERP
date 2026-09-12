@@ -849,27 +849,6 @@ const CRMPage = () => {
                   </button>
                 </div>
 
-                {/* Company Filter Dropdown (Architect / Firm) */}
-                {allCompanies.length > 0 && (
-                  <select
-                    value={companyFilter}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setCompanyFilter(val);
-                      if (val !== "all") setClientTypeFilter("B2B");
-                    }}
-                    className="py-1.5 px-3 rounded-xl border border-[var(--border-color)] themed-input text-xs font-bold focus:ring-2 focus:ring-purple-500 outline-none max-w-[210px] truncate [&>option]:bg-[var(--modal-bg)]"
-                  >
-                    <option value="all">🏢 All Companies ({allCompanies.length})</option>
-                    {allCompanies.map((cName) => {
-                      const cCount = contacts.filter(c => c.organizationName?.trim() === cName).length;
-                      return (
-                        <option key={cName} value={cName}>{cName} ({cCount} {cCount === 1 ? 'client' : 'clients'})</option>
-                      );
-                    })}
-                  </select>
-                )}
-
                 {activeTab === "leads" && (
                   <div className="flex bg-[var(--bg-surface)] p-1 rounded-xl border border-[var(--border-color)] text-xs font-bold shadow-inner">
                     <button
@@ -946,9 +925,9 @@ const CRMPage = () => {
                 <button
                   type="button"
                   onClick={() => setCompanyFilter("all")}
-                  className="px-3 py-1.5 rounded-lg text-xs font-bold text-muted hover:text-themed bg-white/70 dark:bg-slate-900/70 hover:bg-white dark:hover:bg-slate-900 border border-[var(--border-color)] transition shadow-sm"
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold text-muted hover:text-themed bg-white/70 dark:bg-slate-900/70 hover:bg-white dark:hover:bg-slate-900 border border-[var(--border-color)] transition shadow-sm flex items-center gap-1"
                 >
-                  Show All Companies
+                  Clear Filter
                 </button>
               </div>
             )}
@@ -983,7 +962,6 @@ const CRMPage = () => {
                             {c.status === 'Not Interested' && <span className="px-2 py-0.5 rounded text-[8px] uppercase font-black tracking-widest text-slate-500 bg-slate-500/10 border border-slate-500/20 align-middle">Not Interested</span>}
                           </div>
                           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                            <span className="text-[10px] font-semibold uppercase tracking-wider" style={{color: 'var(--text-muted)'}}>ID: {c.id}</span>
                             {isB2B ? (
                               <button
                                 type="button"
@@ -1119,7 +1097,6 @@ const CRMPage = () => {
                           {c.status === 'Not Interested' && <span className="px-2 py-0.5 rounded text-[8px] uppercase font-black tracking-widest text-slate-500 bg-slate-500/10 border border-slate-500/20 w-max">Not Interested</span>}
                         </div>
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <span className="text-[10px] font-semibold uppercase tracking-wider" style={{color: 'var(--text-muted)'}}>ID: {c.id}</span>
                           {isB2B ? (
                             <button
                               type="button"
@@ -1732,8 +1709,8 @@ const CRMPage = () => {
                       <span className="text-xs font-black text-themed">
                         {q.projectTitle || "Untitled Quotation"}
                       </span>
-                      <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-500/10 text-muted border border-[var(--border-color)]">
-                        #{q.quoteNo}
+                      <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-500/10 text-muted border border-[var(--border-color)] font-mono">
+                        {q.quoteNo}
                       </span>
                       <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
                         q.status === 'Approved' ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' :
@@ -1913,11 +1890,11 @@ function EditContactForm({ contact, contacts = [], nextLeadId, onSave, onCancel 
         </div>
         {form.id ? (
           <span className="text-xs px-2.5 py-1 rounded-lg bg-slate-500/10 text-muted font-bold border border-[var(--border-color)]">
-            Lead ID: #{form.id}
+            ID: {form.id}
           </span>
         ) : (
           <span className="text-xs px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/30">
-            Next Lead ID: #{nextLeadId}
+            Next ID: {nextLeadId}
           </span>
         )}
       </div>
