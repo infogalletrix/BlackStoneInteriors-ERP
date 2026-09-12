@@ -24,7 +24,8 @@ import {
   Calendar,
   Trash2,
   Printer,
-  Award
+  Award,
+  ArrowUpDown
 } from "lucide-react";
 import { useDialog } from "../contexts/DialogContext";
 import { useReactToPrint } from "react-to-print";
@@ -50,6 +51,7 @@ export default function SitesPage() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [activeTab, setActiveTab] = useState("media"); // media, history, maintenance, financials
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortOrder, setSortOrder] = useState("desc"); // 'desc' (highest ID on top by default) | 'asc'
 
   const handlePrintSettlement = useReactToPrint({
     contentRef: settlementRef,
@@ -114,6 +116,14 @@ export default function SitesPage() {
       }));
 
       setSites(mapped);
+      // Automatically select highest ID work order if none is currently selected
+      if (mapped.length > 0) {
+        setSelectedSiteId(prev => {
+          if (prev && mapped.some(s => s.id === prev)) return prev;
+          const sorted = [...mapped].sort((a, b) => (Number(b.id) || 0) - (Number(a.id) || 0));
+          return sorted[0].id;
+        });
+      }
     } catch (err) { console.error("Load Sites Error:", err); }
   };
 
@@ -230,16 +240,22 @@ export default function SitesPage() {
 
   const selectedSite = sites.find((s) => s.id === selectedSiteId) || null;
 
-  const filteredSites = sites.filter((s) => {
-    const matchStatus = statusFilter === "All" || s.status === statusFilter;
-    const term = searchTerm.toLowerCase();
-    const matchSearch =
-      (s.name && s.name.toLowerCase().includes(term)) ||
-      (s.address && s.address.toLowerCase().includes(term)) ||
-      (s.clientName && s.clientName.toLowerCase().includes(term)) ||
-      (s.assignedTeam && s.assignedTeam.toLowerCase().includes(term));
-    return matchStatus && matchSearch;
-  });
+  const filteredSites = sites
+    .filter((s) => {
+      const matchStatus = statusFilter === "All" || s.status === statusFilter;
+      const term = searchTerm.toLowerCase();
+      const matchSearch =
+        (s.name && s.name.toLowerCase().includes(term)) ||
+        (s.address && s.address.toLowerCase().includes(term)) ||
+        (s.clientName && s.clientName.toLowerCase().includes(term)) ||
+        (s.assignedTeam && s.assignedTeam.toLowerCase().includes(term));
+      return matchStatus && matchSearch;
+    })
+    .sort((a, b) => {
+      const idA = Number(a.id) || 0;
+      const idB = Number(b.id) || 0;
+      return sortOrder === "desc" ? idB - idA : idA - idB;
+    });
 
   // STATUS COLORS
   const getStatusColor = (status) => {
@@ -551,15 +567,30 @@ export default function SitesPage() {
           <div className="xl:col-span-4 flex flex-col h-[calc(100vh-160px)]">
             {/* Filters */}
             <div className="bg-white dark:bg-slate-900 border border-[var(--border-color)] rounded-t-3xl p-4 shadow-sm z-10 relative">
-              <div className="relative mb-3">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={16} />
-                <input
-                  type="text"
-                  placeholder="Search site, client, team or location..."
-                  className="w-full pl-9 pr-4 py-2.5 themed-input rounded-xl text-sm outline-none focus:border-indigo-500 font-medium"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+              <div className="flex gap-2 items-center mb-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={16} />
+                  <input
+                    type="text"
+                    placeholder="Search site, client, team..."
+                    className="w-full pl-9 pr-3 py-2.5 themed-input rounded-xl text-sm outline-none focus:border-indigo-500 font-medium"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSortOrder(prev => prev === "desc" ? "asc" : "desc")}
+                  className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl border text-xs font-bold transition shadow-sm shrink-0 ${
+                    sortOrder === "desc"
+                      ? "bg-accent/10 border-accent/30 text-accent hover:bg-accent/20"
+                      : "bg-indigo-500/10 border-indigo-500/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20"
+                  }`}
+                  title={`Sort by Work Order ID: Currently ${sortOrder === "desc" ? "Highest First (Descending)" : "Lowest First (Ascending)"}. Click to switch.`}
+                >
+                  <ArrowUpDown size={14} />
+                  <span>{sortOrder === "desc" ? "ID: High-Low" : "ID: Low-High"}</span>
+                </button>
               </div>
               <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-hide">
                 {["All", "Pre-Construction", "In Progress", "Completed", "Maintenance"].map((status) => (
