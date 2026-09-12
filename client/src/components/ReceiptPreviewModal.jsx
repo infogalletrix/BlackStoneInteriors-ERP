@@ -153,7 +153,7 @@ export default function ReceiptPreviewModal({ receipt, onClose, onPrint, onEdit 
               </div>
               {receipt.siteId && (
                 <div className="mt-2 pt-2 border-t border-[var(--border-color)] text-[11px] text-muted font-medium">
-                  Work Order Ref: <strong className="text-themed font-bold">#{receipt.siteId}</strong>
+                  Work Order Ref: <strong className="text-themed font-bold">{receipt.siteId}</strong>
                 </div>
               )}
             </div>

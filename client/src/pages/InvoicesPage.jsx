@@ -470,7 +470,7 @@ export default function HistoryPage() {
                           {r.siteId ? (
                             <div>
                               <span className="inline-flex items-center gap-1 bg-slate-500/10 text-themed px-2 py-0.5 rounded-md font-bold text-xs">
-                                WO #{r.siteId}
+                                WO {r.siteId}
                               </span>
                               {site && <p className="text-xs text-muted font-medium mt-0.5 truncate max-w-[140px]">{site.name}</p>}
                             </div>

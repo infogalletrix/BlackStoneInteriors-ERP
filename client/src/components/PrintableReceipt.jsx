@@ -46,7 +46,7 @@ const PrintableReceipt = forwardRef(({ receipts = [], receipt = null }, ref) => 
           </p>
           {data.siteId && (
             <p className="text-xs font-bold text-gray-500 mt-1">
-              Work Order #{data.siteId}
+              Work Order {data.siteId}
             </p>
           )}
         </div>

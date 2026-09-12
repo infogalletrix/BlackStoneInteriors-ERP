@@ -508,7 +508,7 @@ export default function ReceiptPage() {
                   >
                     <div className="flex-1 min-w-0">
                       <h3 className="font-black text-themed text-xs mb-1 truncate">
-                        WO #{site.id} - {site.name}
+                        WO {site.id} - {site.name}
                       </h3>
                       <div className="text-[10px] text-muted flex flex-col gap-0.5">
                         <span className="flex items-center gap-1 truncate font-medium">
@@ -620,7 +620,7 @@ export default function ReceiptPage() {
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={14} />
                       <input
                         type="text"
-                        placeholder="Search receipt #, client, WO..."
+                        placeholder="Search receipt, client, WO..."
                         value={historySearchTerm}
                         onChange={(e) => setHistorySearchTerm(e.target.value)}
                         className="w-full sm:w-56 lg:w-64 pl-8 pr-3 py-1.5 rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-800 text-xs font-bold outline-none transition-all"
@@ -689,7 +689,7 @@ export default function ReceiptPage() {
                             <td className="px-4 py-3">
                               {r.siteId ? (
                                 <span className="inline-flex items-center gap-1 bg-slate-500/10 text-themed px-2 py-0.5 rounded-md font-bold text-[10px]">
-                                  WO #{r.siteId}
+                                  WO {r.siteId}
                                   {site && <span className="opacity-75 font-normal truncate max-w-[100px]">{site.name}</span>}
                                 </span>
                               ) : (
@@ -792,7 +792,7 @@ export default function ReceiptPage() {
                   </button>
                   <div className="h-4 w-[1px] bg-[var(--border-color)]" />
                   <span className="text-xs font-black text-themed truncate max-w-[240px]">
-                    WO #{selectedSiteId} {currentSite ? `— ${currentSite.name}` : ""}
+                    WO {selectedSiteId} {currentSite ? `— ${currentSite.name}` : ""}
                   </span>
                 </div>
 
