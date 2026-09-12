@@ -27,6 +27,7 @@ import {
   X,
   Edit3,
   Building,
+  ExternalLink,
 } from "lucide-react";
 import { useDialog } from "../contexts/DialogContext";
 import NotificationWidget from "../components/NotificationWidget";
@@ -244,33 +245,9 @@ export default function QuotationPage() {
     return localStorage.getItem("active_quotation_session") || 'default';
   });
 
-  // Load session data when active session changes
-  useEffect(() => {
-    const session = sessions.find(s => s.id === activeSessionId);
-    if (session && session.data) {
-      const d = session.data;
-      setItems(d.items || []);
-      setClientName(d.clientName || "");
-      setOrganizationName(d.organizationName || "");
-      setClientAddress(d.clientAddress || "");
-      setProjectTitle(d.projectTitle || "");
-      setWorkDescription(d.workDescription || "");
-      setBillType(d.billType || "GST");
-      setQuoteId(d.quoteId || null);
-      setEmailId(d.emailId || "");
-      setMobileNo(d.mobileNo || "");
-      setCustomerGst(d.customerGst || "");
-      setDeliveryTimeline(d.deliveryTimeline || "3 to 4 Weeks");
-      setInstallationMaterial(d.installationMaterial || 0);
-      setDeliveryLoading(d.deliveryLoading || 0);
-      setTransportationCharges(d.transportationCharges || 0);
-      setAdditionalDiscount(d.additionalDiscount || 0);
-      setCgstPercent(d.cgstPercent !== undefined ? d.cgstPercent : "9");
-      setSgstPercent(d.sgstPercent !== undefined ? d.sgstPercent : "9");
-      if (d.quoteDate) setQuoteDate(d.quoteDate);
-      if (d.quoteNo) setQuoteNo(d.quoteNo);
-    } else {
-      // Clear for a new session if no data
+  // Apply quote/session data to component state
+  const applySessionData = (d) => {
+    if (!d) {
       setItems([]);
       setClientName("");
       setOrganizationName("");
@@ -289,11 +266,8 @@ export default function QuotationPage() {
       setAdditionalDiscount(0);
       setCgstPercent("9");
       setSgstPercent("9");
-      
-      // Fetch the real internet date
       fetchInternetDate().then(realDate => {
         setQuoteDate(realDate);
-        // Fetch the next quotation number from the backend with the internet date
         fetch(`/api/quotations/next-number?date=${realDate}`)
           .then(res => res.json())
           .then(data => {
@@ -303,6 +277,37 @@ export default function QuotationPage() {
           })
           .catch(err => console.error("Failed to fetch next quote number:", err));
       });
+      return;
+    }
+    setItems(d.items || []);
+    setClientName(d.clientName || "");
+    setOrganizationName(d.organizationName || "");
+    setClientAddress(d.clientAddress || "");
+    setProjectTitle(d.projectTitle || "");
+    setWorkDescription(d.workDescription || "");
+    setBillType(d.billType || "GST");
+    setQuoteId(d.quoteId || null);
+    setEmailId(d.emailId || "");
+    setMobileNo(d.mobileNo || "");
+    setCustomerGst(d.customerGst || "");
+    setDeliveryTimeline(d.deliveryTimeline || "3 to 4 Weeks");
+    setInstallationMaterial(d.installationMaterial || 0);
+    setDeliveryLoading(d.deliveryLoading || 0);
+    setTransportationCharges(d.transportationCharges || 0);
+    setAdditionalDiscount(d.additionalDiscount || 0);
+    setCgstPercent(d.cgstPercent !== undefined ? d.cgstPercent : "9");
+    setSgstPercent(d.sgstPercent !== undefined ? d.sgstPercent : "9");
+    if (d.quoteDate) setQuoteDate(d.quoteDate);
+    if (d.quoteNo) setQuoteNo(d.quoteNo);
+  };
+
+  // Load session data when active session changes
+  useEffect(() => {
+    const session = sessions.find(s => s.id === activeSessionId);
+    if (session && session.data) {
+      applySessionData(session.data);
+    } else {
+      applySessionData(null);
     }
     localStorage.setItem("active_quotation_session", activeSessionId);
   }, [activeSessionId]);
@@ -312,7 +317,7 @@ export default function QuotationPage() {
     const timer = setTimeout(() => {
       setSessions(prev => prev.map(s => s.id === activeSessionId ? {
         ...s,
-        title: clientName || "New Quote",
+        title: clientName ? (projectTitle ? `${projectTitle} (${clientName})` : clientName) : "New Quote",
         data: { items, clientName, organizationName, clientAddress, projectTitle, workDescription, billType, quoteNo, quoteId, quoteDate, emailId, mobileNo, customerGst, deliveryTimeline, installationMaterial, deliveryLoading, transportationCharges, additionalDiscount, cgstPercent, sgstPercent }
       } : s));
     }, 500);
@@ -344,6 +349,61 @@ export default function QuotationPage() {
     }
   };
 
+  const openQuoteInTab = (q) => {
+    if (!q) return;
+
+    let parsedItems = q.items || [];
+    if (typeof parsedItems === 'string') {
+      try { parsedItems = JSON.parse(parsedItems); } catch { parsedItems = []; }
+    }
+
+    const quoteData = {
+      items: Array.isArray(parsedItems) ? parsedItems : [],
+      clientName: q.clientName || "",
+      organizationName: q.organizationName || "",
+      clientAddress: q.clientAddress || "",
+      projectTitle: q.projectTitle || "",
+      workDescription: q.workDescription || "",
+      billType: q.billType || "GST",
+      quoteNo: q.quoteNo || "",
+      quoteId: q.id || null,
+      quoteDate: q.date ? q.date.split('T')[0] : (q.quoteDate ? q.quoteDate.split('T')[0] : new Date().toISOString().split('T')[0]),
+      emailId: q.emailId || "",
+      mobileNo: q.mobileNo || "",
+      customerGst: q.customerGst || "",
+      deliveryTimeline: q.deliveryTimeline || "3 to 4 Weeks",
+      installationMaterial: q.installationMaterial || 0,
+      deliveryLoading: q.deliveryLoading || 0,
+      transportationCharges: q.transportationCharges || 0,
+      additionalDiscount: q.additionalDiscount || 0,
+      cgstPercent: q.cgstPercent !== undefined ? q.cgstPercent : "9",
+      sgstPercent: q.sgstPercent !== undefined ? q.sgstPercent : "9"
+    };
+
+    // Check if this quote is already open in an existing session
+    const existingSession = sessions.find(s => 
+      (s.data?.quoteId && String(s.data.quoteId) === String(q.id)) ||
+      (s.data?.quoteNo && q.quoteNo && s.data.quoteNo === q.quoteNo)
+    );
+    if (existingSession) {
+      setActiveSessionId(existingSession.id);
+      applySessionData(existingSession.data || quoteData);
+      return;
+    }
+
+    const newId = `session-${Date.now()}`;
+    const tabTitle = q.projectTitle ? `${q.projectTitle} (${q.quoteNo || 'Quote'})` : (q.quoteNo || q.clientName || 'Quote');
+    const newSession = {
+      id: newId,
+      title: tabTitle,
+      data: quoteData
+    };
+
+    setSessions(prev => [...prev, newSession]);
+    setActiveSessionId(newId);
+    applySessionData(quoteData);
+  };
+
   const componentRef = useRef();
   const descRef = useRef();
   const addItemButtonRef = useRef();
@@ -357,12 +417,44 @@ export default function QuotationPage() {
   useEffect(() => {
     if (location.state?.autoFillClient) {
       const c = location.state.autoFillClient;
-      setClientName(c.name || "");
-      setOrganizationName(c.organizationName || "");
-      setClientAddress(c.address || "");
-      setMobileNo(c.phone || "");
-      setEmailId(c.email || "");
-      setProjectTitle(c.project || "");
+      if (location.state?.newSession) {
+        const newId = `session-${Date.now()}`;
+        const newSession = {
+          id: newId,
+          title: c.name || 'New Quote',
+          data: {
+            items: [],
+            clientName: c.name || "",
+            organizationName: c.organizationName || "",
+            clientAddress: c.address || "",
+            mobileNo: c.phone || "",
+            emailId: c.email || "",
+            projectTitle: c.project || "",
+            billType: "GST",
+            quoteNo: "",
+            quoteId: null,
+            quoteDate: new Date().toISOString().split('T')[0],
+            customerGst: "",
+            deliveryTimeline: "3 to 4 Weeks",
+            installationMaterial: 0,
+            deliveryLoading: 0,
+            transportationCharges: 0,
+            additionalDiscount: 0,
+            cgstPercent: "9",
+            sgstPercent: "9"
+          }
+        };
+        setSessions(prev => [...prev, newSession]);
+        setActiveSessionId(newId);
+        applySessionData(newSession.data);
+      } else {
+        setClientName(c.name || "");
+        setOrganizationName(c.organizationName || "");
+        setClientAddress(c.address || "");
+        setMobileNo(c.phone || "");
+        setEmailId(c.email || "");
+        setProjectTitle(c.project || "");
+      }
       navigate(location.pathname, { replace: true, state: {} });
       return;
     }
@@ -372,37 +464,9 @@ export default function QuotationPage() {
       return;
     }
     if (location.state?.editQuote) {
-      const q = location.state.editQuote;
-      const newId = `session-${Date.now()}`;
-      const newSession = {
-        id: newId,
-        title: q.clientName || 'Edit Quote',
-        data: {
-          items: q.items || [],
-          clientName: q.clientName || "",
-          organizationName: q.organizationName || "",
-          clientAddress: q.clientAddress || "",
-          projectTitle: q.projectTitle || "",
-          workDescription: q.workDescription || "",
-          billType: q.billType || "GST",
-          quoteNo: q.quoteNo || "",
-          quoteId: q.id || null,
-          quoteDate: q.date || new Date().toISOString().split('T')[0],
-          emailId: q.emailId || "",
-          mobileNo: q.mobileNo || "",
-          customerGst: q.customerGst || "",
-          deliveryTimeline: q.deliveryTimeline || "3 to 4 Weeks",
-          installationMaterial: q.installationMaterial || 0,
-          deliveryLoading: q.deliveryLoading || 0,
-          transportationCharges: q.transportationCharges || 0,
-          additionalDiscount: q.additionalDiscount || 0,
-          cgstPercent: q.cgstPercent !== undefined ? q.cgstPercent : "9",
-          sgstPercent: q.sgstPercent !== undefined ? q.sgstPercent : "9"
-        }
-      };
-      setSessions(prev => [...prev, newSession]);
-      setActiveSessionId(newId);
+      openQuoteInTab(location.state.editQuote);
       navigate(location.pathname, { replace: true, state: {} });
+      return;
     }
   }, []);
 
@@ -835,19 +899,18 @@ export default function QuotationPage() {
                   <button
                     key={q.id || q.quoteNo}
                     type="button"
-                    onClick={() => {
-                      navigate("/invoices", { state: { activeTab: "quotations", search: q.quoteNo } });
-                    }}
-                    className="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-white dark:bg-slate-900 text-amber-800 dark:text-amber-300 border border-amber-500/30 hover:border-amber-500 transition shadow-sm"
-                    title={`View in Quotations: #${q.quoteNo}`}
+                    onClick={() => openQuoteInTab(q)}
+                    className="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-white dark:bg-slate-900 text-amber-800 dark:text-amber-300 border border-amber-500/30 hover:border-amber-500 hover:bg-amber-500/10 transition shadow-sm flex items-center gap-1 cursor-pointer"
+                    title={`Open #${q.quoteNo} in another tab`}
                   >
-                    {q.projectTitle || "Quotation"} (#{q.quoteNo}) • ₹{Number(q.total || 0).toLocaleString("en-IN")}
+                    <span>{q.projectTitle || "Quotation"} (#{q.quoteNo}) • ₹{Number(q.total || 0).toLocaleString("en-IN")}</span>
+                    <ExternalLink size={11} className="opacity-70" />
                   </button>
                 ))}
               </div>
             </div>
             <span className="text-[10px] text-muted font-bold">
-              Specify a new Project Title (e.g. Wardrobe, Kitchen) to create another quotation for this client.
+              Click any quotation above to open it in another tab, or change Project Title to create a new quote for this client.
             </span>
           </div>
         )}

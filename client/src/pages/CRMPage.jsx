@@ -1043,10 +1043,10 @@ const CRMPage = () => {
                                   type="button"
                                   onClick={() => navigate("/quotations", { state: { autoFillClient: c } })}
                                   className="font-bold px-3 py-1.5 rounded-lg text-xs transition-all opacity-0 group-hover:opacity-100 border border-amber-500/50 text-amber-700 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 flex items-center gap-1 shadow-sm"
-                                  title="Create Quotation (+ Quote)"
+                                  title="Create Quotation"
                                 >
                                   <Plus size={12} />
-                                  <span>+ Quote</span>
+                                  <span>Quote</span>
                                 </button>
                                 <button className="font-bold px-3 py-1.5 rounded-lg text-xs transition-all opacity-0 group-hover:opacity-100 border border-slate-500 text-slate-500 hover:bg-slate-500/10" onClick={() => handleMarkNotInterested(c.id, false)}>Not Interested</button>
                                 <button className="font-bold px-3 py-1.5 rounded-lg text-xs transition-all opacity-0 group-hover:opacity-100 border border-blue-500 text-blue-500 hover:bg-blue-500/10" onClick={() => setEditActivity({ type: 'Follow-up Call', date: new Date().toISOString().split('T')[0], client: c.id, status: 'Pending' })}>Schedule Follow-up</button>
@@ -1060,10 +1060,10 @@ const CRMPage = () => {
                             type="button"
                             onClick={() => navigate("/quotations", { state: { autoFillClient: c } })}
                             className="font-bold px-3 py-1.5 rounded-lg text-xs transition-all opacity-0 group-hover:opacity-100 border border-amber-500/50 text-amber-700 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 flex items-center gap-1 shadow-sm"
-                            title="Create Quotation (+ Quote)"
+                            title="Create Quotation"
                           >
                             <Plus size={12} />
-                            <span>+ Quote</span>
+                            <span>Quote</span>
                           </button>
                         )}
                         <button
@@ -1150,10 +1150,10 @@ const CRMPage = () => {
                                 type="button"
                                 onClick={() => navigate("/quotations", { state: { autoFillClient: c } })}
                                 className="font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-amber-500/50 text-amber-700 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 flex items-center gap-1 shadow-sm"
-                                title="Create Quotation (+ Quote)"
+                                title="Create Quotation"
                               >
                                 <Plus size={12} />
-                                <span className="hidden sm:inline">+ Quote</span>
+                                <span className="hidden sm:inline">Quote</span>
                               </button>
                               <button className="font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-slate-500 text-slate-500 hover:bg-slate-500/10" onClick={() => handleMarkNotInterested(c.id, false)} title="Not Interested"><XCircle size={12}/></button>
                               <button className="font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-blue-500 text-blue-500 hover:bg-blue-500/10" onClick={() => setEditActivity({ type: 'Follow-up Call', date: new Date().toISOString().split('T')[0], client: c.id, status: 'Pending' })} title="Schedule Follow-up"><Phone size={12}/></button>
@@ -1167,10 +1167,10 @@ const CRMPage = () => {
                           type="button"
                           onClick={() => navigate("/quotations", { state: { autoFillClient: c } })}
                           className="font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-amber-500/50 text-amber-700 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 flex items-center gap-1 shadow-sm"
-                          title="Create Quotation (+ Quote)"
+                          title="Create Quotation"
                         >
                           <Plus size={12} />
-                          <span className="hidden sm:inline">+ Quote</span>
+                          <span className="hidden sm:inline">Quote</span>
                         </button>
                       )}
                       <button
@@ -1695,7 +1695,7 @@ const CRMPage = () => {
       <Modal open={!!clientQuotationsModal} onClose={() => setClientQuotationsModal(null)} size="max-w-2xl">
         {clientQuotationsModal && (
           <div className="space-y-4">
-            <div className="flex items-start justify-between border-b border-[var(--border-color)] pb-4">
+            <div className="flex items-start justify-between border-b border-[var(--border-color)] pb-4 pr-12">
               <div>
                 <div className="flex items-center gap-2">
                   <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
@@ -1723,11 +1723,11 @@ const CRMPage = () => {
                 onClick={() => {
                   const c = clientQuotationsModal.contact;
                   setClientQuotationsModal(null);
-                  navigate("/quotations", { state: { autoFillClient: c } });
+                  navigate("/quotations", { state: { autoFillClient: c, newSession: true } });
                 }}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-black text-white bg-[#C9A227] hover:bg-[#B8911F] transition shadow-md"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-black text-white bg-[#C9A227] hover:bg-[#B8911F] transition shadow-md whitespace-nowrap mr-6"
               >
-                <Plus size={14} /> + New Quotation
+                <Plus size={14} /> New Quotation
               </button>
             </div>
 
@@ -1771,10 +1771,10 @@ const CRMPage = () => {
                       type="button"
                       onClick={() => {
                         setClientQuotationsModal(null);
-                        navigate("/invoices", { state: { activeTab: "quotations", search: q.quoteNo } });
+                        navigate("/quotations", { state: { editQuote: q } });
                       }}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-themed hover:bg-black/10 dark:hover:bg-white/10 transition"
-                      title="View in Invoices / Quotations"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-500/10 transition"
+                      title="Open Quotation in Editor Tab"
                     >
                       <ExternalLink size={15} />
                     </button>
