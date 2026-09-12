@@ -28,6 +28,30 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
     return Number(val || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
+  // Pre-calculate section totals across the entire quotation
+  const sectionTotals = items.reduce((acc, item) => {
+    const sec = item.section?.trim() || "General";
+    acc[sec] = (acc[sec] || 0) + (parseFloat(item.amount) || 0);
+    return acc;
+  }, {});
+
+  // Group items by section order to keep items of the same section contiguous
+  const sectionOrder = [];
+  const itemsBySection = {};
+  items.forEach((item) => {
+    const sec = item.section?.trim() || "General";
+    if (!itemsBySection[sec]) {
+      itemsBySection[sec] = [];
+      sectionOrder.push(sec);
+    }
+    itemsBySection[sec].push(item);
+  });
+  const contiguousItems = sectionOrder.flatMap((sec) => itemsBySection[sec]);
+  const taggedItems = contiguousItems.map((item, index) => ({
+    ...item,
+    _globalIndex: index + 1,
+  }));
+
   // ── REUSABLE UI BLOCKS ──────────────────────────────────────────
 
   // 1. Decorative Accent Curves
@@ -40,7 +64,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
 
   // 2. Primary Header (Used consistently on ALL pages)
   const renderPrimaryHeader = (pageNumber = 1, totalPages = 1) => (
-    <div className="flex justify-between items-start pb-4 border-b border-slate-200 relative z-10">
+    <div className="flex justify-between items-start pb-2.5 border-b border-slate-200 relative z-10">
       {/* Company Info & Logo */}
       <div className="flex items-center gap-3.5">
         <div className="w-16 h-16 bg-slate-900 rounded-2xl p-2 flex items-center justify-center shadow-md">
@@ -108,7 +132,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
 
   // 3. Client & Project Details Box (Page 1)
   const renderClientProjectDetails = () => (
-    <div className="grid grid-cols-2 gap-3.5 my-3.5">
+    <div className="grid grid-cols-2 gap-2.5 my-2.5">
       {/* Client Info */}
       <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-200/80 pb-1 mb-1.5">
@@ -179,31 +203,41 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
   );
 
   // 4. Work Items Table with continuous serial numbering
-  const renderItemsTable = (itemsSlice) => {
+  const renderItemsTable = (itemsSlice, continuedSections = new Set()) => {
     if (!itemsSlice || itemsSlice.length === 0) return null;
-    const grouped = itemsSlice.reduce((acc, item) => {
-      const sec = item.section || "General";
-      if (!acc[sec]) acc[sec] = [];
-      acc[sec].push(item);
-      return acc;
-    }, {});
+
+    // Group itemsSlice into sections in sequential order
+    const sectionGroups = [];
+    let currentGroup = null;
+
+    itemsSlice.forEach((item) => {
+      const sec = item.section?.trim() || "General";
+      if (!currentGroup || currentGroup.sectionName !== sec) {
+        currentGroup = { sectionName: sec, items: [] };
+        sectionGroups.push(currentGroup);
+      }
+      currentGroup.items.push(item);
+    });
 
     return (
-      <div className="space-y-3 mb-4">
-        {Object.entries(grouped).map(([sectionName, secItems], sIdx) => {
-          const secTotal = secItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+      <div className="space-y-2 mb-2">
+        {sectionGroups.map((group, sIdx) => {
+          const isContinued = continuedSections?.has(group.sectionName);
+          const pageSecTotal = group.items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+          const overallSecTotal = sectionTotals[group.sectionName] || pageSecTotal;
+
           return (
-            <div key={sIdx} className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+            <div key={sIdx} className="border border-slate-200 rounded-xl shadow-sm bg-white overflow-visible mb-2">
               {/* Section Sub-Header Bar */}
-              <div className="bg-gradient-to-r from-slate-100 to-slate-50 border-b border-slate-200 px-3 py-1 flex justify-between items-center">
+              <div className="bg-gradient-to-r from-slate-100 to-slate-50 border-b border-slate-200 px-3 py-1 flex justify-between items-center rounded-t-xl">
                 <div className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#0d5c63]"></span>
                   <span className="font-black text-[9.5px] text-[#0b1e36] uppercase tracking-wider">
-                    {sectionName}
+                    {group.sectionName} {isContinued && <span className="text-slate-400 font-bold text-[8px] lowercase tracking-normal">(contd.)</span>}
                   </span>
                 </div>
                 <span className="text-[8.5px] font-extrabold text-[#0d5c63]">
-                  Subtotal: INR {fmt(secTotal)}
+                  Section Total: INR {fmt(overallSecTotal)}
                 </span>
               </div>
 
@@ -221,8 +255,8 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-[8.5px]">
-                  {secItems.map((item, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50/50">
+                  {group.items.map((item, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50/50" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
                       <td className="py-1 px-2 text-center text-slate-400 font-bold">
                         {item._globalIndex !== undefined ? item._globalIndex : idx + 1}
                       </td>
@@ -424,7 +458,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
 
   // 10. Bottom Brand Footer Banner
   const renderBottomBrandBanner = () => (
-    <div className="pt-2 border-t border-slate-200 mt-auto">
+    <div className="pt-1.5 border-t border-slate-200">
       <div className="bg-gradient-to-r from-[#0b1e36] via-[#0d5c63] to-[#0b1e36] text-white rounded-xl px-4 py-1.5 flex flex-wrap justify-between items-center text-[8px] font-semibold shadow-md">
         <div className="flex items-center gap-1.5">
           <span>📍</span>
@@ -445,70 +479,179 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
   // ── DYNAMIC MULTI-PAGE PAGINATION CALCULATION ────────────────────
   const paginateQuotation = (allItems) => {
     if (!allItems || allItems.length === 0) {
-      return [{ pageNum: 1, totalPages: 1, items: [], isFirst: true, isLast: true }];
+      return [{ pageNum: 1, totalPages: 1, items: [], isFirst: true, isLast: true, continuedSections: new Set() }];
     }
 
-    // Attach continuous 1-based serial number across all items in quotation
-    const taggedItems = allItems.map((item, index) => ({
-      ...item,
-      _globalIndex: index + 1,
-    }));
+    const getItemHeight = (item) => {
+      const spec = (item.specification || "") + (item.product || "");
+      if (spec.length > 120) return 13;
+      if (spec.length > 50) return 10;
+      return 7.5;
+    };
+    const SEC_HDR_HEIGHT = 13; // section sub-header (6.5mm) + table thead (6.5mm)
 
-    // If 8 or fewer items, everything fits cleanly on 1 page with all summary cards and footer fully visible
-    if (taggedItems.length <= 8) {
-      return [{ pageNum: 1, totalPages: 1, items: taggedItems, isFirst: true, isLast: true }];
+    // Compute total height of all items
+    let totalItemsHeight = 0;
+    let prevSec = null;
+    allItems.forEach((it) => {
+      const sec = it.section?.trim() || "General";
+      if (sec !== prevSec) {
+        totalItemsHeight += SEC_HDR_HEIGHT;
+        prevSec = sec;
+      }
+      totalItemsHeight += getItemHeight(it);
+    });
+
+    // 1. Single-Page Check (Capacity for items + summary = ~135mm)
+    if (totalItemsHeight <= 135) {
+      return [{
+        pageNum: 1,
+        totalPages: 1,
+        items: allItems,
+        isFirst: true,
+        isLast: true,
+        continuedSections: new Set()
+      }];
     }
 
-    // Multi-page layout:
-    // Page 1 target is 11-13 items (fills ~85% of Page 1 so there is NO large blank space).
-    // Last page holds the remaining items (usually 4 to 8 items) + all summary cards + footer.
+    // 2. Multi-Page Splitting
+    // Page 1 capacity (without summary) = 195mm
+    // Middle page capacity (without summary) = 225mm
+    // Last page capacity WITH summary = 160mm
     const pages = [];
-    let remainingItems = [...taggedItems];
-    let isFirst = true;
+    let currentIndex = 0;
+    let pageNum = 1;
 
-    while (remainingItems.length > 0) {
-      // If remaining items can fit on the last page alongside summary cards (<= 7 items):
-      if (!isFirst && remainingItems.length <= 7) {
-        pages.push(remainingItems);
-        remainingItems = [];
+    while (currentIndex < allItems.length) {
+      const isFirstPage = (pageNum === 1);
+      const remainingItems = allItems.slice(currentIndex);
+
+      // Calculate remaining items height
+      let remHeight = 0;
+      let rSec = null;
+      remainingItems.forEach((it) => {
+        const sec = it.section?.trim() || "General";
+        if (sec !== rSec) {
+          remHeight += SEC_HDR_HEIGHT;
+          rSec = sec;
+        }
+        remHeight += getItemHeight(it);
+      });
+
+      // If NOT page 1 and remaining items comfortably fit on the last page with summary (<= 160mm):
+      if (!isFirstPage && remHeight <= 160) {
+        pages.push({
+          items: remainingItems,
+          isFirst: false,
+          isLast: true,
+          usedHeight: remHeight
+        });
         break;
       }
 
-      // Determine how many items to place on this page:
-      let take;
-      if (isFirst) {
-        if (taggedItems.length <= 13) {
-          // Balance across 2 pages evenly, e.g. 10 items -> 6 on P1, 4 on P2
-          take = Math.ceil(taggedItems.length / 2);
-        } else {
-          // If 14+ items (like 17 items), fill Page 1 with 12 items
-          take = 12;
-        }
-        isFirst = false;
-      } else {
-        // Middle or second page:
-        if (remainingItems.length > 7) {
-          take = Math.min(14, remainingItems.length - 6);
-        } else {
-          take = remainingItems.length;
-        }
+      // Page capacity
+      let pageCapacity = isFirstPage ? 195 : 225;
+
+      // If page 1 of a 2-page document, balance items so page 2 has ample items and no giant empty gap
+      if (isFirstPage && remHeight > 135 && remHeight <= 300) {
+        pageCapacity = Math.min(195, Math.max(100, remHeight - 85));
       }
 
-      pages.push(remainingItems.slice(0, take));
-      remainingItems = remainingItems.slice(take);
+      let currentHeight = 0;
+      let pageItems = [];
+      let pSec = null;
+
+      while (currentIndex < allItems.length) {
+        const item = allItems[currentIndex];
+        const sec = item.section?.trim() || "General";
+        let cost = getItemHeight(item);
+        if (sec !== pSec) {
+          cost += SEC_HDR_HEIGHT;
+        }
+
+        // Check if adding this item exceeds capacity (and we already have at least 1 item on this page)
+        if (currentHeight + cost > pageCapacity && pageItems.length > 0) {
+          break;
+        }
+
+        pageItems.push(item);
+        currentHeight += cost;
+        pSec = sec;
+        currentIndex++;
+      }
+
+      const isLast = (currentIndex >= allItems.length);
+      pages.push({
+        items: pageItems,
+        isFirst: isFirstPage,
+        isLast: isLast,
+        usedHeight: currentHeight
+      });
+
+      if (isLast) break;
+      pageNum++;
     }
 
+    // Safety check: if last page has items > 160mm, move items
+    const lastIdx = pages.length - 1;
+    if (pages.length > 1 && pages[lastIdx].usedHeight > 160) {
+      const lastPage = pages[lastIdx];
+      const overflowItems = [];
+      let oHeight = 0;
+      let oSec = null;
+
+      while (lastPage.items.length > 1) {
+        const item = lastPage.items[lastPage.items.length - 1];
+        const sec = item.section?.trim() || "General";
+        let cost = getItemHeight(item);
+        if (sec !== oSec) cost += SEC_HDR_HEIGHT;
+
+        if (oHeight + cost > 140 && overflowItems.length > 0) break;
+
+        overflowItems.unshift(lastPage.items.pop());
+        oHeight += cost;
+        oSec = sec;
+        lastPage.usedHeight -= cost;
+        if (lastPage.usedHeight <= 150) break;
+      }
+
+      if (overflowItems.length > 0) {
+        pages.push({
+          items: overflowItems,
+          isFirst: false,
+          isLast: true,
+          usedHeight: oHeight
+        });
+      }
+    }
+
+    // Precompute continuedSections for each page
+    const seenSections = new Set();
     const totalPages = pages.length;
-    return pages.map((pageItems, idx) => ({
-      pageNum: idx + 1,
-      totalPages,
-      items: pageItems,
-      isFirst: idx === 0,
-      isLast: idx === totalPages - 1,
-    }));
+
+    return pages.map((p, idx) => {
+      const continued = new Set();
+      const pageSecs = new Set(p.items.map((it) => it.section?.trim() || "General"));
+      pageSecs.forEach((sec) => {
+        if (seenSections.has(sec)) {
+          continued.add(sec);
+        } else {
+          seenSections.add(sec);
+        }
+      });
+
+      return {
+        pageNum: idx + 1,
+        totalPages,
+        items: p.items,
+        isFirst: idx === 0,
+        isLast: idx === totalPages - 1,
+        continuedSections: continued,
+      };
+    });
   };
 
-  const paginatedPages = paginateQuotation(items);
+  const paginatedPages = paginateQuotation(taggedItems);
 
   return (
     <div ref={ref} className="print-document bg-white text-slate-800 font-sans text-[10px]">
@@ -535,8 +678,8 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
             break-inside: avoid !important;
             display: flex !important;
             flex-direction: column !important;
-            justify-content: space-between !important;
-            padding: 12mm 14mm 10mm 14mm !important;
+            justify-content: flex-start !important;
+            padding: 8mm 12mm 6mm 12mm !important;
             box-sizing: border-box !important;
             position: relative !important;
             overflow: hidden !important;
@@ -550,17 +693,15 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
           .print-page {
             width: 210mm;
             min-height: 297mm;
-            height: 297mm;
             box-sizing: border-box;
-            padding: 12mm 14mm 10mm 14mm;
+            padding: 8mm 12mm 6mm 12mm;
             margin: 0 auto 24px auto;
             box-shadow: 0 4px 25px rgba(0,0,0,0.12);
             position: relative;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: flex-start;
             background: white;
-            overflow: hidden;
           }
         }
       `}</style>
@@ -577,23 +718,13 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
             {page.isFirst && renderClientProjectDetails()}
 
             {/* Items Table for this page */}
-            <div className={page.isFirst ? "" : "mt-2.5"}>
-              {renderItemsTable(page.items)}
+            <div className={page.isFirst ? "" : "mt-2"}>
+              {renderItemsTable(page.items, page.continuedSections)}
             </div>
-          </div>
 
-          {/* Bottom Section */}
-          <div className="mt-auto pt-1.5">
-            {/* If NOT the last page, show continuation notice */}
-            {!page.isLast && (
-              <div className="text-right text-[8px] text-slate-400 font-bold uppercase tracking-wider mb-1.5">
-                Quotation Items & Financial Summary Continue on Page {page.pageNum + 1} →
-              </div>
-            )}
-
-            {/* If THIS IS the last page, render all summary cards */}
+            {/* If THIS IS the last page, render all summary cards directly below items table */}
             {page.isLast && (
-              <div className="grid grid-cols-2 gap-2.5 items-start mb-1.5">
+              <div className="grid grid-cols-2 gap-2.5 items-start mt-2.5 mb-2">
                 {/* Left Column: Bank Details, Terms, Digital Approval */}
                 <div className="space-y-1.5">
                   {renderBankDetailsCard()}
@@ -606,6 +737,16 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
                   {renderFinancialBreakdownCard()}
                   {renderPaymentPlanCard()}
                 </div>
+              </div>
+            )}
+          </div>
+
+          {/* Bottom Footer Section pinned to page bottom */}
+          <div className="mt-auto pt-1">
+            {/* If NOT the last page, show continuation notice */}
+            {!page.isLast && (
+              <div className="text-right text-[8px] text-slate-400 font-bold uppercase tracking-wider mb-1">
+                Quotation Items & Financial Summary Continue on Page {page.pageNum + 1} →
               </div>
             )}
 
