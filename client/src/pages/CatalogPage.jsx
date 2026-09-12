@@ -694,17 +694,17 @@ export default function CatalogPage() {
   return (
     <div className={`p-3 md:p-5 space-y-3.5 w-full max-w-none ${t.text}`}>
       {/* ── HEADER BANNER (Compact) ── */}
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-slate-900 via-[#1e293b] to-slate-900 border border-slate-800 px-5 py-2.5 shadow-md text-white">
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-[#B8911F] via-[#C9A227] to-[#D4AF37] border border-amber-400/40 px-5 py-2.5 shadow-md text-white">
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
-              <Package className="text-[#C9A227]" size={18} />
+            <div className="w-8 h-8 rounded-lg bg-white/20 border border-white/30 flex items-center justify-center shrink-0">
+              <Package className="text-white" size={18} />
             </div>
             <div>
               <h1 className="text-base md:text-lg font-black tracking-tight text-white flex items-center gap-2">
                 Master Catalog Management
               </h1>
-              <p className="text-[11px] text-slate-400 font-medium">
+              <p className="text-[11px] text-amber-50/95 font-medium">
                 Product → Category → Specification with Unit Price & Discounts. Auto-fills quotations!
               </p>
             </div>
@@ -712,7 +712,7 @@ export default function CatalogPage() {
 
           <div className="flex items-center gap-2 shrink-0">
             {saveSuccessMsg && (
-              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-bold border border-emerald-500/30">
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/20 text-white text-xs font-bold border border-white/30 backdrop-blur-sm">
                 <CheckCircle2 size={13} /> {saveSuccessMsg}
               </span>
             )}
