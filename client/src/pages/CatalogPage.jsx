@@ -303,7 +303,7 @@ export default function CatalogPage() {
   const [newSpecDiscPrice, setNewSpecDiscPrice] = useState("");
 
   const handleSpecPriceChange = (val) => {
-    const clean = val.replace(/[^0-9.]/g, "");
+    const clean = val.replace(/[^0-9.]/g, "").replace(/(\..*?)\..*/g, "$1");
     setNewSpecPrice(clean);
     const numPrice = parseFloat(clean) || 0;
     if (newSpecDiscType === "price" && newSpecDiscPrice && numPrice > 0) {
@@ -318,7 +318,7 @@ export default function CatalogPage() {
   };
 
   const handleSpecDiscPercentChange = (val) => {
-    const clean = val.replace(/[^0-9.]/g, "");
+    const clean = val.replace(/[^0-9.]/g, "").replace(/(\..*?)\..*/g, "$1");
     setNewSpecDiscPercent(clean);
     const numPrice = parseFloat(newSpecPrice) || 0;
     if (clean && parseFloat(clean) > 0 && numPrice > 0) {
@@ -331,7 +331,7 @@ export default function CatalogPage() {
   };
 
   const handleSpecDiscPriceChange = (val) => {
-    const clean = val.replace(/[^0-9.]/g, "");
+    const clean = val.replace(/[^0-9.]/g, "").replace(/(\..*?)\..*/g, "$1");
     setNewSpecDiscPrice(clean);
     const numPrice = parseFloat(newSpecPrice) || 0;
     if (clean && parseFloat(clean) > 0 && numPrice > 0) {
@@ -1034,8 +1034,8 @@ export default function CatalogPage() {
                   <div className="relative">
                     <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
                     <input
-                      type="number"
-                      step="any"
+                      type="text"
+                      inputMode="decimal"
                       required
                       value={newSpecPrice}
                       onChange={(e) => handleSpecPriceChange(e.target.value)}
@@ -1080,8 +1080,8 @@ export default function CatalogPage() {
                     <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
                   )}
                   <input
-                    type="number"
-                    step="any"
+                    type="text"
+                    inputMode="decimal"
                     value={newSpecDiscType === "price" ? newSpecDiscPrice : newSpecDiscPercent}
                     onChange={(e) => {
                       if (newSpecDiscType === "price") {
@@ -1228,12 +1228,12 @@ export default function CatalogPage() {
                         Unit Price (₹) <span className="text-red-500">*</span>
                       </label>
                       <input
-                        type="number"
-                        step="any"
+                        type="text"
+                        inputMode="decimal"
                         required
                         value={editingItem.unitPrice}
                         onChange={(e) => {
-                          const val = e.target.value;
+                          const val = e.target.value.replace(/[^0-9.]/g, "").replace(/(\..*?)\..*/g, "$1");
                           const p = parseFloat(val) || 0;
                           let dp = editingItem.discountPrice;
                           let dperc = editingItem.discountPercent;
@@ -1285,11 +1285,11 @@ export default function CatalogPage() {
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
                       )}
                       <input
-                        type="number"
-                        step="any"
+                        type="text"
+                        inputMode="decimal"
                         value={(editingItem.discountType || "percent") === "price" ? (editingItem.discountPrice || "") : (editingItem.discountPercent || "")}
                         onChange={(e) => {
-                          const clean = e.target.value;
+                          const clean = e.target.value.replace(/[^0-9.]/g, "").replace(/(\..*?)\..*/g, "$1");
                           const numPrice = parseFloat(editingItem.unitPrice) || 0;
                           if ((editingItem.discountType || "percent") === "price") {
                             let dperc = "";
