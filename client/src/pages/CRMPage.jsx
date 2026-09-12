@@ -991,7 +991,7 @@ const CRMPage = () => {
                     <td className="py-4 px-4">
                       <div className="flex flex-col gap-1 items-start">
                         <span className="px-3 py-1 rounded-lg text-xs font-bold border" style={{borderColor: 'var(--border-color)', color: 'var(--text-secondary)', background: 'var(--bg-surface)'}}>{c.project}</span>
-                        {clientQuotes.length > 0 ? (
+                        {clientQuotes.length > 0 && (
                           <button
                             type="button"
                             onClick={() => setClientQuotationsModal({ contact: c, quotations: clientQuotes })}
@@ -1000,16 +1000,6 @@ const CRMPage = () => {
                           >
                             <FileText size={10} />
                             <span>{clientQuotes.length} {clientQuotes.length === 1 ? 'Quote' : 'Quotes'}</span>
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => navigate("/quotations", { state: { autoFillClient: c } })}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold text-muted hover:text-amber-600 hover:bg-amber-500/10 border border-[var(--border-color)] transition opacity-0 group-hover:opacity-100"
-                            title="Create quotation for this client"
-                          >
-                            <Plus size={10} />
-                            <span>+ Quote</span>
                           </button>
                         )}
                       </div>
@@ -1049,12 +1039,32 @@ const CRMPage = () => {
                               </button>
                             ) : (
                               <>
+                                <button
+                                  type="button"
+                                  onClick={() => navigate("/quotations", { state: { autoFillClient: c } })}
+                                  className="font-bold px-3 py-1.5 rounded-lg text-xs transition-all opacity-0 group-hover:opacity-100 border border-amber-500/50 text-amber-700 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 flex items-center gap-1 shadow-sm"
+                                  title="Create Quotation (+ Quote)"
+                                >
+                                  <Plus size={12} />
+                                  <span>+ Quote</span>
+                                </button>
                                 <button className="font-bold px-3 py-1.5 rounded-lg text-xs transition-all opacity-0 group-hover:opacity-100 border border-slate-500 text-slate-500 hover:bg-slate-500/10" onClick={() => handleMarkNotInterested(c.id, false)}>Not Interested</button>
                                 <button className="font-bold px-3 py-1.5 rounded-lg text-xs transition-all opacity-0 group-hover:opacity-100 border border-blue-500 text-blue-500 hover:bg-blue-500/10" onClick={() => setEditActivity({ type: 'Follow-up Call', date: new Date().toISOString().split('T')[0], client: c.id, status: 'Pending' })}>Schedule Follow-up</button>
                                 <button className="font-bold px-3 py-1.5 rounded-lg text-xs transition-all opacity-0 group-hover:opacity-100 border border-accent text-accent hover:bg-accent/10" onClick={() => handleConvertToCustomer(c)}>Convert to Customer</button>
                               </>
                             )}
                           </>
+                        )}
+                        {activeTab === "customers" && (
+                          <button
+                            type="button"
+                            onClick={() => navigate("/quotations", { state: { autoFillClient: c } })}
+                            className="font-bold px-3 py-1.5 rounded-lg text-xs transition-all opacity-0 group-hover:opacity-100 border border-amber-500/50 text-amber-700 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 flex items-center gap-1 shadow-sm"
+                            title="Create Quotation (+ Quote)"
+                          >
+                            <Plus size={12} />
+                            <span>+ Quote</span>
+                          </button>
                         )}
                         <button
                           className="font-bold px-3 py-1.5 rounded-lg text-xs transition-all opacity-0 group-hover:opacity-100"
@@ -1136,12 +1146,32 @@ const CRMPage = () => {
                             </button>
                           ) : (
                             <>
+                              <button
+                                type="button"
+                                onClick={() => navigate("/quotations", { state: { autoFillClient: c } })}
+                                className="font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-amber-500/50 text-amber-700 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 flex items-center gap-1 shadow-sm"
+                                title="Create Quotation (+ Quote)"
+                              >
+                                <Plus size={12} />
+                                <span className="hidden sm:inline">+ Quote</span>
+                              </button>
                               <button className="font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-slate-500 text-slate-500 hover:bg-slate-500/10" onClick={() => handleMarkNotInterested(c.id, false)} title="Not Interested"><XCircle size={12}/></button>
                               <button className="font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-blue-500 text-blue-500 hover:bg-blue-500/10" onClick={() => setEditActivity({ type: 'Follow-up Call', date: new Date().toISOString().split('T')[0], client: c.id, status: 'Pending' })} title="Schedule Follow-up"><Phone size={12}/></button>
                               <button className="font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-accent text-accent hover:bg-accent/10" onClick={() => handleConvertToCustomer(c)}>Convert</button>
                             </>
                           )}
                         </>
+                      )}
+                      {activeTab === "customers" && (
+                        <button
+                          type="button"
+                          onClick={() => navigate("/quotations", { state: { autoFillClient: c } })}
+                          className="font-bold px-2 py-1 rounded-lg text-xs transition-colors border border-amber-500/50 text-amber-700 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 flex items-center gap-1 shadow-sm"
+                          title="Create Quotation (+ Quote)"
+                        >
+                          <Plus size={12} />
+                          <span className="hidden sm:inline">+ Quote</span>
+                        </button>
                       )}
                       <button
                         className="p-1.5 rounded-lg transition-colors"
