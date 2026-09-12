@@ -298,6 +298,49 @@ export default function CatalogPage() {
   const [newSpecName, setNewSpecName] = useState("");
   const [newSpecPrice, setNewSpecPrice] = useState("");
   const [newSpecUnit, setNewSpecUnit] = useState("Sq.Ft");
+  const [newSpecDiscPercent, setNewSpecDiscPercent] = useState("");
+  const [newSpecDiscPrice, setNewSpecDiscPrice] = useState("");
+
+  const handleSpecPriceChange = (val) => {
+    const clean = val.replace(/[^0-9.]/g, "");
+    setNewSpecPrice(clean);
+    const numPrice = parseFloat(clean) || 0;
+    if (newSpecDiscPercent && numPrice > 0) {
+      const p = parseFloat(newSpecDiscPercent) || 0;
+      const dp = numPrice - (numPrice * p) / 100;
+      setNewSpecDiscPrice(dp > 0 ? dp.toFixed(2) : "0");
+    } else if (newSpecDiscPrice && numPrice > 0) {
+      const dp = parseFloat(newSpecDiscPrice) || 0;
+      const p = (((numPrice - dp) / numPrice) * 100).toFixed(1);
+      setNewSpecDiscPercent(p > 0 ? p : "0");
+    }
+  };
+
+  const handleSpecDiscPercentChange = (val) => {
+    const clean = val.replace(/[^0-9.]/g, "");
+    setNewSpecDiscPercent(clean);
+    const numPrice = parseFloat(newSpecPrice) || 0;
+    if (clean && parseFloat(clean) > 0 && numPrice > 0) {
+      const p = parseFloat(clean);
+      const dp = numPrice - (numPrice * p) / 100;
+      setNewSpecDiscPrice(dp > 0 ? dp.toFixed(2) : "0");
+    } else {
+      setNewSpecDiscPrice("");
+    }
+  };
+
+  const handleSpecDiscPriceChange = (val) => {
+    const clean = val.replace(/[^0-9.]/g, "");
+    setNewSpecDiscPrice(clean);
+    const numPrice = parseFloat(newSpecPrice) || 0;
+    if (clean && parseFloat(clean) > 0 && numPrice > 0) {
+      const dp = parseFloat(clean);
+      const p = (((numPrice - dp) / numPrice) * 100).toFixed(1);
+      setNewSpecDiscPercent(p > 0 ? p : "0");
+    } else {
+      setNewSpecDiscPercent("");
+    }
+  };
 
   // Editing modal/inline states
   const [editingItem, setEditingItem] = useState(null); // { type: 'product'|'category'|'spec', id, name, unitPrice, unit }
@@ -491,16 +534,28 @@ export default function CatalogPage() {
     }
 
     const name = newSpecName.trim();
-    if (!name) return;
+    if (!name) {
+      showDialog({ title: "Specification Name Missing", message: "Please enter a specification description.", type: "alert" });
+      return;
+    }
 
-    const price = parseFloat(newSpecPrice) || 0;
+    const price = parseFloat(newSpecPrice);
+    if (!newSpecPrice || isNaN(price) || price <= 0) {
+      showDialog({ title: "Unit Price Required", message: "Unit price is mandatory and must be greater than 0.", type: "alert" });
+      return;
+    }
+
     const unit = newSpecUnit.trim() || "Sq.Ft";
+    const discPercent = newSpecDiscPercent && !isNaN(parseFloat(newSpecDiscPercent)) ? parseFloat(newSpecDiscPercent) : null;
+    const discPrice = newSpecDiscPrice && !isNaN(parseFloat(newSpecDiscPrice)) ? parseFloat(newSpecDiscPrice) : null;
 
     const newSpec = {
       id: "spec-" + Date.now(),
       name,
       unitPrice: price,
-      unit
+      unit,
+      discountPercent: discPercent,
+      discountPrice: discPrice
     };
 
     const updated = catalogTree.map(p => {
@@ -524,6 +579,8 @@ export default function CatalogPage() {
     setCatalogTree(updated);
     setNewSpecName("");
     setNewSpecPrice("");
+    setNewSpecDiscPercent("");
+    setNewSpecDiscPrice("");
     setNewSpecUnit("Sq.Ft");
     persistToServer(updated);
   };
@@ -577,6 +634,12 @@ export default function CatalogPage() {
         return p;
       });
     } else if (type === "specification") {
+      const parsedPrice = parseFloat(unitPrice);
+      if (!unitPrice || isNaN(parsedPrice) || parsedPrice <= 0) {
+        showDialog({ title: "Unit Price Required", message: "Unit price is mandatory and must be greater than 0.", type: "alert" });
+        return;
+      }
+
       updated = updated.map(p => {
         if (p.id === activeProduct?.id) {
           return {
@@ -586,7 +649,14 @@ export default function CatalogPage() {
                 return {
                   ...c,
                   specifications: (c.specifications || []).map(s => 
-                    s.id === id ? { ...s, name: name.trim(), unitPrice: parseFloat(unitPrice) || 0, unit: unit || "Sq.Ft" } : s
+                    s.id === id ? { 
+                      ...s, 
+                      name: name.trim(), 
+                      unitPrice: parsedPrice, 
+                      unit: unit || "Sq.Ft",
+                      discountPercent: editingItem.discountPercent !== undefined && editingItem.discountPercent !== "" && !isNaN(parseFloat(editingItem.discountPercent)) ? parseFloat(editingItem.discountPercent) : null,
+                      discountPrice: editingItem.discountPrice !== undefined && editingItem.discountPrice !== "" && !isNaN(parseFloat(editingItem.discountPrice)) ? parseFloat(editingItem.discountPrice) : null
+                    } : s
                   )
                 };
               }
@@ -618,24 +688,28 @@ export default function CatalogPage() {
   }, [catalogTree, searchQuery]);
 
   return (
-    <div className={`p-4 md:p-6 space-y-6 max-w-7xl mx-auto ${t.text}`}>
-      {/* ── HEADER BANNER ── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-[#1e293b] to-slate-900 border border-slate-800 p-6 shadow-xl text-white">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white flex items-center gap-3">
-              <Package className="text-[#C9A227]" size={28} />
-              Master Catalog Management
-            </h1>
-            <p className="text-xs md:text-sm text-slate-300 max-w-2xl font-medium">
-              3-Level Layered Structure: <span className="text-amber-300 font-bold">Product</span> → <span className="text-amber-300 font-bold">Category</span> → <span className="text-amber-300 font-bold">Specification with Unit Price (₹)</span>. Automatically auto-fills rates and units in quotations!
-            </p>
+    <div className={`p-3 md:p-5 space-y-3.5 w-full max-w-none ${t.text}`}>
+      {/* ── HEADER BANNER (Compact) ── */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-slate-900 via-[#1e293b] to-slate-900 border border-slate-800 px-5 py-2.5 shadow-md text-white">
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
+              <Package className="text-[#C9A227]" size={18} />
+            </div>
+            <div>
+              <h1 className="text-base md:text-lg font-black tracking-tight text-white flex items-center gap-2">
+                Master Catalog Management
+              </h1>
+              <p className="text-[11px] text-slate-400 font-medium">
+                Product → Category → Specification with Unit Price & Discounts. Auto-fills quotations!
+              </p>
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 shrink-0">
             {saveSuccessMsg && (
-              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-bold border border-emerald-500/30">
-                <CheckCircle2 size={14} /> {saveSuccessMsg}
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-bold border border-emerald-500/30">
+                <CheckCircle2 size={13} /> {saveSuccessMsg}
               </span>
             )}
           </div>
@@ -933,30 +1007,44 @@ export default function CatalogPage() {
 
           {/* Add Specification Form */}
           {activeCategory ? (
-            <form onSubmit={handleAddSpecification} className="p-3 border-b border-[var(--border-color)] bg-slate-50/50 dark:bg-slate-900/50 space-y-2">
+            <form onSubmit={handleAddSpecification} className="p-3 border-b border-[var(--border-color)] bg-slate-50/50 dark:bg-slate-900/50 space-y-2.5">
               <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">
+                  Specification Description <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   value={newSpecName}
                   onChange={(e) => setNewSpecName(e.target.value)}
-                  placeholder="Specification / Material description..."
+                  placeholder="Material description (e.g. 18mm BWP Ply)..."
                   className="w-full px-3 py-1.5 text-xs font-medium rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                   required
                 />
               </div>
+
               <div className="grid grid-cols-12 gap-2">
-                <div className="col-span-7 relative">
-                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                  <input
-                    type="number"
-                    step="any"
-                    value={newSpecPrice}
-                    onChange={(e) => setNewSpecPrice(e.target.value)}
-                    placeholder="Unit Price"
-                    className="w-full pl-6 pr-2 py-1.5 text-xs font-bold rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 text-emerald-700 dark:text-emerald-400"
-                  />
+                <div className="col-span-7">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">
+                    Unit Price <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
+                    <input
+                      type="number"
+                      step="any"
+                      required
+                      value={newSpecPrice}
+                      onChange={(e) => handleSpecPriceChange(e.target.value)}
+                      placeholder="0.00 *"
+                      className="w-full pl-6 pr-2 py-1.5 text-xs font-black rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 text-emerald-700 dark:text-emerald-400"
+                    />
+                  </div>
                 </div>
+
                 <div className="col-span-5">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">
+                    Unit
+                  </label>
                   <select
                     value={newSpecUnit}
                     onChange={(e) => setNewSpecUnit(e.target.value)}
@@ -968,10 +1056,47 @@ export default function CatalogPage() {
                   </select>
                 </div>
               </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">
+                    Disc %
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="any"
+                      value={newSpecDiscPercent}
+                      onChange={(e) => handleSpecDiscPercentChange(e.target.value)}
+                      placeholder="0 %"
+                      className="w-full pl-2.5 pr-6 py-1.5 text-xs font-semibold rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30 text-amber-600 dark:text-amber-400"
+                    />
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] font-bold">%</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">
+                    Disc Price (₹)
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
+                    <input
+                      type="number"
+                      step="any"
+                      value={newSpecDiscPrice}
+                      onChange={(e) => handleSpecDiscPriceChange(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full pl-5 pr-2 py-1.5 text-xs font-semibold rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500/30 text-purple-700 dark:text-purple-400"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <button
                 type="submit"
-                disabled={!newSpecName.trim()}
-                className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white rounded-xl font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 transition"
+                disabled={!newSpecName.trim() || !newSpecPrice || parseFloat(newSpecPrice) <= 0}
+                className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 transition mt-0.5"
               >
                 <Plus size={13} /> Add Specification & Unit Rate
               </button>
@@ -994,10 +1119,22 @@ export default function CatalogPage() {
                     <p className="text-xs font-semibold text-themed leading-snug">
                       {spec.name}
                     </p>
-                    <div className="mt-1.5 flex items-center gap-2">
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-black bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
                         ₹{Number(spec.unitPrice || 0).toLocaleString("en-IN")} / {spec.unit || "Sq.Ft"}
                       </span>
+
+                      {spec.discountPercent > 0 && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+                          {spec.discountPercent}% OFF
+                        </span>
+                      )}
+
+                      {spec.discountPrice > 0 && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20">
+                          Disc: ₹{Number(spec.discountPrice).toLocaleString("en-IN")}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -1009,7 +1146,9 @@ export default function CatalogPage() {
                         id: spec.id,
                         name: spec.name,
                         unitPrice: spec.unitPrice || 0,
-                        unit: spec.unit || "Sq.Ft"
+                        unit: spec.unit || "Sq.Ft",
+                        discountPercent: spec.discountPercent !== undefined && spec.discountPercent !== null ? String(spec.discountPercent) : "",
+                        discountPrice: spec.discountPrice !== undefined && spec.discountPrice !== null ? String(spec.discountPrice) : ""
                       })}
                       className="p-1.5 text-slate-400 hover:text-emerald-600 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition"
                       title="Edit Specification & Rate"
@@ -1073,32 +1212,89 @@ export default function CatalogPage() {
               </div>
 
               {editingItem.type === "specification" && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
-                      Unit Price (₹)
-                    </label>
-                    <input
-                      type="number"
-                      step="any"
-                      value={editingItem.unitPrice}
-                      onChange={(e) => setEditingItem({ ...editingItem, unitPrice: e.target.value })}
-                      className="w-full px-3 py-2 text-xs font-bold text-emerald-600 rounded-xl border border-[var(--border-color)] bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
-                    />
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                        Unit Price (₹) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        required
+                        value={editingItem.unitPrice}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const p = parseFloat(val) || 0;
+                          let dp = editingItem.discountPrice;
+                          let dperc = editingItem.discountPercent;
+                          if (dperc && p > 0) {
+                            dp = (p - (p * parseFloat(dperc)) / 100).toFixed(2);
+                          }
+                          setEditingItem({ ...editingItem, unitPrice: val, discountPrice: dp });
+                        }}
+                        className="w-full px-3 py-2 text-xs font-bold text-emerald-600 rounded-xl border border-[var(--border-color)] bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                        Unit
+                      </label>
+                      <select
+                        value={editingItem.unit}
+                        onChange={(e) => setEditingItem({ ...editingItem, unit: e.target.value })}
+                        className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-[var(--border-color)] bg-slate-50 dark:bg-slate-900 focus:outline-none"
+                      >
+                        {STANDARD_UNITS.map((u, idx) => (
+                          <option key={idx} value={u}>{u}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
-                      Unit
-                    </label>
-                    <select
-                      value={editingItem.unit}
-                      onChange={(e) => setEditingItem({ ...editingItem, unit: e.target.value })}
-                      className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-[var(--border-color)] bg-slate-50 dark:bg-slate-900 focus:outline-none"
-                    >
-                      {STANDARD_UNITS.map((u, idx) => (
-                        <option key={idx} value={u}>{u}</option>
-                      ))}
-                    </select>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                        Disc %
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={editingItem.discountPercent || ""}
+                        onChange={(e) => {
+                          const clean = e.target.value;
+                          const numPrice = parseFloat(editingItem.unitPrice) || 0;
+                          let dp = "";
+                          if (clean && parseFloat(clean) > 0 && numPrice > 0) {
+                            dp = (numPrice - (numPrice * parseFloat(clean)) / 100).toFixed(2);
+                          }
+                          setEditingItem({ ...editingItem, discountPercent: clean, discountPrice: dp });
+                        }}
+                        placeholder="0 %"
+                        className="w-full px-3 py-2 text-xs font-semibold text-amber-600 rounded-xl border border-[var(--border-color)] bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                        Disc Price (₹)
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={editingItem.discountPrice || ""}
+                        onChange={(e) => {
+                          const clean = e.target.value;
+                          const numPrice = parseFloat(editingItem.unitPrice) || 0;
+                          let dperc = "";
+                          if (clean && parseFloat(clean) > 0 && numPrice > 0) {
+                            dperc = (((numPrice - parseFloat(clean)) / numPrice) * 100).toFixed(1);
+                          }
+                          setEditingItem({ ...editingItem, discountPrice: clean, discountPercent: dperc });
+                        }}
+                        placeholder="0.00 ₹"
+                        className="w-full px-3 py-2 text-xs font-semibold text-purple-600 rounded-xl border border-[var(--border-color)] bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                      />
+                    </div>
                   </div>
                 </div>
               )}

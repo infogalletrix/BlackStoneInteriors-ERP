@@ -247,6 +247,13 @@ export default function QuotationItemModal({
       if (found.unit) {
         setUnit(found.unit);
       }
+      if (found.discountPercent !== undefined && found.discountPercent !== null && Number(found.discountPercent) > 0) {
+        setDiscountType("percent");
+        handleDiscountPercentChange(String(found.discountPercent));
+      } else if (found.discountPrice !== undefined && found.discountPrice !== null && Number(found.discountPrice) > 0) {
+        setDiscountType("price");
+        handleDiscountPriceChange(String(found.discountPrice));
+      }
     }
   };
 
