@@ -65,10 +65,10 @@ export default function QuotationPage() {
   const [mobileNo, setMobileNo] = useState("");
   const [customerGst, setCustomerGst] = useState("");
   const [deliveryTimeline, setDeliveryTimeline] = useState("3 to 4 Weeks");
-  const [installationMaterial, setInstallationMaterial] = useState(0);
-  const [deliveryLoading, setDeliveryLoading] = useState(0);
-  const [transportationCharges, setTransportationCharges] = useState(0);
-  const [additionalDiscount, setAdditionalDiscount] = useState(0);
+  const [installationMaterial, setInstallationMaterial] = useState("");
+  const [deliveryLoading, setDeliveryLoading] = useState("");
+  const [transportationCharges, setTransportationCharges] = useState("");
+  const [additionalDiscount, setAdditionalDiscount] = useState("");
   const [cgstPercent, setCgstPercent] = useState("9");
   const [sgstPercent, setSgstPercent] = useState("9");
 
@@ -260,10 +260,10 @@ export default function QuotationPage() {
       setMobileNo("");
       setCustomerGst("");
       setDeliveryTimeline("3 to 4 Weeks");
-      setInstallationMaterial(0);
-      setDeliveryLoading(0);
-      setTransportationCharges(0);
-      setAdditionalDiscount(0);
+      setInstallationMaterial("");
+      setDeliveryLoading("");
+      setTransportationCharges("");
+      setAdditionalDiscount("");
       setCgstPercent("9");
       setSgstPercent("9");
       fetchInternetDate().then(realDate => {
@@ -291,10 +291,10 @@ export default function QuotationPage() {
     setMobileNo(d.mobileNo || "");
     setCustomerGst(d.customerGst || "");
     setDeliveryTimeline(d.deliveryTimeline || "3 to 4 Weeks");
-    setInstallationMaterial(d.installationMaterial || 0);
-    setDeliveryLoading(d.deliveryLoading || 0);
-    setTransportationCharges(d.transportationCharges || 0);
-    setAdditionalDiscount(d.additionalDiscount || 0);
+    setInstallationMaterial(d.installationMaterial && Number(d.installationMaterial) > 0 ? d.installationMaterial : "");
+    setDeliveryLoading(d.deliveryLoading && Number(d.deliveryLoading) > 0 ? d.deliveryLoading : "");
+    setTransportationCharges(d.transportationCharges && Number(d.transportationCharges) > 0 ? d.transportationCharges : "");
+    setAdditionalDiscount(d.additionalDiscount && Number(d.additionalDiscount) > 0 ? d.additionalDiscount : "");
     setCgstPercent(d.cgstPercent !== undefined ? d.cgstPercent : "9");
     setSgstPercent(d.sgstPercent !== undefined ? d.sgstPercent : "9");
     if (d.quoteDate) setQuoteDate(d.quoteDate);
@@ -372,10 +372,10 @@ export default function QuotationPage() {
       mobileNo: q.mobileNo || "",
       customerGst: q.customerGst || "",
       deliveryTimeline: q.deliveryTimeline || "3 to 4 Weeks",
-      installationMaterial: q.installationMaterial || 0,
-      deliveryLoading: q.deliveryLoading || 0,
-      transportationCharges: q.transportationCharges || 0,
-      additionalDiscount: q.additionalDiscount || 0,
+      installationMaterial: q.installationMaterial && Number(q.installationMaterial) > 0 ? q.installationMaterial : "",
+      deliveryLoading: q.deliveryLoading && Number(q.deliveryLoading) > 0 ? q.deliveryLoading : "",
+      transportationCharges: q.transportationCharges && Number(q.transportationCharges) > 0 ? q.transportationCharges : "",
+      additionalDiscount: q.additionalDiscount && Number(q.additionalDiscount) > 0 ? q.additionalDiscount : "",
       cgstPercent: q.cgstPercent !== undefined ? q.cgstPercent : "9",
       sgstPercent: q.sgstPercent !== undefined ? q.sgstPercent : "9"
     };
@@ -436,10 +436,10 @@ export default function QuotationPage() {
             quoteDate: new Date().toISOString().split('T')[0],
             customerGst: "",
             deliveryTimeline: "3 to 4 Weeks",
-            installationMaterial: 0,
-            deliveryLoading: 0,
-            transportationCharges: 0,
-            additionalDiscount: 0,
+            installationMaterial: "",
+            deliveryLoading: "",
+            transportationCharges: "",
+            additionalDiscount: "",
             cgstPercent: "9",
             sgstPercent: "9"
           }
@@ -587,10 +587,10 @@ export default function QuotationPage() {
       mobileNo,
       customerGst,
       deliveryTimeline,
-      installationMaterial,
-      deliveryLoading,
-      transportationCharges,
-      additionalDiscount,
+      installationMaterial: parseFloat(installationMaterial || 0),
+      deliveryLoading: parseFloat(deliveryLoading || 0),
+      transportationCharges: parseFloat(transportationCharges || 0),
+      additionalDiscount: parseFloat(additionalDiscount || 0),
       cgstPercent,
       sgstPercent
     };
@@ -651,9 +651,9 @@ export default function QuotationPage() {
           setMobileNo("");
           setCustomerGst("");
           setDeliveryTimeline("3 to 4 Weeks");
-          setInstallationMaterial(0);
-          setDeliveryLoading(0);
-          setAdditionalDiscount(0);
+          setInstallationMaterial("");
+          setDeliveryLoading("");
+          setAdditionalDiscount("");
           setQuoteId(null);
           fetch(`/api/quotations/next-number?date=${quoteDate}`)
             .then(res => res.json())
@@ -729,10 +729,10 @@ export default function QuotationPage() {
         setMobileNo("");
         setCustomerGst("");
         setDeliveryTimeline("3 to 4 Weeks");
-        setInstallationMaterial(0);
-        setDeliveryLoading(0);
-        setTransportationCharges(0);
-        setAdditionalDiscount(0);
+        setInstallationMaterial("");
+        setDeliveryLoading("");
+        setTransportationCharges("");
+        setAdditionalDiscount("");
         setCgstPercent("9");
         setSgstPercent("9");
       }
@@ -1126,10 +1126,10 @@ export default function QuotationPage() {
           <div className="flex flex-col gap-1.5">
              <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Delivery and Transport (₹)</label>
              <input 
-               value={deliveryLoading} 
+               value={deliveryLoading && Number(deliveryLoading) > 0 ? deliveryLoading : (deliveryLoading === "0" ? "" : deliveryLoading)} 
                onChange={e => {
                  setDeliveryLoading(e.target.value.replace(/[^0-9.]/g, ''));
-                 setTransportationCharges(0);
+                 setTransportationCharges("");
                }} 
                placeholder="0.00" 
                className="w-36 themed-input px-3 py-1.5 text-sm text-right border border-[var(--border-color)] rounded-lg font-bold outline-none focus:border-amber-400" 
@@ -1138,12 +1138,22 @@ export default function QuotationPage() {
 
           <div className="flex flex-col gap-1.5">
              <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Discount (₹)</label>
-             <input value={additionalDiscount} onChange={e=>setAdditionalDiscount(e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0.00" className="w-28 themed-input px-3 py-1.5 text-sm text-right border border-[var(--border-color)] rounded-lg font-bold outline-none focus:border-amber-400" />
+             <input 
+               value={additionalDiscount && Number(additionalDiscount) > 0 ? additionalDiscount : (additionalDiscount === "0" ? "" : additionalDiscount)} 
+               onChange={e=>setAdditionalDiscount(e.target.value.replace(/[^0-9.]/g, ''))} 
+               placeholder="0.00" 
+               className="w-28 themed-input px-3 py-1.5 text-sm text-right border border-[var(--border-color)] rounded-lg font-bold outline-none focus:border-amber-400" 
+             />
           </div>
 
           <div className="flex flex-col gap-1.5">
              <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Instal. Mat. (₹)</label>
-             <input value={installationMaterial} onChange={e=>setInstallationMaterial(e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0.00" className="w-28 themed-input px-3 py-1.5 text-sm text-right border border-[var(--border-color)] rounded-lg font-bold outline-none focus:border-amber-400" />
+             <input 
+               value={installationMaterial && Number(installationMaterial) > 0 ? installationMaterial : (installationMaterial === "0" ? "" : installationMaterial)} 
+               onChange={e=>setInstallationMaterial(e.target.value.replace(/[^0-9.]/g, ''))} 
+               placeholder="0.00" 
+               className="w-28 themed-input px-3 py-1.5 text-sm text-right border border-[var(--border-color)] rounded-lg font-bold outline-none focus:border-amber-400" 
+             />
           </div>
 
           {/* CGST and SGST text boxes ONLY appear for GST */}
