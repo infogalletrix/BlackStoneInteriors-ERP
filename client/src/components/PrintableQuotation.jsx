@@ -2,7 +2,16 @@ import { forwardRef } from "react";
 
 const PrintableQuotation = forwardRef(({ data }, ref) => {
   const safeData = data || {};
-  const items = safeData.items || [];
+  const rawItems = safeData.items || [];
+  let parsedItems = rawItems;
+  if (typeof rawItems === "string") {
+    try {
+      parsedItems = JSON.parse(rawItems);
+    } catch {
+      parsedItems = [];
+    }
+  }
+  const items = Array.isArray(parsedItems) ? parsedItems : [];
 
   const subTotal = items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
   const installation = parseFloat(safeData.installationMaterial || 0);
@@ -502,8 +511,8 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       totalItemsHeight += getItemHeight(it);
     });
 
-    // 1. Single-Page Check (Capacity for items + summary = ~135mm)
-    if (totalItemsHeight <= 135) {
+    // 1. Single-Page Check (Safe capacity: ~115mm)
+    if (totalItemsHeight <= 115) {
       return [{
         pageNum: 1,
         totalPages: 1,
@@ -514,10 +523,10 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       }];
     }
 
-    // 2. Multi-Page Splitting
-    // Page 1 capacity (without summary) = 195mm
-    // Middle page capacity (without summary) = 225mm
-    // Last page capacity WITH summary = 160mm
+    // 2. Multi-Page Splitting:
+    // Page 1 capacity: 165mm
+    // Middle page capacity: 195mm
+    // Last page capacity WITH summary: 145mm
     const pages = [];
     let currentIndex = 0;
     let pageNum = 1;
@@ -538,8 +547,8 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         remHeight += getItemHeight(it);
       });
 
-      // If NOT page 1 and remaining items comfortably fit on the last page with summary (<= 160mm):
-      if (!isFirstPage && remHeight <= 160) {
+      // If NOT page 1 and remaining items fit comfortably on last page with summary (<= 145mm):
+      if (!isFirstPage && remHeight <= 145) {
         pages.push({
           items: remainingItems,
           isFirst: false,
@@ -550,11 +559,11 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       }
 
       // Page capacity
-      let pageCapacity = isFirstPage ? 195 : 225;
+      let pageCapacity = isFirstPage ? 165 : 195;
 
-      // If page 1 of a 2-page document, balance items so page 2 has ample items and no giant empty gap
-      if (isFirstPage && remHeight > 135 && remHeight <= 300) {
-        pageCapacity = Math.min(195, Math.max(100, remHeight - 85));
+      // For 2-page documents, balance Page 1 so Page 2 has adequate items
+      if (isFirstPage && remHeight > 115 && remHeight <= 280) {
+        pageCapacity = Math.min(165, Math.max(90, remHeight - 110));
       }
 
       let currentHeight = 0;
@@ -592,9 +601,9 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       pageNum++;
     }
 
-    // Safety check: if last page has items > 160mm, move items
+    // Safety check: ensure last page has items <= 145mm
     const lastIdx = pages.length - 1;
-    if (pages.length > 1 && pages[lastIdx].usedHeight > 160) {
+    if (pages.length > 1 && pages[lastIdx].usedHeight > 145) {
       const lastPage = pages[lastIdx];
       const overflowItems = [];
       let oHeight = 0;
@@ -606,13 +615,13 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         let cost = getItemHeight(item);
         if (sec !== oSec) cost += SEC_HDR_HEIGHT;
 
-        if (oHeight + cost > 140 && overflowItems.length > 0) break;
+        if (oHeight + cost > 130 && overflowItems.length > 0) break;
 
         overflowItems.unshift(lastPage.items.pop());
         oHeight += cost;
         oSec = sec;
         lastPage.usedHeight -= cost;
-        if (lastPage.usedHeight <= 150) break;
+        if (lastPage.usedHeight <= 135) break;
       }
 
       if (overflowItems.length > 0) {
@@ -625,11 +634,14 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       }
     }
 
+    // Explicit guarantee: Filter out any empty pages
+    const validPages = pages.filter((p) => p.items && p.items.length > 0);
+    const totalPages = validPages.length > 0 ? validPages.length : 1;
+
     // Precompute continuedSections for each page
     const seenSections = new Set();
-    const totalPages = pages.length;
 
-    return pages.map((p, idx) => {
+    return validPages.map((p, idx) => {
       const continued = new Set();
       const pageSecs = new Set(p.items.map((it) => it.section?.trim() || "General"));
       pageSecs.forEach((sec) => {
@@ -659,19 +671,24 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         @media print {
           @page {
             size: A4 portrait;
-            margin: 0;
+            margin: 6mm 8mm 6mm 8mm;
           }
-          body {
+          html, body {
             margin: 0 !important;
             padding: 0 !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
+          .print-document {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+          }
           .print-page {
-            width: 210mm !important;
-            height: 297mm !important;
-            min-height: 297mm !important;
-            max-height: 297mm !important;
+            width: 100% !important;
+            max-width: 194mm !important;
+            height: 275mm !important;
+            max-height: 275mm !important;
             page-break-after: always !important;
             break-after: page !important;
             page-break-inside: avoid !important;
@@ -679,7 +696,8 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
             display: flex !important;
             flex-direction: column !important;
             justify-content: flex-start !important;
-            padding: 8mm 12mm 6mm 12mm !important;
+            padding: 0 !important;
+            margin: 0 auto !important;
             box-sizing: border-box !important;
             position: relative !important;
             overflow: hidden !important;
@@ -687,6 +705,9 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
           .print-page:last-child {
             page-break-after: avoid !important;
             break-after: avoid !important;
+          }
+          thead {
+            display: table-row-group !important;
           }
         }
         @media screen {
