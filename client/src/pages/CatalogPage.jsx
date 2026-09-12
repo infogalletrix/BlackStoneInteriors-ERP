@@ -298,6 +298,7 @@ export default function CatalogPage() {
   const [newSpecName, setNewSpecName] = useState("");
   const [newSpecPrice, setNewSpecPrice] = useState("");
   const [newSpecUnit, setNewSpecUnit] = useState("Sq.Ft");
+  const [newSpecDiscType, setNewSpecDiscType] = useState("percent"); // 'percent' | 'price'
   const [newSpecDiscPercent, setNewSpecDiscPercent] = useState("");
   const [newSpecDiscPrice, setNewSpecDiscPrice] = useState("");
 
@@ -305,14 +306,14 @@ export default function CatalogPage() {
     const clean = val.replace(/[^0-9.]/g, "");
     setNewSpecPrice(clean);
     const numPrice = parseFloat(clean) || 0;
-    if (newSpecDiscPercent && numPrice > 0) {
-      const p = parseFloat(newSpecDiscPercent) || 0;
-      const dp = numPrice - (numPrice * p) / 100;
-      setNewSpecDiscPrice(dp > 0 ? dp.toFixed(2) : "0");
-    } else if (newSpecDiscPrice && numPrice > 0) {
+    if (newSpecDiscType === "price" && newSpecDiscPrice && numPrice > 0) {
       const dp = parseFloat(newSpecDiscPrice) || 0;
       const p = (((numPrice - dp) / numPrice) * 100).toFixed(1);
       setNewSpecDiscPercent(p > 0 ? p : "0");
+    } else if (newSpecDiscPercent && numPrice > 0) {
+      const p = parseFloat(newSpecDiscPercent) || 0;
+      const dp = numPrice - (numPrice * p) / 100;
+      setNewSpecDiscPrice(dp > 0 ? dp.toFixed(2) : "0");
     }
   };
 
@@ -554,6 +555,7 @@ export default function CatalogPage() {
       name,
       unitPrice: price,
       unit,
+      discountType: newSpecDiscType,
       discountPercent: discPercent,
       discountPrice: discPrice
     };
@@ -581,6 +583,7 @@ export default function CatalogPage() {
     setNewSpecPrice("");
     setNewSpecDiscPercent("");
     setNewSpecDiscPrice("");
+    setNewSpecDiscType("percent");
     setNewSpecUnit("Sq.Ft");
     persistToServer(updated);
   };
@@ -654,6 +657,7 @@ export default function CatalogPage() {
                       name: name.trim(), 
                       unitPrice: parsedPrice, 
                       unit: unit || "Sq.Ft",
+                      discountType: editingItem.discountType || "percent",
                       discountPercent: editingItem.discountPercent !== undefined && editingItem.discountPercent !== "" && !isNaN(parseFloat(editingItem.discountPercent)) ? parseFloat(editingItem.discountPercent) : null,
                       discountPrice: editingItem.discountPrice !== undefined && editingItem.discountPrice !== "" && !isNaN(parseFloat(editingItem.discountPrice)) ? parseFloat(editingItem.discountPrice) : null
                     } : s
@@ -1057,39 +1061,41 @@ export default function CatalogPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">
-                    Disc %
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">
+                    Disc ({newSpecDiscType === "price" ? "₹" : "%"})
                   </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      step="any"
-                      value={newSpecDiscPercent}
-                      onChange={(e) => handleSpecDiscPercentChange(e.target.value)}
-                      placeholder="0 %"
-                      className="w-full pl-2.5 pr-6 py-1.5 text-xs font-semibold rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30 text-amber-600 dark:text-amber-400"
-                    />
-                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] font-bold">%</span>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setNewSpecDiscType(prev => prev === "percent" ? "price" : "percent")}
+                    className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-[var(--accent)] border border-amber-500/30 hover:bg-amber-500/20 transition"
+                    title="Switch between Percentage and Direct Price discount"
+                  >
+                    {newSpecDiscType === "price" ? "Switch to %" : "Switch to ₹"}
+                  </button>
                 </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">
-                    Disc Price (₹)
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                    <input
-                      type="number"
-                      step="any"
-                      value={newSpecDiscPrice}
-                      onChange={(e) => handleSpecDiscPriceChange(e.target.value)}
-                      placeholder="0.00"
-                      className="w-full pl-5 pr-2 py-1.5 text-xs font-semibold rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500/30 text-purple-700 dark:text-purple-400"
-                    />
-                  </div>
+                <div className="relative">
+                  {newSpecDiscType === "price" && (
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
+                  )}
+                  <input
+                    type="number"
+                    step="any"
+                    value={newSpecDiscType === "price" ? newSpecDiscPrice : newSpecDiscPercent}
+                    onChange={(e) => {
+                      if (newSpecDiscType === "price") {
+                        handleSpecDiscPriceChange(e.target.value);
+                      } else {
+                        handleSpecDiscPercentChange(e.target.value);
+                      }
+                    }}
+                    placeholder={newSpecDiscType === "price" ? "0.00 ₹" : "0 %"}
+                    className={`w-full ${newSpecDiscType === "price" ? "pl-6 pr-2.5" : "pl-2.5 pr-6"} py-1.5 text-xs font-semibold rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30 text-amber-600 dark:text-amber-400`}
+                  />
+                  {newSpecDiscType === "percent" && (
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] font-bold">%</span>
+                  )}
                 </div>
               </div>
 
@@ -1124,17 +1130,19 @@ export default function CatalogPage() {
                         ₹{Number(spec.unitPrice || 0).toLocaleString("en-IN")} / {spec.unit || "Sq.Ft"}
                       </span>
 
-                      {spec.discountPercent > 0 && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
-                          {spec.discountPercent}% OFF
-                        </span>
-                      )}
-
-                      {spec.discountPrice > 0 && (
+                      {spec.discountType === "price" && spec.discountPrice > 0 ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20">
                           Disc: ₹{Number(spec.discountPrice).toLocaleString("en-IN")}
                         </span>
-                      )}
+                      ) : spec.discountPercent > 0 ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+                          {spec.discountPercent}% OFF
+                        </span>
+                      ) : spec.discountPrice > 0 ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20">
+                          Disc: ₹{Number(spec.discountPrice).toLocaleString("en-IN")}
+                        </span>
+                      ) : null}
                     </div>
                   </div>
 
@@ -1147,6 +1155,7 @@ export default function CatalogPage() {
                         name: spec.name,
                         unitPrice: spec.unitPrice || 0,
                         unit: spec.unit || "Sq.Ft",
+                        discountType: spec.discountType || (spec.discountPrice && !spec.discountPercent ? "price" : "percent"),
                         discountPercent: spec.discountPercent !== undefined && spec.discountPercent !== null ? String(spec.discountPercent) : "",
                         discountPrice: spec.discountPrice !== undefined && spec.discountPrice !== null ? String(spec.discountPrice) : ""
                       })}
@@ -1228,10 +1237,12 @@ export default function CatalogPage() {
                           const p = parseFloat(val) || 0;
                           let dp = editingItem.discountPrice;
                           let dperc = editingItem.discountPercent;
-                          if (dperc && p > 0) {
+                          if (editingItem.discountType === "price" && dp && p > 0) {
+                            dperc = (((p - parseFloat(dp)) / p) * 100).toFixed(1);
+                          } else if (dperc && p > 0) {
                             dp = (p - (p * parseFloat(dperc)) / 100).toFixed(2);
                           }
-                          setEditingItem({ ...editingItem, unitPrice: val, discountPrice: dp });
+                          setEditingItem({ ...editingItem, unitPrice: val, discountPrice: dp, discountPercent: dperc });
                         }}
                         className="w-full px-3 py-2 text-xs font-bold text-emerald-600 rounded-xl border border-[var(--border-color)] bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                       />
@@ -1252,48 +1263,54 @@ export default function CatalogPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
-                        Disc %
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="text-xs font-bold text-slate-500 uppercase">
+                        Disc ({(editingItem.discountType || "percent") === "price" ? "₹" : "%"})
                       </label>
-                      <input
-                        type="number"
-                        step="any"
-                        value={editingItem.discountPercent || ""}
-                        onChange={(e) => {
-                          const clean = e.target.value;
-                          const numPrice = parseFloat(editingItem.unitPrice) || 0;
-                          let dp = "";
-                          if (clean && parseFloat(clean) > 0 && numPrice > 0) {
-                            dp = (numPrice - (numPrice * parseFloat(clean)) / 100).toFixed(2);
-                          }
-                          setEditingItem({ ...editingItem, discountPercent: clean, discountPrice: dp });
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextType = (editingItem.discountType || "percent") === "price" ? "percent" : "price";
+                          setEditingItem({ ...editingItem, discountType: nextType });
                         }}
-                        placeholder="0 %"
-                        className="w-full px-3 py-2 text-xs font-semibold text-amber-600 rounded-xl border border-[var(--border-color)] bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
-                      />
+                        className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-[var(--accent)] border border-amber-500/30 hover:bg-amber-500/20 transition"
+                        title="Switch between Percentage and Direct Price discount"
+                      >
+                        {(editingItem.discountType || "percent") === "price" ? "Switch to %" : "Switch to ₹"}
+                      </button>
                     </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
-                        Disc Price (₹)
-                      </label>
+                    <div className="relative">
+                      {(editingItem.discountType || "percent") === "price" && (
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
+                      )}
                       <input
                         type="number"
                         step="any"
-                        value={editingItem.discountPrice || ""}
+                        value={(editingItem.discountType || "percent") === "price" ? (editingItem.discountPrice || "") : (editingItem.discountPercent || "")}
                         onChange={(e) => {
                           const clean = e.target.value;
                           const numPrice = parseFloat(editingItem.unitPrice) || 0;
-                          let dperc = "";
-                          if (clean && parseFloat(clean) > 0 && numPrice > 0) {
-                            dperc = (((numPrice - parseFloat(clean)) / numPrice) * 100).toFixed(1);
+                          if ((editingItem.discountType || "percent") === "price") {
+                            let dperc = "";
+                            if (clean && parseFloat(clean) > 0 && numPrice > 0) {
+                              dperc = (((numPrice - parseFloat(clean)) / numPrice) * 100).toFixed(1);
+                            }
+                            setEditingItem({ ...editingItem, discountPrice: clean, discountPercent: dperc });
+                          } else {
+                            let dp = "";
+                            if (clean && parseFloat(clean) > 0 && numPrice > 0) {
+                              dp = (numPrice - (numPrice * parseFloat(clean)) / 100).toFixed(2);
+                            }
+                            setEditingItem({ ...editingItem, discountPercent: clean, discountPrice: dp });
                           }
-                          setEditingItem({ ...editingItem, discountPrice: clean, discountPercent: dperc });
                         }}
-                        placeholder="0.00 ₹"
-                        className="w-full px-3 py-2 text-xs font-semibold text-purple-600 rounded-xl border border-[var(--border-color)] bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                        placeholder={(editingItem.discountType || "percent") === "price" ? "0.00 ₹" : "0 %"}
+                        className={`w-full px-3 py-2 text-xs font-semibold rounded-xl border border-[var(--border-color)] bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30 text-amber-600 dark:text-amber-400 ${(editingItem.discountType || "percent") === "price" ? "pl-7" : ""}`}
                       />
+                      {(editingItem.discountType || "percent") !== "price" && (
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">%</span>
+                      )}
                     </div>
                   </div>
                 </div>
