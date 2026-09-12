@@ -567,7 +567,7 @@ export default function SitesPage() {
                 />
               </div>
               <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-hide">
-                {["All", "Pre-Construction", "In Progress", "Waiting Floor", "Completed", "Maintenance"].map((status) => (
+                {["All", "Pre-Construction", "In Progress", "Completed", "Maintenance"].map((status) => (
                   <button
                     key={status}
                     onClick={() => setStatusFilter(status)}
@@ -716,7 +716,6 @@ export default function SitesPage() {
                       >
                         <option className="bg-[var(--modal-bg)]">Pre-Construction</option>
                         <option className="bg-[var(--modal-bg)]">In Progress</option>
-                        <option className="bg-[var(--modal-bg)]">Waiting Floor</option>
                         <option className="bg-[var(--modal-bg)]">Completed</option>
                         <option className="bg-[var(--modal-bg)]">Maintenance</option>
                       </select>
@@ -731,7 +730,7 @@ export default function SitesPage() {
                     </div>
                     <div className="flex items-center gap-4">
                       {(() => {
-                        const { billed, paid, balance, spent } = getSiteFinancials(selectedSite.id);
+                        const { billed, paid, balance } = getSiteFinancials(selectedSite.id);
                         return (
                           <>
                             <div className="flex flex-col items-start pr-4">
@@ -747,10 +746,6 @@ export default function SitesPage() {
                               <span className={`font-black text-sm tracking-tight ${balance > 0 ? "text-rose-400" : "text-emerald-400"}`}>
                                 ₹{Math.abs(balance).toLocaleString()}
                               </span>
-                            </div>
-                            <div className="flex flex-col items-start border-l border-[var(--border-color)] pl-4 pr-4">
-                              <span className="text-[10px] text-muted uppercase tracking-widest font-black">Spent</span>
-                              <span className="text-amber-500 font-black text-sm tracking-tight">₹{spent.toLocaleString()}</span>
                             </div>
                           </>
                         );
@@ -1125,7 +1120,6 @@ export default function SitesPage() {
                   <select name="status" className="themed-input w-full border border-[var(--border-color)] p-2.5 rounded-xl outline-none focus:border-[var(--accent)] font-bold text-sm transition-all shadow-sm">
                     <option>Pre-Construction</option>
                     <option>In Progress</option>
-                    <option>Waiting Floor</option>
                     <option>Completed</option>
                   </select>
                 </div>
@@ -1207,7 +1201,6 @@ export default function SitesPage() {
                 <select name="status" defaultValue={editFormData.status} className="w-full border py-1.5 px-3 rounded-lg outline-none focus:border-indigo-500 font-bold text-sm">
                   <option>Pre-Construction</option>
                   <option>In Progress</option>
-                  <option>Waiting Floor</option>
                   <option>Completed</option>
                   <option>Maintenance</option>
                 </select>
