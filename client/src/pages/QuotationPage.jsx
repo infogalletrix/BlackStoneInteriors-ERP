@@ -921,7 +921,7 @@ export default function QuotationPage() {
       <div className="px-4 py-2 bg-slate-50/90 dark:bg-slate-900/90 border-b border-[var(--border-color)] flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200">
-            Quotation Items ({items.length})
+            Total Items: {items.length}
           </span>
           {items.length > 0 && (
             <span className="text-[11px] font-bold text-amber-700 dark:text-[var(--accent)] bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
@@ -1100,15 +1100,6 @@ export default function QuotationPage() {
             >
               <Plus size={16} strokeWidth={2.5} /> Add Item
             </button>
-          </div>
-
-          <div className="flex items-center gap-6 text-sm">
-            <span className="font-bold text-muted">
-              Total Items: <strong className="text-themed font-black text-base">{items.length}</strong>
-            </span>
-            <span className="font-bold text-muted">
-              Sub Total: <strong className="text-amber-700 dark:text-[var(--accent)] font-black text-base">₹{formatINR(subTotal)}</strong>
-            </span>
           </div>
         </div>
 
