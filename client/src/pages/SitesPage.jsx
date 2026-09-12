@@ -455,35 +455,17 @@ export default function SitesPage() {
     e.preventDefault();
     const fd = new FormData(e.target);
     const category = fd.get("category");
-    let url = fd.get("url") || "";
 
-    if (mediaFileBase64) {
-      url = mediaFileBase64;
-    }
-
-    if (!url) {
-      showDialog({ title: "Error", message: "Please provide a media URL or upload a file.", type: "error" });
+    if (!mediaFileBase64) {
+      showDialog({ title: "Error", message: "Please select an image or video file to upload.", type: "error" });
       return;
-    }
-
-    // Auto-detect media type as image or video
-    let type = mediaFileType;
-    if (!mediaFileBase64 && url) {
-      const lower = url.toLowerCase();
-      if (lower.match(/\.(mp4|webm|ogg|mov|m4v)(\?.*)?$/) || lower.includes("youtube.com") || lower.includes("youtu.be") || lower.includes("vimeo.com")) {
-        type = "video";
-      } else {
-        type = "image";
-      }
-    } else if (mediaFileBase64) {
-      type = mediaFileBase64.startsWith("data:video") ? "video" : "image";
     }
 
     const newMedia = {
       id: `media-${Date.now()}`,
-      type,
+      type: mediaFileType,
       category,
-      url
+      url: mediaFileBase64
     };
 
     const s = sites.find(s => s.id === selectedSiteId);
@@ -1294,10 +1276,8 @@ export default function SitesPage() {
                 <input required name="category" placeholder="e.g. Master Bedroom, Kitchen 3D" className="w-full border themed-input p-3 rounded-xl outline-none" />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Upload Photo or Video (Optional)</label>
-                <input type="file" accept="image/*,video/*" onChange={handleMediaFileChange} className="w-full border themed-input p-3 rounded-xl outline-none mb-3" />
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Or provide Media URL</label>
-                <input name="url" placeholder="https://..." className="w-full border themed-input p-3 rounded-xl outline-none" disabled={!!mediaFileBase64} />
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Upload Photo or Video <span className="text-red-500">*</span></label>
+                <input required type="file" accept="image/*,video/*" onChange={handleMediaFileChange} className="w-full border themed-input p-3 rounded-xl outline-none" />
               </div>
               <button type="submit" className="w-full bg-accent text-white py-3 rounded-xl font-bold mt-2">Add to Gallery</button>
             </div>
