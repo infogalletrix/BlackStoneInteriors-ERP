@@ -6,7 +6,7 @@ import ReceiptPreviewModal from "../components/ReceiptPreviewModal";
 import {
   FileText, Search, Eye, Printer, CheckCircle2, Clock, AlertCircle,
   IndianRupee, TrendingUp, Calendar, X, Filter, Edit2, Trash2,
-  History, FileCheck, Receipt, Plus
+  History, FileCheck, Receipt, Plus, ArrowUpDown
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useDialog } from "../contexts/DialogContext";
@@ -34,6 +34,7 @@ export default function HistoryPage() {
   const [isLoadingReceipts, setIsLoadingReceipts] = useState(true);
   const [receiptsFilter, setReceiptsFilter] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortOrder, setSortOrder] = useState("desc"); // 'desc' (Recent transactions on top by default) | 'asc'
   const [previewInvoice, setPreviewInvoice] = useState(null);
   const [previewReceipt, setPreviewReceipt] = useState(null);
   const [receiptPrintData, setReceiptPrintData] = useState([]);
@@ -136,10 +137,27 @@ export default function HistoryPage() {
     }, 100);
   };
 
-  const filteredQuotations = quotations.filter((q) => {
-    const s = searchTerm.toLowerCase();
-    return q.clientName?.toLowerCase().includes(s) || q.quoteNo?.toLowerCase().includes(s);
-  });
+  const filteredQuotations = quotations
+    .filter((q) => {
+      const s = searchTerm.toLowerCase();
+      return (
+        !s ||
+        q.clientName?.toLowerCase().includes(s) ||
+        q.quoteNo?.toLowerCase().includes(s) ||
+        q.projectTitle?.toLowerCase().includes(s) ||
+        q.organizationName?.toLowerCase().includes(s)
+      );
+    })
+    .sort((a, b) => {
+      const timeA = a.date ? new Date(a.date).getTime() : 0;
+      const timeB = b.date ? new Date(b.date).getTime() : 0;
+      if (timeA !== timeB) {
+        return sortOrder === "desc" ? timeB - timeA : timeA - timeB;
+      }
+      const idA = Number(a.id) || 0;
+      const idB = Number(b.id) || 0;
+      return sortOrder === "desc" ? idB - idA : idA - idB;
+    });
 
   const filteredReceipts = receipts
     .filter((r) => {
@@ -159,8 +177,12 @@ export default function HistoryPage() {
     .sort((a, b) => {
       const timeA = a.date ? new Date(a.date).getTime() : 0;
       const timeB = b.date ? new Date(b.date).getTime() : 0;
-      if (timeA !== timeB) return timeB - timeA;
-      return (Number(b.id) || 0) - (Number(a.id) || 0);
+      if (timeA !== timeB) {
+        return sortOrder === "desc" ? timeB - timeA : timeA - timeB;
+      }
+      const idA = Number(a.id) || 0;
+      const idB = Number(b.id) || 0;
+      return sortOrder === "desc" ? idB - idA : idA - idB;
     });
 
   const totalReceiptsAmount = receipts.reduce(
@@ -234,12 +256,30 @@ export default function HistoryPage() {
           </div>
 
           <div className="bg-white dark:bg-slate-900 border border-[var(--border-color)] shadow-sm rounded-[32px] overflow-hidden">
-            <div className="p-5 border-b border-[var(--border-color)] flex justify-end bg-white dark:bg-slate-900">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={16} />
-                <input type="text" placeholder="Search by client or quote no..."
-                  className="pl-9 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-[var(--border-color)] text-themed rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-400 font-medium w-72"
-                  value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <div className="p-5 border-b border-[var(--border-color)] flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900">
+              <div className="text-xs font-black text-themed uppercase tracking-wider">
+                Quotations Directory ({filteredQuotations.length})
+              </div>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="relative flex-1 sm:flex-initial">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={16} />
+                  <input type="text" placeholder="Search by client or quote no..."
+                    className="pl-9 pr-4 py-2 bg-white dark:bg-slate-800 border border-[var(--border-color)] text-themed rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-400 font-medium w-full sm:w-72"
+                    value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSortOrder(prev => prev === "desc" ? "asc" : "desc")}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition shadow-sm shrink-0 ${
+                    sortOrder === "desc"
+                      ? "bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20"
+                      : "bg-indigo-500/10 border-indigo-500/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20"
+                  }`}
+                  title={`Sort Quotations: Currently ${sortOrder === "desc" ? "Recent First (Descending)" : "Oldest First (Ascending)"}. Click to switch.`}
+                >
+                  <ArrowUpDown size={14} />
+                  <span>{sortOrder === "desc" ? "Recent First" : "Oldest First"}</span>
+                </button>
               </div>
             </div>
             <div className="overflow-x-auto bg-white dark:bg-slate-900">
@@ -357,20 +397,33 @@ export default function HistoryPage() {
                   </button>
                 ))}
               </div>
-              <div className="flex items-center gap-3 w-full sm:w-auto">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 <div className="relative flex-1 sm:flex-initial">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={16} />
                   <input
                     type="text"
                     placeholder="Search receipts, client, WO..."
-                    className="pl-9 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-[var(--border-color)] text-themed rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500 font-medium w-full sm:w-72"
+                    className="pl-9 pr-4 py-2 bg-white dark:bg-slate-800 border border-[var(--border-color)] text-themed rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500 font-medium w-full sm:w-64"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
                 <button
+                  type="button"
+                  onClick={() => setSortOrder(prev => prev === "desc" ? "asc" : "desc")}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition shadow-sm shrink-0 ${
+                    sortOrder === "desc"
+                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20"
+                      : "bg-indigo-500/10 border-indigo-500/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20"
+                  }`}
+                  title={`Sort Receipts: Currently ${sortOrder === "desc" ? "Recent First (Descending)" : "Oldest First (Ascending)"}. Click to switch.`}
+                >
+                  <ArrowUpDown size={14} />
+                  <span>{sortOrder === "desc" ? "Recent First" : "Oldest First"}</span>
+                </button>
+                <button
                   onClick={() => navigate("/receipts")}
-                  className="px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white transition flex items-center gap-1.5 shadow-md shrink-0"
+                  className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white transition flex items-center gap-1.5 shadow-md shrink-0"
                 >
                   <Plus size={14} /> New
                 </button>
