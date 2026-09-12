@@ -1124,13 +1124,16 @@ export default function QuotationPage() {
           </div>
           
           <div className="flex flex-col gap-1.5">
-             <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Delivery (₹)</label>
-             <input value={deliveryLoading} onChange={e=>setDeliveryLoading(e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0.00" className="w-28 themed-input px-3 py-1.5 text-sm text-right border border-[var(--border-color)] rounded-lg font-bold outline-none focus:border-amber-400" />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-             <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Transport (₹)</label>
-             <input value={transportationCharges} onChange={e=>setTransportationCharges(e.target.value.replace(/[^0-9.]/g, ''))} placeholder="0.00" className="w-28 themed-input px-3 py-1.5 text-sm text-right border border-[var(--border-color)] rounded-lg font-bold outline-none focus:border-amber-400" />
+             <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Delivery and Transport (₹)</label>
+             <input 
+               value={deliveryLoading} 
+               onChange={e => {
+                 setDeliveryLoading(e.target.value.replace(/[^0-9.]/g, ''));
+                 setTransportationCharges(0);
+               }} 
+               placeholder="0.00" 
+               className="w-36 themed-input px-3 py-1.5 text-sm text-right border border-[var(--border-color)] rounded-lg font-bold outline-none focus:border-amber-400" 
+             />
           </div>
 
           <div className="flex flex-col gap-1.5">

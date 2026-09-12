@@ -330,19 +330,11 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
             </td>
           </tr>
           <tr>
-            <td className="p-1.5 text-slate-600 font-medium">Delivery, Loading & Unloading</td>
+            <td className="p-1.5 text-slate-600 font-medium">Delivery and Transport</td>
             <td className="p-1.5 text-right font-semibold text-slate-800">
-              {delivery ? `INR ${fmt(delivery)}` : "Included"}
+              {(delivery + transport) > 0 ? `INR ${fmt(delivery + transport)}` : "Included"}
             </td>
           </tr>
-          {transport > 0 && (
-            <tr>
-              <td className="p-1.5 text-slate-600 font-medium">Transportation Charges</td>
-              <td className="p-1.5 text-right font-semibold text-slate-800">
-                INR {fmt(transport)}
-              </td>
-            </tr>
-          )}
           {discount > 0 && (
             <tr className="text-rose-600">
               <td className="p-1.5 font-semibold">Additional Discount</td>
