@@ -72,6 +72,7 @@ export default function QuotationPage() {
   const [sgstPercent, setSgstPercent] = useState("9");
 
   const [crmClients, setCrmClients] = useState([]);
+  const [allServerQuotes, setAllServerQuotes] = useState([]);
 
   // Dropdown Options Management (Products, Categories, Specifications)
   const [productsList, setProductsList] = useState(() => {
@@ -184,6 +185,7 @@ export default function QuotationPage() {
         const historical = [];
         if (qRes.status === 'fulfilled' && Array.isArray(qRes.value)) {
           const quotes = qRes.value;
+          setAllServerQuotes(quotes);
           quotes.forEach(q => {
             let its = q.items;
             if (typeof its === 'string') { try { its = JSON.parse(its); } catch {} }
@@ -353,6 +355,17 @@ export default function QuotationPage() {
   const handlePrint = useReactToPrint({ contentRef: componentRef });
 
   useEffect(() => {
+    if (location.state?.autoFillClient) {
+      const c = location.state.autoFillClient;
+      setClientName(c.name || "");
+      setOrganizationName(c.organizationName || "");
+      setClientAddress(c.address || "");
+      setMobileNo(c.phone || "");
+      setEmailId(c.email || "");
+      setProjectTitle(c.project || "");
+      navigate(location.pathname, { replace: true, state: {} });
+      return;
+    }
     if (location.state?.newSession) {
       createNewSession();
       navigate(location.pathname, { replace: true, state: {} });
@@ -744,9 +757,16 @@ export default function QuotationPage() {
 
         {/* Client Name */}
         <div className="md:col-span-3">
-          <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
-            Client Name
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Client Name
+            </label>
+            {organizationName && (
+              <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 flex items-center gap-1 truncate max-w-[150px]">
+                <Building size={10} /> {organizationName}
+              </span>
+            )}
+          </div>
           <input
             list="crm-clients-list-quotation"
             placeholder="Enter client name..."
@@ -760,13 +780,16 @@ export default function QuotationPage() {
                 setEmailId(matchedClient.email || "");
                 setMobileNo(matchedClient.phone || "");
                 setClientAddress(matchedClient.address || "");
+                if (matchedClient.project && !projectTitle) {
+                  setProjectTitle(matchedClient.project);
+                }
               }
             }}
             className="w-full themed-input border border-[var(--border-color)] px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg outline-none focus:border-amber-400 transition"
           />
           <datalist id="crm-clients-list-quotation">
             {crmClients.map(c => (
-              <option key={c.id} value={c.name}>{c.organizationName ? `${c.organizationName}` : ""}</option>
+              <option key={c.id} value={c.name}>{c.organizationName ? `[${c.organizationName}]` : ""}</option>
             ))}
           </datalist>
         </div>
@@ -798,6 +821,36 @@ export default function QuotationPage() {
           <span className="text-[10px] font-bold text-amber-700 dark:text-[var(--accent)] uppercase tracking-wider">Sub Total</span>
           <span className="text-sm md:text-base font-black text-amber-700 dark:text-[var(--accent)] whitespace-nowrap">₹{formatINR(subTotal)}</span>
         </div>
+
+        {/* Multiple Quotations Banner for Selected Client */}
+        {clientName && allServerQuotes.filter(q => (q.clientName || "").trim().toLowerCase() === clientName.trim().toLowerCase()).length > 0 && (
+          <div className="md:col-span-12 bg-amber-500/10 border border-amber-500/25 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <FileText size={14} className="text-amber-600 dark:text-[var(--accent)]" />
+              <span className="text-xs font-black text-themed">
+                {allServerQuotes.filter(q => (q.clientName || "").trim().toLowerCase() === clientName.trim().toLowerCase()).length} Existing Quotation(s) for {clientName}:
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {allServerQuotes.filter(q => (q.clientName || "").trim().toLowerCase() === clientName.trim().toLowerCase()).map(q => (
+                  <button
+                    key={q.id || q.quoteNo}
+                    type="button"
+                    onClick={() => {
+                      navigate("/invoices", { state: { activeTab: "quotations", search: q.quoteNo } });
+                    }}
+                    className="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-white dark:bg-slate-900 text-amber-800 dark:text-amber-300 border border-amber-500/30 hover:border-amber-500 transition shadow-sm"
+                    title={`View in Quotations: #${q.quoteNo}`}
+                  >
+                    {q.projectTitle || "Quotation"} (#{q.quoteNo}) • ₹{Number(q.total || 0).toLocaleString("en-IN")}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <span className="text-[10px] text-muted font-bold">
+              Specify a new Project Title (e.g. Wardrobe, Kitchen) to create another quotation for this client.
+            </span>
+          </div>
+        )}
       </div>
 
 
@@ -1138,6 +1191,7 @@ export default function QuotationPage() {
         setClientAddress={setClientAddress}
         projectTitle={projectTitle}
         setProjectTitle={setProjectTitle}
+        existingCompanies={Array.from(new Set(crmClients.map(c => c.organizationName?.trim()).filter(Boolean))).sort()}
       />
 
     </div>

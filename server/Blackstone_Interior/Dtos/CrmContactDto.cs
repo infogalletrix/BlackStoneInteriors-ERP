@@ -10,6 +10,7 @@ namespace Blackstone_Interior.Dtos
         public string Project { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
         public string Status { get; set; } = "Cold";
+        public string? ClientType { get; set; }
         public string Source { get; set; } = string.Empty;
         public List<string>? Tags { get; set; }
         public string? Date { get; set; }

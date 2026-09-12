@@ -294,7 +294,6 @@ export default function CatalogPage() {
   // Input states for adding new items
   const [newProductName, setNewProductName] = useState("");
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [presetCategorySelect, setPresetCategorySelect] = useState("");
 
   const [newSpecName, setNewSpecName] = useState("");
   const [newSpecPrice, setNewSpecPrice] = useState("");
@@ -459,7 +458,6 @@ export default function CatalogPage() {
     setCatalogTree(updated);
     setSelectedCategoryId(newCat.id);
     setNewCategoryName("");
-    setPresetCategorySelect("");
     persistToServer(updated);
   };
 
@@ -820,46 +818,26 @@ export default function CatalogPage() {
             </span>
           </div>
 
-          {/* Add Category Controls */}
+          {/* Quick Add Category Form */}
           {activeProduct ? (
-            <div className="p-3 border-b border-[var(--border-color)] bg-slate-50/50 dark:bg-slate-900/50 space-y-2">
-              {/* Preset Quick-Selector */}
-              <div className="flex gap-2">
-                <select
-                  value={presetCategorySelect}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setPresetCategorySelect(val);
-                    if (val) handleAddCategory(val);
-                  }}
-                  className="flex-1 px-3 py-2 text-xs font-medium rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-900 focus:outline-none"
-                >
-                  <option value="">+ Add from standard categories...</option>
-                  {PRESET_CATEGORIES.filter(p => !activeProduct.categories?.some(c => c.name.toLowerCase() === p.toLowerCase())).map((preset, idx) => (
-                    <option key={idx} value={preset}>{preset}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Or Custom Category Name */}
+            <form onSubmit={(e) => { e.preventDefault(); handleAddCategory(); }} className="p-3 border-b border-[var(--border-color)] bg-slate-50/50 dark:bg-slate-900/50">
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
-                  placeholder="Or type custom category..."
-                  className="flex-1 px-3 py-1.5 text-xs font-medium rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/30"
+                  placeholder="New category (e.g. Carcass, Shutters)..."
+                  className="flex-1 px-3 py-2 text-xs font-medium rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/30"
                 />
                 <button
-                  type="button"
-                  onClick={() => handleAddCategory()}
+                  type="submit"
                   disabled={!newCategoryName.trim()}
-                  className="px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white rounded-xl font-bold text-xs shadow-sm flex items-center gap-1 transition"
+                  className="px-3.5 py-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white rounded-xl font-bold text-xs shadow-sm flex items-center gap-1 transition"
                 >
-                  <Plus size={13} /> Add
+                  <Plus size={14} /> Add
                 </button>
               </div>
-            </div>
+            </form>
           ) : (
             <div className="p-4 text-center text-xs text-muted font-medium bg-slate-50/50 dark:bg-slate-900/50">
               Select a Product first

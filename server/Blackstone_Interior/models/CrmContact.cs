@@ -20,6 +20,9 @@ namespace Blackstone_Interior.models
         // "Hot" | "Warm" | "Cold"
         public string Status { get; set; } = "Cold";
 
+        // "B2B" | "B2C"
+        public string ClientType { get; set; } = "B2C";
+
         // Lead source e.g. Instagram, Referral
         public string Source { get; set; } = string.Empty;
 

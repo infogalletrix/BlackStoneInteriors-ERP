@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import {
-  User, Briefcase, Calendar, Plus, Phone, MapPin, Search, DollarSign, Activity, CheckCircle, Clock, Mail, Tag, Percent, BarChart2, Download, Filter, PieChart, Trash2, List, Grid, Edit3, Settings, FileText, ChevronDown, Play, Pause, XCircle, RotateCcw
+  User, Briefcase, Calendar, Plus, Phone, MapPin, Search, DollarSign, Activity, CheckCircle, Clock, Mail, Tag, Percent, BarChart2, Download, Filter, PieChart, Trash2, List, Grid, Edit3, Settings, FileText, ChevronDown, Play, Pause, XCircle, RotateCcw,
+  Building2, Building, UserCheck, ExternalLink
 } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -28,8 +29,13 @@ function Modal({ open, onClose, children, size = "max-w-lg" }) {
 const CRMPage = () => {
   const { showDialog } = useDialog();
   const location = useLocation();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("leads");
   const [leadFilter, setLeadFilter] = useState("interested"); // "interested" | "not_interested" | "all"
+  const [clientTypeFilter, setClientTypeFilter] = useState("all"); // "all" | "B2B" | "B2C"
+  const [companyFilter, setCompanyFilter] = useState("all"); // "all" | company name
+  const [quotations, setQuotations] = useState([]);
+  const [clientQuotationsModal, setClientQuotationsModal] = useState(null);
   
   useEffect(() => {
     const p = location.pathname.split('/').pop();
@@ -85,14 +91,16 @@ const CRMPage = () => {
 
   const loadData = async () => {
     try {
-      const [cRes, dRes, aRes, sRes] = await Promise.all([
+      const [cRes, dRes, aRes, sRes, qRes] = await Promise.all([
         fetch('/api/crm').then(res => res.json()),
         fetch('/api/crm/deals/all').then(res => res.json()),
         fetch('/api/crm/activities/all').then(res => res.json()),
         fetch('/api/sites').then(res => res.json()),
+        fetch('/api/quotations').then(res => res.ok ? res.json() : []).catch(() => []),
       ]);
       setContacts(cRes);
       setSites(sRes);
+      setQuotations(Array.isArray(qRes) ? qRes : []);
       
       const newPipe = {
         LEAD: { id: "LEAD", title: "LEADS", deals: [] },
@@ -530,6 +538,26 @@ const CRMPage = () => {
   const notInterestedLeadsCount = leadsOnly.filter(c => c.status === 'Not Interested').length;
   const allLeadsCount = leadsOnly.length;
 
+  const allCompanies = useMemo(() => {
+    return Array.from(new Set(contacts.map(c => c.organizationName?.trim()).filter(Boolean))).sort();
+  }, [contacts]);
+
+  const b2bCount = useMemo(() => {
+    return contacts.filter(c => {
+      const isB2B = c.clientType === 'B2B' || (!c.clientType && !!c.organizationName?.trim());
+      const tabMatch = activeTab === 'customers' ? c.status === 'Customer' : c.status !== 'Customer';
+      return isB2B && tabMatch;
+    }).length;
+  }, [contacts, activeTab]);
+
+  const b2cCount = useMemo(() => {
+    return contacts.filter(c => {
+      const isB2C = c.clientType === 'B2C' || (!c.clientType && !c.organizationName?.trim());
+      const tabMatch = activeTab === 'customers' ? c.status === 'Customer' : c.status !== 'Customer';
+      return isB2C && tabMatch;
+    }).length;
+  }, [contacts, activeTab]);
+
   const filteredContacts = contacts.filter((c) => {
     let tabMatch = true;
     if (activeTab === 'leads') {
@@ -545,7 +573,18 @@ const CRMPage = () => {
       tabMatch = c.status === 'Customer';
     }
 
-    const searchMatch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) || (c.project || "").toLowerCase().includes(searchTerm.toLowerCase()) || (c.tags && c.tags.join(" ").toLowerCase().includes(searchTerm.toLowerCase()));
+    const contactClientType = c.clientType || (c.organizationName?.trim() ? "B2B" : "B2C");
+    if (clientTypeFilter !== "all" && contactClientType !== clientTypeFilter) {
+      return false;
+    }
+    if (companyFilter !== "all" && (c.organizationName?.trim() || "") !== companyFilter) {
+      return false;
+    }
+
+    const searchMatch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      (c.organizationName || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
+      (c.project || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
+      (c.tags && c.tags.join(" ").toLowerCase().includes(searchTerm.toLowerCase()));
     return searchMatch && checkMonth(c.date) && tabMatch;
   });
 
@@ -743,19 +782,94 @@ const CRMPage = () => {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="overflow-x-auto bg-transparent">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-5 sm:p-6 border-b border-[var(--border-color)]">
               <div>
-                <h2 className="text-lg font-black text-themed">
-                  {activeTab === "leads" 
-                    ? (leadFilter === "not_interested" ? "Not Interested Leads" : leadFilter === "all" ? "All Leads" : "Pre-Sales Leads") 
-                    : "Active Customers"}
+                <h2 className="text-lg font-black text-themed flex items-center gap-2 flex-wrap">
+                  <span>
+                    {activeTab === "leads" 
+                      ? (leadFilter === "not_interested" ? "Not Interested Leads" : leadFilter === "all" ? "All Leads" : "Pre-Sales Leads") 
+                      : "Active Customers"}
+                  </span>
+                  {clientTypeFilter !== "all" && (
+                    <span className={`text-xs px-2.5 py-0.5 rounded-full font-black uppercase ${
+                      clientTypeFilter === "B2B" ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20" : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                    }`}>
+                      {clientTypeFilter} Only
+                    </span>
+                  )}
                 </h2>
                 <p className="text-xs text-muted font-medium mt-0.5">
                   {activeTab === "leads"
                     ? `${filteredContacts.length} lead${filteredContacts.length === 1 ? '' : 's'} displayed`
                     : `${filteredContacts.length} customer${filteredContacts.length === 1 ? '' : 's'} displayed`}
+                  {companyFilter !== "all" && ` • Partner: ${companyFilter}`}
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
+                {/* B2B / B2C Category Filter */}
+                <div className="flex bg-[var(--bg-surface)] p-1 rounded-xl border border-[var(--border-color)] text-xs font-bold shadow-inner">
+                  <button
+                    onClick={() => { setClientTypeFilter("all"); setCompanyFilter("all"); }}
+                    className={`px-2.5 py-1 rounded-lg transition-all ${
+                      clientTypeFilter === "all"
+                        ? "bg-black/10 dark:bg-white/10 text-themed font-black shadow-sm"
+                        : "text-muted hover:text-themed"
+                    }`}
+                  >
+                    All Types
+                  </button>
+                  <button
+                    onClick={() => setClientTypeFilter("B2B")}
+                    className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
+                      clientTypeFilter === "B2B"
+                        ? "bg-purple-600 text-white shadow-sm font-black"
+                        : "text-purple-600 dark:text-purple-400 hover:bg-purple-500/10"
+                    }`}
+                    title="Architects, Interior Designers, Partner Companies"
+                  >
+                    <Building2 size={12} />
+                    <span>B2B</span>
+                    <span className={`px-1.5 py-0.2 rounded text-[10px] font-black ${clientTypeFilter === "B2B" ? "bg-white/20 text-white" : "bg-purple-500/10 text-purple-600 dark:text-purple-400"}`}>
+                      {b2bCount}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => { setClientTypeFilter("B2C"); setCompanyFilter("all"); }}
+                    className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
+                      clientTypeFilter === "B2C"
+                        ? "bg-emerald-600 text-white shadow-sm font-black"
+                        : "text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                    }`}
+                    title="Direct walk-in clients / homeowners"
+                  >
+                    <UserCheck size={12} />
+                    <span>B2C</span>
+                    <span className={`px-1.5 py-0.2 rounded text-[10px] font-black ${clientTypeFilter === "B2C" ? "bg-white/20 text-white" : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"}`}>
+                      {b2cCount}
+                    </span>
+                  </button>
+                </div>
+
+                {/* Company Filter Dropdown (Architect / Firm) */}
+                {allCompanies.length > 0 && (
+                  <select
+                    value={companyFilter}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setCompanyFilter(val);
+                      if (val !== "all") setClientTypeFilter("B2B");
+                    }}
+                    className="py-1.5 px-3 rounded-xl border border-[var(--border-color)] themed-input text-xs font-bold focus:ring-2 focus:ring-purple-500 outline-none max-w-[210px] truncate [&>option]:bg-[var(--modal-bg)]"
+                  >
+                    <option value="all">🏢 All Companies ({allCompanies.length})</option>
+                    {allCompanies.map((cName) => {
+                      const cCount = contacts.filter(c => c.organizationName?.trim() === cName).length;
+                      return (
+                        <option key={cName} value={cName}>{cName} ({cCount} {cCount === 1 ? 'client' : 'clients'})</option>
+                      );
+                    })}
+                  </select>
+                )}
+
                 {activeTab === "leads" && (
                   <div className="flex bg-[var(--bg-surface)] p-1 rounded-xl border border-[var(--border-color)] text-xs font-bold shadow-inner">
                     <button
@@ -809,6 +923,35 @@ const CRMPage = () => {
                 <button onClick={exportContactsToPDF} className="flex items-center gap-2 themed-card text-muted px-4 py-2 rounded-xl text-sm font-bold hover:opacity-80 transition-colors border border-[var(--border-color)]"><Download size={16}/> <span className="hidden sm:inline">Export PDF</span></button>
               </div>
             </div>
+
+            {/* Active Company Filter Header Banner */}
+            {companyFilter !== "all" && (
+              <div className="mx-6 my-4 p-4 rounded-2xl bg-gradient-to-r from-purple-500/10 via-indigo-500/10 to-blue-500/10 border border-purple-500/30 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center font-black shadow-md shadow-purple-600/30 flex-shrink-0">
+                    <Building2 size={20} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-purple-600 dark:text-purple-400">
+                        B2B Partner Company Portfolio
+                      </span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-purple-500/20 text-purple-700 dark:text-purple-300">
+                        {filteredContacts.length} {filteredContacts.length === 1 ? 'Client Order' : 'Client Orders'}
+                      </span>
+                    </div>
+                    <h3 className="text-base sm:text-lg font-black text-themed">{companyFilter}</h3>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCompanyFilter("all")}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold text-muted hover:text-themed bg-white/70 dark:bg-slate-900/70 hover:bg-white dark:hover:bg-slate-900 border border-[var(--border-color)] transition shadow-sm"
+                >
+                  Show All Companies
+                </button>
+              </div>
+            )}
             
             {viewMode === "list" ? (
             <table className="w-full text-left border-collapse" style={{background: 'transparent'}}>
@@ -822,25 +965,76 @@ const CRMPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredContacts.map((c) => (
+                {filteredContacts.map((c) => {
+                  const isB2B = (c.clientType === 'B2B') || (!c.clientType && !!c.organizationName?.trim());
+                  const clientQuotes = quotations.filter(q => (q.clientName || "").trim().toLowerCase() === c.name.trim().toLowerCase());
+
+                  return (
                   <tr key={c.id} className={`border-b border-[var(--border-color)] group transition-colors ${c.status === 'Not Interested' && leadFilter !== 'not_interested' ? 'opacity-50 grayscale hover:opacity-100 hover:grayscale-0' : ''}`} style={{background: 'transparent'}}>
                     <td className="py-4 pl-8 pr-4">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black shadow-sm flex-shrink-0"
-                          style={{background: 'var(--accent-soft)', color: 'var(--accent)'}}>
+                          style={{background: isB2B ? 'rgba(147, 51, 234, 0.15)' : 'var(--accent-soft)', color: isB2B ? '#9333ea' : 'var(--accent)'}}>
                           {c.name.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <div className="font-black" style={{color: 'var(--text-primary)'}}>
-                            {c.name}
-                            {c.status === 'Not Interested' && <span className="ml-2 px-2 py-0.5 rounded text-[8px] uppercase font-black tracking-widest text-slate-500 bg-slate-500/10 border border-slate-500/20 align-middle">Not Interested</span>}
+                          <div className="font-black text-themed flex items-center gap-1.5 flex-wrap">
+                            <span>{c.name}</span>
+                            {c.status === 'Not Interested' && <span className="px-2 py-0.5 rounded text-[8px] uppercase font-black tracking-widest text-slate-500 bg-slate-500/10 border border-slate-500/20 align-middle">Not Interested</span>}
                           </div>
-                          <div className="text-[10px] font-semibold uppercase tracking-wider" style={{color: 'var(--text-muted)'}}>ID: {c.id}</div>
+                          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                            <span className="text-[10px] font-semibold uppercase tracking-wider" style={{color: 'var(--text-muted)'}}>ID: {c.id}</span>
+                            {isB2B ? (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (c.organizationName) {
+                                    setCompanyFilter(c.organizationName.trim());
+                                    setClientTypeFilter("B2B");
+                                  }
+                                }}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/25 hover:bg-purple-500/20 transition"
+                                title="Click to filter all clients under this partner company"
+                              >
+                                <Building2 size={10} />
+                                <span className="truncate max-w-[130px]">{c.organizationName || "B2B Partner"}</span>
+                              </button>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">
+                                <UserCheck size={10} />
+                                <span>Walk-in</span>
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </td>
                     <td className="py-4 px-4">
-                      <span className="px-3 py-1 rounded-lg text-xs font-bold border" style={{borderColor: 'var(--border-color)', color: 'var(--text-secondary)', background: 'var(--bg-surface)'}}>{c.project}</span>
+                      <div className="flex flex-col gap-1 items-start">
+                        <span className="px-3 py-1 rounded-lg text-xs font-bold border" style={{borderColor: 'var(--border-color)', color: 'var(--text-secondary)', background: 'var(--bg-surface)'}}>{c.project}</span>
+                        {clientQuotes.length > 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => setClientQuotationsModal({ contact: c, quotations: clientQuotes })}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition"
+                            title="Click to view all quotations for this client"
+                          >
+                            <FileText size={10} />
+                            <span>{clientQuotes.length} {clientQuotes.length === 1 ? 'Quote' : 'Quotes'}</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => navigate("/quotations", { state: { autoFillClient: c } })}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold text-muted hover:text-amber-600 hover:bg-amber-500/10 border border-[var(--border-color)] transition opacity-0 group-hover:opacity-100"
+                            title="Create quotation for this client"
+                          >
+                            <Plus size={10} />
+                            <span>+ Quote</span>
+                          </button>
+                        )}
+                      </div>
                     </td>
                     <td className="py-4 px-4">
                       <div className="flex flex-wrap gap-1 mb-1">
@@ -895,22 +1089,28 @@ const CRMPage = () => {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
             ) : (
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" style={{background: 'transparent'}}>
-              {filteredContacts.map((c) => (
+                {filteredContacts.map((c) => {
+                  const isB2B = (c.clientType === 'B2B') || (!c.clientType && !!c.organizationName?.trim());
+                  const clientQuotes = quotations.filter(q => (q.clientName || "").trim().toLowerCase() === c.name.trim().toLowerCase());
+                  const quoteTotal = clientQuotes.reduce((sum, q) => sum + (parseFloat(q.total) || 0), 0);
+
+                  return (
                 <div key={c.id} className={`group relative p-5 rounded-2xl border transition-all hover:-translate-y-0.5 hover:shadow-lg ${c.status === 'Not Interested' && leadFilter !== 'not_interested' ? 'opacity-60 grayscale hover:opacity-100 hover:grayscale-0' : ''}`}
                   style={{background: 'var(--bg-card)', borderColor: 'var(--border-color)'}}>
                   {/* Accent top strip on hover */}
                   <div className="absolute inset-x-0 top-0 h-0.5 rounded-t-2xl opacity-0 group-hover:opacity-100 transition-opacity"
-                    style={{background: 'linear-gradient(90deg, var(--accent), var(--accent-hover))'}} />
+                    style={{background: isB2B ? 'linear-gradient(90deg, #9333ea, #6366f1)' : 'linear-gradient(90deg, var(--accent), var(--accent-hover))'}} />
 
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-3">
                       <div className="w-11 h-11 rounded-xl flex items-center justify-center text-lg font-black shadow-sm flex-shrink-0"
-                        style={{background: 'var(--accent-soft)', color: 'var(--accent)'}}>
+                        style={{background: isB2B ? 'rgba(147, 51, 234, 0.15)' : 'var(--accent-soft)', color: isB2B ? '#9333ea' : 'var(--accent)'}}>
                         {c.name.charAt(0).toUpperCase()}
                       </div>
                       <div>
@@ -918,7 +1118,31 @@ const CRMPage = () => {
                           {c.name}
                           {c.status === 'Not Interested' && <span className="px-2 py-0.5 rounded text-[8px] uppercase font-black tracking-widest text-slate-500 bg-slate-500/10 border border-slate-500/20 w-max">Not Interested</span>}
                         </div>
-                        <div className="text-[10px] font-semibold uppercase tracking-wider" style={{color: 'var(--text-muted)'}}>ID: {c.id}</div>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <span className="text-[10px] font-semibold uppercase tracking-wider" style={{color: 'var(--text-muted)'}}>ID: {c.id}</span>
+                          {isB2B ? (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (c.organizationName) {
+                                  setCompanyFilter(c.organizationName.trim());
+                                  setClientTypeFilter("B2B");
+                                }
+                              }}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/25 hover:bg-purple-500/20 transition"
+                              title="Click to filter all orders from this partner company"
+                            >
+                              <Building2 size={10} />
+                              <span className="truncate max-w-[120px]">{c.organizationName || "B2B Partner"}</span>
+                            </button>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">
+                              <UserCheck size={10} />
+                              <span>Walk-in</span>
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className={`flex gap-1 ${c.status === 'Not Interested' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
@@ -962,7 +1186,23 @@ const CRMPage = () => {
                       style={{border: '1px solid var(--border-color)', color: 'var(--text-secondary)', background: 'var(--bg-surface)'}}>
                       {c.project}
                     </span>
-                    <div className="flex flex-wrap gap-1">
+                    {clientQuotes.length > 0 && (
+                      <div className="mt-2 pt-2 border-t border-[var(--border-color)] flex items-center justify-between">
+                        <button
+                          type="button"
+                          onClick={() => setClientQuotationsModal({ contact: c, quotations: clientQuotes })}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-black bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition"
+                          title="View all quotations for this client"
+                        >
+                          <FileText size={12} />
+                          <span>{clientQuotes.length} {clientQuotes.length === 1 ? 'Quotation' : 'Quotations'}</span>
+                        </button>
+                        <span className="text-xs font-black text-themed">
+                          ₹{quoteTotal.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex flex-wrap gap-1 mt-2">
                       {c.tags?.map(t => (
                         <span key={t} className="text-[9px] font-black uppercase px-2 py-0.5 rounded"
                           style={{background: 'var(--accent-soft)', color: 'var(--accent)', border: '1px solid transparent'}}>
@@ -993,7 +1233,8 @@ const CRMPage = () => {
                     )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
             )}
           </motion.div>
@@ -1408,7 +1649,7 @@ const CRMPage = () => {
 
       {/* MODALS */}
       <Modal open={!!editContact} onClose={() => setEditContact(null)}>
-        {editContact && <EditContactForm contact={editContact} nextLeadId={nextLeadId} onSave={handleContactSave} onCancel={() => setEditContact(null)} />}
+        {editContact && <EditContactForm contact={editContact} contacts={contacts} nextLeadId={nextLeadId} onSave={handleContactSave} onCancel={() => setEditContact(null)} />}
       </Modal>
 
       <Modal open={!!editDeal} onClose={() => setEditDeal(null)}>
@@ -1429,7 +1670,134 @@ const CRMPage = () => {
 
       <Modal open={!!selectedCallNote} onClose={() => setSelectedCallNote(null)}>
         {selectedCallNote && (
-          <CallNotesModalContent note={selectedCallNote} onClose={() => setSelectedCallNote(null)} />
+          <div className="space-y-4">
+            <h3 className="text-xl font-bold text-themed">Call Details: {selectedCallNote.clientName}</h3>
+            <div className="text-sm font-medium text-muted">Date: {new Date(selectedCallNote.date).toLocaleString()}</div>
+            <div className="text-sm font-medium text-muted">Status: <span className="font-bold text-themed">{selectedCallNote.status}</span></div>
+            <div className="p-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)] text-sm font-semibold whitespace-pre-wrap">
+              {selectedCallNote.notes || "No additional notes."}
+            </div>
+            <div className="flex justify-end">
+              <button onClick={() => setSelectedCallNote(null)} className="px-4 py-2 bg-slate-500/10 text-themed font-bold text-sm rounded-xl">Close</button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* ── CLIENT QUOTATIONS MODAL ── */}
+      <Modal open={!!clientQuotationsModal} onClose={() => setClientQuotationsModal(null)} size="max-w-2xl">
+        {clientQuotationsModal && (
+          <div className="space-y-4">
+            <div className="flex items-start justify-between border-b border-[var(--border-color)] pb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
+                    (clientQuotationsModal.contact.clientType === 'B2B' || clientQuotationsModal.contact.organizationName) 
+                      ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20'
+                      : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                  }`}>
+                    {(clientQuotationsModal.contact.clientType === 'B2B' || clientQuotationsModal.contact.organizationName) ? 'B2B Client' : 'B2C Walk-in'}
+                  </span>
+                  {clientQuotationsModal.contact.organizationName && (
+                    <span className="text-xs font-bold text-muted flex items-center gap-1">
+                      <Building2 size={12} className="text-purple-600" /> {clientQuotationsModal.contact.organizationName}
+                    </span>
+                  )}
+                </div>
+                <h2 className="text-2xl font-black text-themed mt-1">
+                  Quotations for {clientQuotationsModal.contact.name}
+                </h2>
+                <p className="text-xs text-muted mt-0.5">
+                  Multiple room/area quotations (e.g. Wardrobe, Kitchen, etc.)
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const c = clientQuotationsModal.contact;
+                  setClientQuotationsModal(null);
+                  navigate("/quotations", { state: { autoFillClient: c } });
+                }}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-black text-white bg-[#C9A227] hover:bg-[#B8911F] transition shadow-md"
+              >
+                <Plus size={14} /> + New Quotation
+              </button>
+            </div>
+
+            <div className="divide-y divide-[var(--border-color)] max-h-[420px] overflow-y-auto">
+              {clientQuotationsModal.quotations.map((q) => (
+                <div key={q.id || q.quoteNo} className="py-3 flex items-center justify-between gap-3 hover:bg-black/5 dark:hover:bg-white/5 px-2 rounded-xl transition">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-black text-themed">
+                        {q.projectTitle || "Untitled Quotation"}
+                      </span>
+                      <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-500/10 text-muted border border-[var(--border-color)]">
+                        #{q.quoteNo}
+                      </span>
+                      <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
+                        q.status === 'Approved' ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' :
+                        q.status === 'Rejected' ? 'bg-rose-500/10 text-rose-600 border border-rose-500/20' :
+                        'bg-amber-500/10 text-amber-600 border border-amber-500/20'
+                      }`}>
+                        {q.status || 'Pending'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 mt-1 text-[11px] text-muted">
+                      <span>Date: {q.date || 'N/A'}</span>
+                      <span>•</span>
+                      <span>Type: {q.billType || 'GST'}</span>
+                      {q.workDescription && (
+                        <>
+                          <span>•</span>
+                          <span className="truncate max-w-[200px]">{q.workDescription}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <span className="text-sm font-black text-amber-700 dark:text-[var(--accent)]">
+                      ₹{Number(q.total || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setClientQuotationsModal(null);
+                        navigate("/invoices", { state: { activeTab: "quotations", search: q.quoteNo } });
+                      }}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-themed hover:bg-black/10 dark:hover:bg-white/10 transition"
+                      title="View in Invoices / Quotations"
+                    >
+                      <ExternalLink size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setClientQuotationsModal(null);
+                        navigate("/quotations", { state: { editQuote: q } });
+                      }}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-500/10 transition"
+                      title="Edit Quotation"
+                    >
+                      <Edit3 size={15} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-3 border-t border-[var(--border-color)] flex justify-between items-center text-xs font-bold text-muted">
+              <span>Total Value: <strong className="text-themed">₹{clientQuotationsModal.quotations.reduce((sum, q) => sum + (parseFloat(q.total) || 0), 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</strong></span>
+              <button
+                type="button"
+                onClick={() => setClientQuotationsModal(null)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-black/5 dark:hover:bg-white/5 transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         )}
       </Modal>
 
@@ -1496,9 +1864,26 @@ function EditCampaignForm({ campaign, onSave, onCancel }) {
 }
 
 // --- EXTENDED FORMS ---
-function EditContactForm({ contact, nextLeadId, onSave, onCancel }) {
+function EditContactForm({ contact, contacts = [], nextLeadId, onSave, onCancel }) {
   const { showDialog } = useDialog();
-  const [form, setForm] = useState(contact || { name: '', organizationName: '', project: '', phone: '', email: '', address: '', status: 'Cold', source: '', tags: [] });
+
+  const existingCompanies = useMemo(() => {
+    return Array.from(new Set((contacts || []).map(c => c.organizationName?.trim()).filter(Boolean))).sort();
+  }, [contacts]);
+
+  const initialType = contact?.clientType || (contact?.organizationName?.trim() ? "B2B" : "B2C");
+  const [form, setForm] = useState(contact ? { ...contact, clientType: initialType } : { 
+    name: '', 
+    organizationName: '', 
+    clientType: 'B2C', 
+    project: '', 
+    phone: '', 
+    email: '', 
+    address: '', 
+    status: 'Cold', 
+    source: '', 
+    tags: [] 
+  });
   const [tagInput, setTagInput] = useState("");
 
   const addTag = () => { if (tagInput.trim() && !form.tags.includes(tagInput.trim())) { setForm({...form, tags: [...form.tags, tagInput.trim()]}); setTagInput(""); } };
@@ -1506,6 +1891,10 @@ function EditContactForm({ contact, nextLeadId, onSave, onCancel }) {
   return (
     <form onSubmit={e => { 
       e.preventDefault(); 
+      if (form.clientType === "B2B" && !form.organizationName?.trim()) {
+        showDialog({ title: "Company Name Required", message: "Please enter or select a Company / Partner firm name for B2B client.", type: "alert" });
+        return;
+      }
       if (form.phone) {
         const cleanedPhone = form.phone.replace(/\D/g, "");
         if (cleanedPhone.length !== 10) {
@@ -1516,7 +1905,12 @@ function EditContactForm({ contact, nextLeadId, onSave, onCancel }) {
       onSave(form); 
     }} className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
-        <h2 className="font-black text-3xl text-themed tracking-tight">Client Profile</h2>
+        <div>
+          <h2 className="font-black text-2xl sm:text-3xl text-themed tracking-tight">Client Profile</h2>
+          <p className="text-muted font-medium text-xs sm:text-sm mt-0.5">
+            {form.clientType === "B2B" ? "B2B Business / Architect Partner Client" : "B2C Direct Walk-in Client"}
+          </p>
+        </div>
         {form.id ? (
           <span className="text-xs px-2.5 py-1 rounded-lg bg-slate-500/10 text-muted font-bold border border-[var(--border-color)]">
             Lead ID: #{form.id}
@@ -1527,17 +1921,109 @@ function EditContactForm({ contact, nextLeadId, onSave, onCancel }) {
           </span>
         )}
       </div>
-      <p className="text-muted font-medium text-sm mb-6 pb-4 border-b border-[var(--border-color)]">Comprehensive details for your design client.</p>
-      
+
+      {/* Top Toggle: B2B vs B2C */}
+      <div className="bg-[var(--bg-surface)] p-2 rounded-2xl border border-[var(--border-color)] shadow-inner">
+        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block flex items-center justify-between">
+          <span>Client Category</span>
+          <span className="text-[9px] font-semibold text-muted normal-case">Select Business Partner vs Walk-in</span>
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setForm(prev => ({ ...prev, clientType: "B2B" }))}
+            className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 ${
+              form.clientType === "B2B"
+                ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-500/25 ring-2 ring-purple-400/40"
+                : "bg-black/5 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-black/10 dark:hover:bg-white/10"
+            }`}
+          >
+            <Building2 size={15} />
+            <span>B2B (Architect / Firm)</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setForm(prev => ({ ...prev, clientType: "B2C" }))}
+            className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 ${
+              form.clientType === "B2C"
+                ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/25 ring-2 ring-emerald-400/40"
+                : "bg-black/5 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-black/10 dark:hover:bg-white/10"
+            }`}
+          >
+            <UserCheck size={15} />
+            <span>B2C (Walk-in Client)</span>
+          </button>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Full Name</label>
-          <input className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" value={form.name || ''} onChange={e => setForm({ ...form, name: e.target.value })} required />
-        </div>
-        <div>
-          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Organization Name (Optional)</label>
-          <input className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" value={form.organizationName || ''} onChange={e => setForm({ ...form, organizationName: e.target.value })} placeholder="e.g. Acme Corp" />
-        </div>
+        {form.clientType === "B2B" ? (
+          <>
+            <div>
+              <label className="text-[10px] font-black text-purple-600 dark:text-purple-400 uppercase tracking-widest mb-1.5 block flex items-center gap-1">
+                <Building2 size={12} />
+                <span>Company / Firm Name (e.g. Studio Arcs) *</span>
+              </label>
+              <input 
+                list="b2b-companies-list"
+                className="themed-input w-full border border-purple-400/50 dark:border-purple-600/50 rounded-xl p-3 text-sm font-black outline-none focus:border-purple-500 transition-all bg-purple-50/25 dark:bg-purple-950/20" 
+                value={form.organizationName || ''} 
+                onChange={e => setForm({ ...form, organizationName: e.target.value })} 
+                placeholder="Type or pick company (e.g. Studio Arcs)..."
+                required
+              />
+              <datalist id="b2b-companies-list">
+                {existingCompanies.map((cName, idx) => (
+                  <option key={idx} value={cName} />
+                ))}
+              </datalist>
+              <span className="text-[10px] text-muted font-medium mt-1 block">
+                Architect, Interior Designer, or Contracting Firm
+              </span>
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">
+                Client / Property Owner Name *
+              </label>
+              <input 
+                className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" 
+                value={form.name || ''} 
+                onChange={e => setForm({ ...form, name: e.target.value })} 
+                placeholder="e.g. Mr. Rajesh Sharma (End Client)"
+                required 
+              />
+              <span className="text-[10px] text-muted font-medium mt-1 block">
+                The specific client or project owner under this company
+              </span>
+            </div>
+          </>
+        ) : (
+          <>
+            <div>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">
+                Full Name *
+              </label>
+              <input 
+                className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" 
+                value={form.name || ''} 
+                onChange={e => setForm({ ...form, name: e.target.value })} 
+                placeholder="e.g. Mr. Rajesh Sharma"
+                required 
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">
+                Organization / Workplace (Optional)
+              </label>
+              <input 
+                className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" 
+                value={form.organizationName || ''} 
+                onChange={e => setForm({ ...form, organizationName: e.target.value })} 
+                placeholder="e.g. Self / Company" 
+              />
+            </div>
+          </>
+        )}
         <div>
           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Phone Number</label>
           <input className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" value={form.phone || ''} onChange={e => setForm({ ...form, phone: e.target.value })} required />
@@ -1555,13 +2041,13 @@ function EditContactForm({ contact, nextLeadId, onSave, onCancel }) {
           <input className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" value={form.address || ''} onChange={e => setForm({ ...form, address: e.target.value })} required />
         </div>
         <div className="md:col-span-2">
-          {/* Replaced fixed select with input + datalist so ANY lead source can be entered */}
           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 block">Lead Source</label>
           <input list="lead-sources" placeholder="e.g. Instagram" className="themed-input w-full border border-[var(--border-color)] rounded-xl p-3 text-sm font-bold outline-none focus:border-violet-500 transition-all" value={form.source} onChange={e => setForm({ ...form, source: e.target.value })} />
           <datalist id="lead-sources">
             <option value="Instagram" />
             <option value="Website" />
             <option value="Referral" />
+            <option value="Architect / Designer Partner" />
             <option value="Direct Walk-in" />
           </datalist>
         </div>

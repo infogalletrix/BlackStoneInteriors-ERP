@@ -34,6 +34,9 @@ namespace Blackstone_Interior.Controllers
                     project = c.Project,
                     address = c.Address,
                     status = c.Status,
+                    clientType = string.IsNullOrWhiteSpace(c.ClientType) 
+                        ? (!string.IsNullOrWhiteSpace(c.OrganizationName) ? "B2B" : "B2C") 
+                        : c.ClientType,
                     source = c.Source,
                     tags = parsedTags,
                     date = c.Date
@@ -60,6 +63,9 @@ namespace Blackstone_Interior.Controllers
                 Project = dto.Project,
                 Address = dto.Address,
                 Status = dto.Status,
+                ClientType = !string.IsNullOrWhiteSpace(dto.ClientType)
+                    ? dto.ClientType
+                    : (!string.IsNullOrWhiteSpace(dto.OrganizationName) ? "B2B" : "B2C"),
                 Source = dto.Source,
                 Tags = JsonSerializer.Serialize(dto.Tags ?? new List<string>()),
                 Date = dto.Date ?? DateTime.Now.ToString("yyyy-MM-dd")
@@ -90,6 +96,10 @@ namespace Blackstone_Interior.Controllers
             contact.Project = dto.Project;
             contact.Address = dto.Address;
             contact.Status = dto.Status;
+            if (!string.IsNullOrWhiteSpace(dto.ClientType))
+            {
+                contact.ClientType = dto.ClientType;
+            }
             contact.Source = dto.Source;
             contact.Tags = JsonSerializer.Serialize(dto.Tags ?? new List<string>());
 

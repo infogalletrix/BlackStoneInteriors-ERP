@@ -49,6 +49,12 @@ try
     
     // Apply pending migrations automatically on startup
     db.Database.Migrate();
+
+    try
+    {
+        db.Database.ExecuteSqlRaw("ALTER TABLE CrmContacts ADD COLUMN ClientType VARCHAR(50) DEFAULT 'B2C';");
+    }
+    catch { }
     
     db.Database.CanConnect();
     Console.WriteLine("DB CONNECTION SUCCESSFUL!");
