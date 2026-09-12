@@ -69,6 +69,7 @@ export default function SitesPage() {
   const [selectedLoadQuoteId, setSelectedLoadQuoteId] = useState("");
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [mediaFileBase64, setMediaFileBase64] = useState("");
+  const [mediaFileType, setMediaFileType] = useState("image");
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
 
   const handleMaintenanceChange = () => {
@@ -434,6 +435,11 @@ export default function SitesPage() {
   const handleMediaFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.type && file.type.startsWith("video")) {
+        setMediaFileType("video");
+      } else {
+        setMediaFileType("image");
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setMediaFileBase64(reader.result);
@@ -441,13 +447,13 @@ export default function SitesPage() {
       reader.readAsDataURL(file);
     } else {
       setMediaFileBase64("");
+      setMediaFileType("image");
     }
   };
 
   const handleAddMedia = async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
-    const type = fd.get("type");
     const category = fd.get("category");
     let url = fd.get("url") || "";
 
@@ -458,6 +464,19 @@ export default function SitesPage() {
     if (!url) {
       showDialog({ title: "Error", message: "Please provide a media URL or upload a file.", type: "error" });
       return;
+    }
+
+    // Auto-detect media type as image or video
+    let type = mediaFileType;
+    if (!mediaFileBase64 && url) {
+      const lower = url.toLowerCase();
+      if (lower.match(/\.(mp4|webm|ogg|mov|m4v)(\?.*)?$/) || lower.includes("youtube.com") || lower.includes("youtu.be") || lower.includes("vimeo.com")) {
+        type = "video";
+      } else {
+        type = "image";
+      }
+    } else if (mediaFileBase64) {
+      type = mediaFileBase64.startsWith("data:video") ? "video" : "image";
     }
 
     const newMedia = {
@@ -473,6 +492,7 @@ export default function SitesPage() {
     await updateSiteProperty(selectedSiteId, "media", updatedMedia);
     setIsMediaModalOpen(false);
     setMediaFileBase64("");
+    setMediaFileType("image");
     showDialog({ title: "Success", message: "Media added successfully.", type: "success" });
   };
 
@@ -1265,23 +1285,16 @@ export default function SitesPage() {
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <form onSubmit={handleAddMedia} className="themed-modal rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
             <div className="p-6 flex justify-between items-center border-b border-[var(--border-color)]">
-              <h2 className="text-lg font-black text-themed">Add Media Link</h2>
+              <h2 className="text-lg font-black text-themed">Add Media</h2>
               <button type="button" onClick={() => setIsMediaModalOpen(false)} className="text-muted hover:text-themed"><X /></button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Media Type</label>
-                <select name="type" className="w-full border themed-input p-3 rounded-xl outline-none">
-                  <option value="image">Image / Render</option>
-                  <option value="video">Video Walkthrough</option>
-                </select>
-              </div>
-              <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Caption / Room</label>
-                <input required name="category" placeholder="e.g. Master Bedroom" className="w-full border themed-input p-3 rounded-xl outline-none" />
+                <input required name="category" placeholder="e.g. Master Bedroom, Kitchen 3D" className="w-full border themed-input p-3 rounded-xl outline-none" />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Upload File (Optional)</label>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Upload Photo or Video (Optional)</label>
                 <input type="file" accept="image/*,video/*" onChange={handleMediaFileChange} className="w-full border themed-input p-3 rounded-xl outline-none mb-3" />
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Or provide Media URL</label>
                 <input name="url" placeholder="https://..." className="w-full border themed-input p-3 rounded-xl outline-none" disabled={!!mediaFileBase64} />
