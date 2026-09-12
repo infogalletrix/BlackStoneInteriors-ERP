@@ -531,14 +531,9 @@ export default function SitesPage() {
               <Building className="text-accent" size={18} />
               Work Orders
             </h1>
-            <p className="text-muted mt-0.5 text-xs font-medium mb-4">
+            <p className="text-muted mt-0.5 text-xs font-medium">
               Manage site operations, financial links, and project progress.
             </p>
-            <div className="flex items-center gap-3">
-              <span className="px-5 py-2 rounded-full font-bold text-xs bg-accent text-white shadow-sm">
-                Projects Overview
-              </span>
-            </div>
           </div>
           <div className="flex items-center gap-3">
             <button
