@@ -186,6 +186,11 @@ export default function QuotationItemModal({
       return null;
     }
 
+    const numericQty = parseFloat(qty) || 0;
+    const numericRate = parseFloat(rate) || 0;
+    const totalBeforeDiscount = numericQty * numericRate;
+    const totalDiscount = Math.max(0, totalBeforeDiscount - itemAmount);
+
     return {
       id: editingItem ? editingItem.id : Date.now() + Math.random(),
       code: editingItem?.code || "",
@@ -199,6 +204,7 @@ export default function QuotationItemModal({
       discountType,
       discountPercent,
       discountPrice,
+      discountAmount: totalDiscount,
       amount: itemAmount
     };
   };

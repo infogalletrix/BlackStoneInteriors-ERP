@@ -971,7 +971,7 @@ export default function QuotationPage() {
               <th className="px-3.5 py-3.5 text-center w-16 font-black">Qty</th>
               <th className="px-3.5 py-3.5 text-center w-16 font-black">Unit</th>
               <th className="px-3.5 py-3.5 text-right w-28 font-black">Rate (₹)</th>
-              <th className="px-3.5 py-3.5 text-right w-24 font-black">Discount</th>
+              <th className="px-3.5 py-3.5 text-right w-28 font-black">Discount (₹)</th>
               <th className="px-3.5 py-3.5 text-right w-32 font-black">Amount (₹)</th>
               <th className="px-3.5 py-3.5 text-center w-24 font-black">Actions</th>
             </tr>
@@ -1023,13 +1023,30 @@ export default function QuotationPage() {
                   {formatINR(item.rate)}
                 </td>
                 <td className="px-3.5 py-3.5 text-right text-muted font-semibold text-sm">
-                  {item.discountType === 'price' && item.discountPrice && parseFloat(item.discountPrice) > 0 ? (
-                    <span className="text-amber-700 dark:text-[var(--accent)] font-bold">₹{formatINR(item.discountPrice)}</span>
-                  ) : item.discountPercent && parseFloat(item.discountPercent) > 0 ? (
-                    <span className="text-amber-600 dark:text-[var(--accent)] font-bold">{item.discountPercent}%</span>
-                  ) : (
-                    "—"
-                  )}
+                  {(() => {
+                    const qty = parseFloat(item.qty) || 0;
+                    const rate = parseFloat(item.rate) || 0;
+                    const gross = qty * rate;
+                    const net = parseFloat(item.amount) || 0;
+                    const discAmount = item.discountAmount !== undefined && item.discountAmount !== null && parseFloat(item.discountAmount) > 0
+                      ? parseFloat(item.discountAmount)
+                      : (gross > 0 && net < gross
+                        ? Math.max(0, gross - net)
+                        : (item.discountPercent && parseFloat(item.discountPercent) > 0
+                          ? (gross * parseFloat(item.discountPercent)) / 100
+                          : 0));
+
+                    return discAmount > 0 ? (
+                      <span 
+                        className="text-amber-700 dark:text-[var(--accent)] font-bold"
+                        title={item.discountPercent ? `${item.discountPercent}% off` : undefined}
+                      >
+                        ₹{formatINR(discAmount)}
+                      </span>
+                    ) : (
+                      "—"
+                    );
+                  })()}
                 </td>
                 <td className="px-3.5 py-3.5 text-right font-black text-amber-700 dark:text-[var(--accent)] text-base">
                   {formatINR(item.amount || 0)}
