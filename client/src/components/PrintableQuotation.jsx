@@ -493,11 +493,11 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
 
     const getItemHeight = (item) => {
       const spec = (item.specification || "") + (item.product || "");
-      if (spec.length > 120) return 9;
-      if (spec.length > 50) return 7;
-      return 5.5;
+      if (spec.length > 95) return 8.5;
+      if (spec.length > 45) return 6.5;
+      return 4.5;
     };
-    const SEC_HDR_HEIGHT = 8; // section sub-header (4mm) + table thead (4mm)
+    const SEC_HDR_HEIGHT = 9; // section sub-header (4.5mm) + table thead (4.5mm)
 
     // Compute total height of all items
     let totalItemsHeight = 0;
@@ -511,8 +511,8 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       totalItemsHeight += getItemHeight(it);
     });
 
-    // 1. Single-Page Check (Safe capacity: ~170mm for items + summary cards)
-    if (totalItemsHeight <= 170) {
+    // 1. Single-Page Check (Safe capacity: ~185mm for items + summary cards)
+    if (totalItemsHeight <= 185) {
       return [{
         pageNum: 1,
         totalPages: 1,
@@ -524,9 +524,9 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
     }
 
     // 2. Multi-Page Splitting:
-    // Page 1 capacity without summary: 200mm (packs maximum items, eliminates blank space)
-    // Middle page capacity without summary: 205mm
-    // Last page capacity WITH summary: 160mm
+    // Page 1 capacity without summary: 228mm (packs maximum items, eliminates blank space)
+    // Middle page capacity without summary: 242mm
+    // Last page capacity WITH summary: 200mm
     const pages = [];
     let currentIndex = 0;
     let pageNum = 1;
@@ -547,8 +547,8 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         remHeight += getItemHeight(it);
       });
 
-      // If NOT page 1 and remaining items fit comfortably on last page with summary (<= 160mm):
-      if (!isFirstPage && remHeight <= 160) {
+      // If NOT page 1 and remaining items fit comfortably on last page with summary (<= 200mm):
+      if (!isFirstPage && remHeight <= 200) {
         pages.push({
           items: remainingItems,
           isFirst: false,
@@ -558,8 +558,8 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         break;
       }
 
-      // Page capacity: Fill Page 1 up to full 200mm capacity without throttling
-      const pageCapacity = isFirstPage ? 200 : 205;
+      // Page capacity: Fill Page 1 up to full 228mm capacity without throttling
+      const pageCapacity = isFirstPage ? 228 : 242;
 
       let currentHeight = 0;
       let pageItems = [];
@@ -596,9 +596,9 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       pageNum++;
     }
 
-    // Safety check: ensure last page with items AND summary <= 160mm
+    // Safety check: ensure last page with items AND summary <= 200mm
     const lastIdx = pages.length - 1;
-    if (pages.length > 1 && pages[lastIdx].usedHeight > 160) {
+    if (pages.length > 1 && pages[lastIdx].usedHeight > 200) {
       const lastPage = pages[lastIdx];
       const overflowItems = [];
       let oHeight = 0;
@@ -610,13 +610,13 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         let cost = getItemHeight(item);
         if (sec !== oSec) cost += SEC_HDR_HEIGHT;
 
-        if (oHeight + cost > 150 && overflowItems.length > 0) break;
+        if (oHeight + cost > 190 && overflowItems.length > 0) break;
 
         overflowItems.unshift(lastPage.items.pop());
         oHeight += cost;
         oSec = sec;
         lastPage.usedHeight -= cost;
-        if (lastPage.usedHeight <= 160) break;
+        if (lastPage.usedHeight <= 200) break;
       }
 
       if (overflowItems.length > 0) {
