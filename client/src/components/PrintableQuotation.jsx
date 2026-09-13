@@ -72,18 +72,17 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
     const prod = item.product || "";
     const cat = item.category || "";
     const maxLines = Math.max(
-      Math.ceil(spec.length / 36),
-      Math.ceil(prod.length / 15),
-      Math.ceil(cat.length / 15),
+      Math.ceil(spec.length / 45),
+      Math.ceil(prod.length / 16),
+      Math.ceil(cat.length / 16),
       1
     );
-    if (maxLines >= 4) return 19.0;
-    if (maxLines === 3) return 15.0;
-    if (maxLines === 2) return 11.0;
-    return 7.5;
+    if (maxLines >= 4) return 14.0;
+    if (maxLines === 3) return 11.0;
+    if (maxLines === 2) return 8.0;
+    return 5.0;
   };
-  const SEC_HDR_HEIGHT = 18.0; // section sub-header bar + table thead + margins
-  const MAX_ITEMS_WITH_SUMMARY = 80; // max items height (mm) allowed to share a page with summary cards
+  const SEC_HDR_HEIGHT = 11.0; // section header (5mm) + table thead (4.5mm) + margin (1.5mm)
 
   const paginateQuotation = (allItems) => {
     if (!allItems || allItems.length === 0) {
@@ -98,8 +97,8 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       prevSec = s;
     });
 
-    // 1. Single-Page check: fits all items + client details + summary cards if items height <= MAX_ITEMS_WITH_SUMMARY
-    if (totalItemsHeight <= MAX_ITEMS_WITH_SUMMARY) {
+    // 1. Single-Page check: fits all items + client details + summary cards if items height <= 135mm
+    if (totalItemsHeight <= 135) {
       return [{
         pageNum: 1,
         totalPages: 1,
@@ -111,8 +110,9 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
     }
 
     // 2. Multi-Page Splitting:
-    // Page 1 capacity: 180mm (packs maximum items with header & client details)
-    // Subsequent full-items page capacity: 220mm (header + items + footer)
+    // Page 1 capacity: 215mm (packs maximum items, eliminates blank space)
+    // Subsequent full-items page capacity: 240mm (header + items + footer)
+    // Last page with summary cards: items height up to 165mm
     const pages = [];
     let currIdx = 0;
     let pageNum = 1;
@@ -130,14 +130,13 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         rSec = s;
       });
 
-      // If NOT page 1 and remaining items fit comfortably on last page with summary (<= MAX_ITEMS_WITH_SUMMARY):
-      if (!isP1 && remH <= MAX_ITEMS_WITH_SUMMARY) {
+      // If NOT page 1 and remaining items fit comfortably on last page with summary (<= 165mm):
+      if (!isP1 && remH <= 165) {
         pages.push({ items: rem, isFirst: false, isLast: true, usedH: remH });
-        currIdx = allItems.length;
         break;
       }
 
-      const cap = isP1 ? 180 : 220;
+      const cap = isP1 ? 215 : 240;
       const pageItems = [];
       let pageH = 0;
       let pSec = null;
@@ -146,30 +145,29 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         const it = allItems[currIdx];
         const s = (it.section || "General").trim();
         const cost = getItemHeight(it) + (s !== pSec ? SEC_HDR_HEIGHT : 0);
+
+        // Check if adding this item exceeds capacity:
+        // Pack as many items as possible on this page; push ONLY remaining items to next page!
         if (pageH + cost > cap && pageItems.length > 0) break;
+
         pageItems.push(it);
         pageH += cost;
         pSec = s;
         currIdx++;
       }
 
-      const allPacked = (currIdx >= allItems.length);
+      const isLast = (currIdx >= allItems.length);
 
-      if (allPacked) {
-        // All items have been assigned to pages!
-        // Check if summary cards can safely share this page without pushing content past 297mm:
-        if (!isP1 && pageH <= MAX_ITEMS_WITH_SUMMARY) {
-          pages.push({ items: pageItems, isFirst: false, isLast: true, usedH: pageH });
-        } else {
-          // Put remaining items on this page, and place summary cards cleanly on the next page
-          pages.push({ items: pageItems, isFirst: isP1, isLast: false, usedH: pageH });
-          pages.push({ items: [], isFirst: false, isLast: true, usedH: 0 });
-        }
+      // If Page 1 packed all items but summary cannot fit on Page 1 (totalItemsHeight > 135),
+      // create Page 2 for summary cards
+      if (isP1 && isLast && totalItemsHeight > 135) {
+        pages.push({ items: pageItems, isFirst: true, isLast: false, usedH: pageH });
+        pages.push({ items: [], isFirst: false, isLast: true, usedH: 0 });
         break;
-      } else {
-        pages.push({ items: pageItems, isFirst: isP1, isLast: false, usedH: pageH });
       }
 
+      pages.push({ items: pageItems, isFirst: isP1, isLast, usedH: pageH });
+      if (isLast) break;
       pageNum++;
     }
 
@@ -331,50 +329,50 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
     });
 
     return (
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {sectionGroups.map((secGroup, sIdx) => {
           const isCont = continuedSections?.has(secGroup.sectionName);
           const pageTotal = secGroup.items.reduce((s, it) => s + (parseFloat(it.amount) || 0), 0);
           const overallTotal = sectionTotals[secGroup.sectionName] || pageTotal;
 
           return (
-            <div key={sIdx} className="border border-slate-200 rounded-xl shadow-xs bg-white overflow-hidden mb-2">
+            <div key={sIdx} className="border border-slate-200 rounded-xl shadow-xs bg-white overflow-hidden mb-1.5">
               {/* Section Sub-Header */}
-              <div className="bg-gradient-to-r from-slate-100 to-slate-50 border-b border-slate-200 px-3 py-1.5 flex justify-between items-center">
+              <div className="bg-gradient-to-r from-slate-100 to-slate-50 border-b border-slate-200 px-2.5 py-1 flex justify-between items-center">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-[#0d5c63]"></span>
-                  <span className="font-black text-[11px] text-[#0b1e36] uppercase tracking-wider">
-                    {secGroup.sectionName} {isCont && <span className="text-slate-400 font-semibold text-[9px] lowercase tracking-normal">(contd.)</span>}
+                  <span className="font-black text-[10.5px] text-[#0b1e36] uppercase tracking-wider">
+                    {secGroup.sectionName} {isCont && <span className="text-slate-400 font-semibold text-[8.5px] lowercase tracking-normal">(contd.)</span>}
                   </span>
                 </div>
-                <span className="text-[10.5px] font-black text-[#0d5c63]">Section Total: INR {fmt(overallTotal)}</span>
+                <span className="text-[10px] font-black text-[#0d5c63]">Section Total: INR {fmt(overallTotal)}</span>
               </div>
 
               {/* Table */}
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-extrabold uppercase text-[9.5px] tracking-wider">
-                    <th className="py-1.5 px-2.5 text-center w-8">SI</th>
-                    <th className="py-1.5 px-2.5 w-28">Product</th>
-                    <th className="py-1.5 px-2.5 w-28">Category</th>
-                    <th className="py-1.5 px-2.5">Specification & Material</th>
-                    <th className="py-1.5 px-1.5 text-center w-9">Qty</th>
-                    <th className="py-1.5 px-1.5 text-center w-11">Unit</th>
-                    <th className="py-1.5 px-2.5 text-right w-20">Rate</th>
-                    <th className="py-1.5 px-2.5 text-right w-24">Amount</th>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-extrabold uppercase text-[9px] tracking-wider">
+                    <th className="py-1 px-2 text-center w-8">SI</th>
+                    <th className="py-1 px-2 w-28">Product</th>
+                    <th className="py-1 px-2 w-28">Category</th>
+                    <th className="py-1 px-2">Specification & Material</th>
+                    <th className="py-1 px-1.5 text-center w-9">Qty</th>
+                    <th className="py-1 px-1.5 text-center w-11">Unit</th>
+                    <th className="py-1 px-2 text-right w-20">Rate</th>
+                    <th className="py-1 px-2 text-right w-24">Amount</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-[10px]">
+                <tbody className="divide-y divide-slate-100 text-[9.5px]">
                   {secGroup.items.map((it, idx) => (
                     <tr key={idx} className="hover:bg-slate-50/50">
-                      <td className="py-1.5 px-2.5 text-center text-slate-400 font-bold text-[10px] align-top">{it._globalIndex || idx + 1}</td>
-                      <td className="py-1.5 px-2.5 align-top text-slate-900 font-bold text-[10.5px] leading-snug">{it.product || "—"}</td>
-                      <td className="py-1.5 px-2.5 align-top text-slate-700 font-semibold text-[10px] leading-snug">{it.category || "—"}</td>
-                      <td className="py-1.5 px-2.5 align-top text-slate-700 font-normal text-[10px] leading-relaxed tracking-normal">{it.specification || "Standard Material & Hardware"}</td>
-                      <td className="py-1.5 px-1.5 text-center align-top font-bold text-slate-900 text-[10.5px]">{it.qty || 1}</td>
-                      <td className="py-1.5 px-1.5 text-center align-top text-slate-600 font-medium text-[10px]">{it.unit || "Sq.Ft"}</td>
-                      <td className="py-1.5 px-2.5 text-right align-top font-semibold text-slate-800 text-[10.5px]">{it.rate ? `₹${fmt(it.rate)}` : "—"}</td>
-                      <td className="py-1.5 px-2.5 text-right align-top font-black text-slate-950 text-[11px]">{it.amount ? `₹${fmt(it.amount)}` : "Incl."}</td>
+                      <td className="py-1 px-2 text-center text-slate-400 font-bold text-[9.5px] align-top">{it._globalIndex || idx + 1}</td>
+                      <td className="py-1 px-2 align-top text-slate-900 font-bold text-[10px] leading-tight">{it.product || "—"}</td>
+                      <td className="py-1 px-2 align-top text-slate-700 font-semibold text-[9.5px] leading-tight">{it.category || "—"}</td>
+                      <td className="py-1 px-2 align-top text-slate-700 font-normal text-[9.5px] leading-snug tracking-normal">{it.specification || "Standard Material & Hardware"}</td>
+                      <td className="py-1 px-1.5 text-center align-top font-bold text-slate-900 text-[10px]">{it.qty || 1}</td>
+                      <td className="py-1 px-1.5 text-center align-top text-slate-600 font-medium text-[9.5px]">{it.unit || "Sq.Ft"}</td>
+                      <td className="py-1 px-2 text-right align-top font-semibold text-slate-800 text-[10px]">{it.rate ? `₹${fmt(it.rate)}` : "—"}</td>
+                      <td className="py-1 px-2 text-right align-top font-black text-slate-950 text-[10.5px]">{it.amount ? `₹${fmt(it.amount)}` : "Incl."}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -555,7 +553,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
             display: flex !important;
             flex-direction: column !important;
             justify-content: space-between !important;
-            padding: 8mm 10mm 8mm 10mm !important;
+            padding: 7mm 9mm 7mm 9mm !important;
             margin: 0 !important;
             box-sizing: border-box !important;
             position: relative !important;
@@ -577,7 +575,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
             height: 297mm;
             max-height: 297mm;
             box-sizing: border-box;
-            padding: 8mm 10mm 8mm 10mm;
+            padding: 7mm 9mm 7mm 9mm;
             margin: 0 auto 24px auto;
             box-shadow: 0 4px 25px rgba(0,0,0,0.12);
             position: relative;
@@ -597,7 +595,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
           {renderDecorativeCurves()}
 
           {/* Top content area: Header, Client Info, Items, and/or Summary */}
-          <div className="flex-1 flex flex-col justify-start overflow-hidden">
+          <div>
             {renderHeader(page.pageNum, page.totalPages)}
             {page.isFirst && renderClientDetails()}
 
