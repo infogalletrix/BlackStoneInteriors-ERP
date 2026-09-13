@@ -413,59 +413,68 @@ export default function CatalogPage() {
     }
     prodId = updated[prodIdx].id;
 
-    // 2. Find or create Category under this Product
-    const finalCatName = category ? category.trim() : "Carcass / Core Structure";
-    let prodCategories = [...(updated[prodIdx].categories || [])];
-    let catIdx = prodCategories.findIndex(
-      (c) => c.name.trim().toLowerCase() === finalCatName.toLowerCase()
-    );
-    let catId;
-    if (catIdx === -1) {
-      const newCat = {
-        id: "cat-" + Date.now() + Math.floor(Math.random() * 1000),
-        name: finalCatName,
-        specifications: []
-      };
-      prodCategories.push(newCat);
-      catIdx = prodCategories.length - 1;
-    }
-    catId = prodCategories[catIdx].id;
+    const trimmedCat = (category || "").trim();
+    let catId = "";
 
-    // 3. If specification & unit price provided, add or update specification
-    if (specification && specification.trim() && unitPrice !== null && !isNaN(unitPrice) && Number(unitPrice) > 0) {
-      const newSpec = {
-        id: "spec-" + Date.now() + Math.floor(Math.random() * 1000),
-        name: specification.trim(),
-        unitPrice: Number(unitPrice),
-        unit: unit || "Sq.Ft",
-        discountType: discountType || "percent",
-        discountPercent: discountPercent !== null && discountPercent !== undefined ? Number(discountPercent) : null,
-        discountPrice: discountPrice !== null && discountPrice !== undefined ? Number(discountPrice) : null
-      };
-
-      const existingSpecs = [...(prodCategories[catIdx].specifications || [])];
-      const specIdx = existingSpecs.findIndex(
-        (s) => s.name.trim().toLowerCase() === specification.trim().toLowerCase()
+    // 2. Only find or create Category under this Product if category is provided!
+    if (trimmedCat) {
+      let prodCategories = [...(updated[prodIdx].categories || [])];
+      let catIdx = prodCategories.findIndex(
+        (c) => c.name.trim().toLowerCase() === trimmedCat.toLowerCase()
       );
-      if (specIdx >= 0) {
-        existingSpecs[specIdx] = { ...existingSpecs[specIdx], ...newSpec, id: existingSpecs[specIdx].id };
-      } else {
-        existingSpecs.push(newSpec);
+      if (catIdx === -1) {
+        const newCat = {
+          id: "cat-" + Date.now() + Math.floor(Math.random() * 1000),
+          name: trimmedCat,
+          specifications: []
+        };
+        prodCategories.push(newCat);
+        catIdx = prodCategories.length - 1;
       }
-      prodCategories[catIdx] = {
-        ...prodCategories[catIdx],
-        specifications: existingSpecs
+      catId = prodCategories[catIdx].id;
+
+      // 3. If specification & unit price provided, add or update specification under this category
+      if (specification && specification.trim() && unitPrice !== null && !isNaN(unitPrice) && Number(unitPrice) > 0) {
+        const newSpec = {
+          id: "spec-" + Date.now() + Math.floor(Math.random() * 1000),
+          name: specification.trim(),
+          unitPrice: Number(unitPrice),
+          unit: unit || "Sq.Ft",
+          discountType: discountType || "percent",
+          discountPercent: discountPercent !== null && discountPercent !== undefined ? Number(discountPercent) : null,
+          discountPrice: discountPrice !== null && discountPrice !== undefined ? Number(discountPrice) : null
+        };
+
+        const existingSpecs = [...(prodCategories[catIdx].specifications || [])];
+        const specIdx = existingSpecs.findIndex(
+          (s) => s.name.trim().toLowerCase() === specification.trim().toLowerCase()
+        );
+        if (specIdx >= 0) {
+          existingSpecs[specIdx] = { ...existingSpecs[specIdx], ...newSpec, id: existingSpecs[specIdx].id };
+        } else {
+          existingSpecs.push(newSpec);
+        }
+        prodCategories[catIdx] = {
+          ...prodCategories[catIdx],
+          specifications: existingSpecs
+        };
+      }
+
+      updated[prodIdx] = {
+        ...updated[prodIdx],
+        categories: prodCategories
       };
     }
-
-    updated[prodIdx] = {
-      ...updated[prodIdx],
-      categories: prodCategories
-    };
 
     setCatalogTree(updated);
     setSelectedProductId(prodId);
-    setSelectedCategoryId(catId);
+    if (catId) {
+      setSelectedCategoryId(catId);
+    } else if (updated[prodIdx].categories && updated[prodIdx].categories.length > 0) {
+      setSelectedCategoryId(updated[prodIdx].categories[0].id);
+    } else {
+      setSelectedCategoryId("");
+    }
     persistToServer(updated);
   };
 
@@ -887,7 +896,7 @@ export default function CatalogPage() {
             {activeProduct && (!activeProduct.categories || activeProduct.categories.length === 0) && (
               <div className="p-8 text-center text-muted text-xs font-semibold">
                 No categories added to {activeProduct.name} yet.
-                <p className="text-[11px] mt-1 text-slate-400">Add a category using the inputs above.</p>
+                <p className="text-[11px] mt-1 text-slate-400">Click "+ Add" above to add a category.</p>
               </div>
             )}
           </div>

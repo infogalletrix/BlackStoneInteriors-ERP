@@ -146,6 +146,12 @@ export default function CatalogItemModal({
     const trimmedCategory = category.trim();
     const trimmedSpec = specification.trim();
 
+    // If specification is provided, category is required to know where to place it
+    if (trimmedSpec && !trimmedCategory) {
+      setValidationError("Please select or enter a Category for this specification.");
+      return null;
+    }
+
     // If specification is provided, unitPrice is mandatory
     if (trimmedSpec) {
       const parsedPrice = parseFloat(unitPrice);
@@ -158,7 +164,7 @@ export default function CatalogItemModal({
     setValidationError("");
     return {
       product: trimmedProduct,
-      category: trimmedCategory || "Carcass / Core Structure",
+      category: trimmedCategory,
       specification: trimmedSpec,
       unitPrice: trimmedSpec ? parseFloat(unitPrice) : null,
       unit: unit || "Sq.Ft",
@@ -261,7 +267,7 @@ export default function CatalogItemModal({
                 </span>
               ) : (
                 <span className="text-[10px] text-slate-400 font-semibold">
-                  Defaults to "Carcass / Core Structure" if empty
+                  Optional (leave empty if adding product only)
                 </span>
               )}
             </div>
