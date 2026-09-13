@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, Fragment } from "react";
 
 const PrintableQuotation = forwardRef(({ data }, ref) => {
   const safeData = data || {};
@@ -44,7 +44,8 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
     return acc;
   }, {});
 
-  // Group items by section order to keep items of the same section contiguous
+  // Group items by section order to keep items of the same section contiguous,
+  // and within each section group by category to keep same categories contiguous
   const sectionOrder = [];
   const itemsBySection = {};
   items.forEach((item) => {
@@ -55,7 +56,25 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
     }
     itemsBySection[sec].push(item);
   });
-  const contiguousItems = sectionOrder.flatMap((sec) => itemsBySection[sec]);
+
+  const contiguousItems = [];
+  sectionOrder.forEach((sec) => {
+    const secItems = itemsBySection[sec];
+    const catOrder = [];
+    const itemsByCat = {};
+    secItems.forEach((it) => {
+      const cat = it.category?.trim() || "";
+      if (!itemsByCat[cat]) {
+        itemsByCat[cat] = [];
+        catOrder.push(cat);
+      }
+      itemsByCat[cat].push(it);
+    });
+    catOrder.forEach((cat) => {
+      contiguousItems.push(...itemsByCat[cat]);
+    });
+  });
+
   const taggedItems = contiguousItems.map((item, index) => ({
     ...item,
     _globalIndex: index + 1,
@@ -212,28 +231,37 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
   );
 
   // 4. Work Items Table with continuous serial numbering
-  const renderItemsTable = (itemsSlice, continuedSections = new Set()) => {
+  // 4. Work Items Table with continuous serial numbering and category sub-sections
+  const renderItemsTable = (itemsSlice, continuedSections = new Set(), continuedCategories = new Set()) => {
     if (!itemsSlice || itemsSlice.length === 0) return null;
 
-    // Group itemsSlice into sections in sequential order
+    // Group itemsSlice into sections and categories in sequential order
     const sectionGroups = [];
-    let currentGroup = null;
+    let currentSecGroup = null;
 
     itemsSlice.forEach((item) => {
       const sec = item.section?.trim() || "General";
-      if (!currentGroup || currentGroup.sectionName !== sec) {
-        currentGroup = { sectionName: sec, items: [] };
-        sectionGroups.push(currentGroup);
+      if (!currentSecGroup || currentSecGroup.sectionName !== sec) {
+        currentSecGroup = { sectionName: sec, categoryGroups: [], allSecItems: [] };
+        sectionGroups.push(currentSecGroup);
       }
-      currentGroup.items.push(item);
+      currentSecGroup.allSecItems.push(item);
+
+      const cat = item.category?.trim() || "";
+      let currentCatGroup = currentSecGroup.categoryGroups[currentSecGroup.categoryGroups.length - 1];
+      if (!currentCatGroup || currentCatGroup.categoryName !== cat) {
+        currentCatGroup = { categoryName: cat, items: [] };
+        currentSecGroup.categoryGroups.push(currentCatGroup);
+      }
+      currentCatGroup.items.push(item);
     });
 
     return (
       <div className="space-y-1 mb-1.5">
-        {sectionGroups.map((group, sIdx) => {
-          const isContinued = continuedSections?.has(group.sectionName);
-          const pageSecTotal = group.items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-          const overallSecTotal = sectionTotals[group.sectionName] || pageSecTotal;
+        {sectionGroups.map((secGroup, sIdx) => {
+          const isContinued = continuedSections?.has(secGroup.sectionName);
+          const pageSecTotal = secGroup.allSecItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+          const overallSecTotal = sectionTotals[secGroup.sectionName] || pageSecTotal;
 
           return (
             <div key={sIdx} className="border border-slate-200 rounded-lg shadow-xs bg-white overflow-visible mb-1.5">
@@ -242,7 +270,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
                 <div className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#0d5c63]"></span>
                   <span className="font-black text-[9px] text-[#0b1e36] uppercase tracking-wider">
-                    {group.sectionName} {isContinued && <span className="text-slate-400 font-bold text-[7.5px] lowercase tracking-normal">(contd.)</span>}
+                    {secGroup.sectionName} {isContinued && <span className="text-slate-400 font-bold text-[7.5px] lowercase tracking-normal">(contd.)</span>}
                   </span>
                 </div>
                 <span className="text-[8px] font-extrabold text-[#0d5c63]">
@@ -264,30 +292,45 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-[8px]">
-                  {group.items.map((item, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50/50 leading-tight" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
-                      <td className="py-0.5 px-2 text-center text-slate-400 font-bold">
-                        {item._globalIndex !== undefined ? item._globalIndex : idx + 1}
-                      </td>
-                      <td className="py-0.5 px-2 align-top text-slate-900">
-                        <div className="font-bold">{item.product || "—"}</div>
-                        {item.category && (
-                          <div className="text-[7px] font-semibold text-[#0d5c63] inline-block bg-teal-50 px-1 py-0.2 rounded border border-teal-100">
-                            {item.category}
-                          </div>
+                  {secGroup.categoryGroups.map((catGroup, cIdx) => {
+                    const isCatContinued = continuedCategories?.has(secGroup.sectionName + "::" + catGroup.categoryName);
+                    return (
+                      <Fragment key={cIdx}>
+                        {catGroup.categoryName && (
+                          <tr className="bg-slate-50/90 border-t border-b border-slate-200/80">
+                            <td colSpan={7} className="py-0.5 px-2">
+                              <div className="flex items-center gap-1.5">
+                                <span className="w-1 h-1 rounded-full bg-[#0d5c63]"></span>
+                                <span className="text-[7.5px] font-bold text-slate-500 uppercase tracking-wide">
+                                  Category: <span className="text-[#0b1e36] font-extrabold">{catGroup.categoryName}</span>
+                                  {isCatContinued && <span className="text-slate-400 font-bold text-[7px] lowercase tracking-normal"> (contd.)</span>}
+                                </span>
+                              </div>
+                            </td>
+                          </tr>
                         )}
-                      </td>
-                      <td className="py-0.5 px-2 align-top text-slate-600 leading-snug">{item.specification || "Standard Material & Hardware"}</td>
-                      <td className="py-0.5 px-1.5 text-center align-top font-bold text-slate-800">{item.qty || 1}</td>
-                      <td className="py-0.5 px-1.5 text-center align-top text-slate-500">{item.unit || "Sq.Ft"}</td>
-                      <td className="py-0.5 px-2 text-right align-top font-medium text-slate-700">
-                        {item.rate ? `₹${fmt(item.rate)}` : "—"}
-                      </td>
-                      <td className="py-0.5 px-2 text-right align-top font-black text-slate-900">
-                        {item.amount ? `₹${fmt(item.amount)}` : "Incl."}
-                      </td>
-                    </tr>
-                  ))}
+                        {catGroup.items.map((item, idx) => (
+                          <tr key={idx} className="hover:bg-slate-50/50 leading-tight" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                            <td className="py-0.5 px-2 text-center text-slate-400 font-bold">
+                              {item._globalIndex !== undefined ? item._globalIndex : idx + 1}
+                            </td>
+                            <td className="py-0.5 px-2 align-top text-slate-900 font-bold">
+                              {item.product || "—"}
+                            </td>
+                            <td className="py-0.5 px-2 align-top text-slate-600 leading-snug">{item.specification || "Standard Material & Hardware"}</td>
+                            <td className="py-0.5 px-1.5 text-center align-top font-bold text-slate-800">{item.qty || 1}</td>
+                            <td className="py-0.5 px-1.5 text-center align-top text-slate-500">{item.unit || "Sq.Ft"}</td>
+                            <td className="py-0.5 px-2 text-right align-top font-medium text-slate-700">
+                              {item.rate ? `₹${fmt(item.rate)}` : "—"}
+                            </td>
+                            <td className="py-0.5 px-2 text-right align-top font-black text-slate-900">
+                              {item.amount ? `₹${fmt(item.amount)}` : "Incl."}
+                            </td>
+                          </tr>
+                        ))}
+                      </Fragment>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -498,17 +541,26 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       return 4.5;
     };
     const SEC_HDR_HEIGHT = 9; // section sub-header (4.5mm) + table thead (4.5mm)
+    const CAT_HDR_HEIGHT = 4; // category sub-header row (4mm)
 
     // Compute total height of all items
     let totalItemsHeight = 0;
     let prevSec = null;
+    let prevCat = null;
     allItems.forEach((it) => {
       const sec = it.section?.trim() || "General";
+      const cat = it.category?.trim() || "";
+      let cost = getItemHeight(it);
       if (sec !== prevSec) {
-        totalItemsHeight += SEC_HDR_HEIGHT;
+        cost += SEC_HDR_HEIGHT;
+        if (cat) cost += CAT_HDR_HEIGHT;
         prevSec = sec;
+        prevCat = cat;
+      } else if (cat && cat !== prevCat) {
+        cost += CAT_HDR_HEIGHT;
+        prevCat = cat;
       }
-      totalItemsHeight += getItemHeight(it);
+      totalItemsHeight += cost;
     });
 
     // 1. Single-Page Check (Safe capacity: ~185mm for items + summary cards)
@@ -519,7 +571,8 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         items: allItems,
         isFirst: true,
         isLast: true,
-        continuedSections: new Set()
+        continuedSections: new Set(),
+        continuedCategories: new Set()
       }];
     }
 
@@ -538,13 +591,21 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       // Calculate remaining items height
       let remHeight = 0;
       let rSec = null;
+      let rCat = null;
       remainingItems.forEach((it) => {
         const sec = it.section?.trim() || "General";
+        const cat = it.category?.trim() || "";
+        let cost = getItemHeight(it);
         if (sec !== rSec) {
-          remHeight += SEC_HDR_HEIGHT;
+          cost += SEC_HDR_HEIGHT;
+          if (cat) cost += CAT_HDR_HEIGHT;
           rSec = sec;
+          rCat = cat;
+        } else if (cat && cat !== rCat) {
+          cost += CAT_HDR_HEIGHT;
+          rCat = cat;
         }
-        remHeight += getItemHeight(it);
+        remHeight += cost;
       });
 
       // If NOT page 1 and remaining items fit comfortably on last page with summary (<= 200mm):
@@ -564,13 +625,18 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       let currentHeight = 0;
       let pageItems = [];
       let pSec = null;
+      let pCat = null;
 
       while (currentIndex < allItems.length) {
         const item = allItems[currentIndex];
         const sec = item.section?.trim() || "General";
+        const cat = item.category?.trim() || "";
         let cost = getItemHeight(item);
         if (sec !== pSec) {
           cost += SEC_HDR_HEIGHT;
+          if (cat) cost += CAT_HDR_HEIGHT;
+        } else if (cat && cat !== pCat) {
+          cost += CAT_HDR_HEIGHT;
         }
 
         // Check if adding this item exceeds capacity (and we already have at least 1 item on this page)
@@ -581,6 +647,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         pageItems.push(item);
         currentHeight += cost;
         pSec = sec;
+        pCat = cat;
         currentIndex++;
       }
 
@@ -603,18 +670,26 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       const overflowItems = [];
       let oHeight = 0;
       let oSec = null;
+      let oCat = null;
 
       while (lastPage.items.length > 1) {
         const item = lastPage.items[lastPage.items.length - 1];
         const sec = item.section?.trim() || "General";
+        const cat = item.category?.trim() || "";
         let cost = getItemHeight(item);
-        if (sec !== oSec) cost += SEC_HDR_HEIGHT;
+        if (sec !== oSec) {
+          cost += SEC_HDR_HEIGHT;
+          if (cat) cost += CAT_HDR_HEIGHT;
+        } else if (cat && cat !== oCat) {
+          cost += CAT_HDR_HEIGHT;
+        }
 
         if (oHeight + cost > 190 && overflowItems.length > 0) break;
 
         overflowItems.unshift(lastPage.items.pop());
         oHeight += cost;
         oSec = sec;
+        oCat = cat;
         lastPage.usedHeight -= cost;
         if (lastPage.usedHeight <= 200) break;
       }
@@ -633,17 +708,31 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
     const validPages = pages.filter((p) => (p.items && p.items.length > 0) || p.isLast);
     const totalPages = validPages.length > 0 ? validPages.length : 1;
 
-    // Precompute continuedSections for each page
+    // Precompute continuedSections and continuedCategories for each page
     const seenSections = new Set();
+    const seenCategories = new Set();
 
     return validPages.map((p, idx) => {
       const continued = new Set();
-      const pageSecs = new Set(p.items.map((it) => it.section?.trim() || "General"));
-      pageSecs.forEach((sec) => {
+      const continuedCats = new Set();
+
+      p.items.forEach((it) => {
+        const sec = it.section?.trim() || "General";
+        const cat = it.category?.trim() || "";
+        const secCatKey = sec + "::" + cat;
+
         if (seenSections.has(sec)) {
           continued.add(sec);
         } else {
           seenSections.add(sec);
+        }
+
+        if (cat) {
+          if (seenCategories.has(secCatKey)) {
+            continuedCats.add(secCatKey);
+          } else {
+            seenCategories.add(secCatKey);
+          }
         }
       });
 
@@ -654,6 +743,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         isFirst: idx === 0,
         isLast: idx === totalPages - 1,
         continuedSections: continued,
+        continuedCategories: continuedCats,
       };
     });
   };
@@ -736,7 +826,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
             {/* Items Table for this page */}
             {page.items && page.items.length > 0 ? (
               <div className={page.isFirst ? "" : "mt-1.5"}>
-                {renderItemsTable(page.items, page.continuedSections)}
+                {renderItemsTable(page.items, page.continuedSections, page.continuedCategories)}
               </div>
             ) : page.isLast && !page.isFirst ? (
               <div className="mt-2 mb-1.5 bg-gradient-to-r from-slate-100 to-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg flex justify-between items-center shadow-xs">
