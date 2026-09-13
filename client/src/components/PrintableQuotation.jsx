@@ -72,17 +72,18 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
     const prod = item.product || "";
     const cat = item.category || "";
     const maxLines = Math.max(
-      Math.ceil(spec.length / 38),
-      Math.ceil(prod.length / 16),
-      Math.ceil(cat.length / 16),
+      Math.ceil(spec.length / 36),
+      Math.ceil(prod.length / 15),
+      Math.ceil(cat.length / 15),
       1
     );
-    if (maxLines >= 4) return 16.5;
-    if (maxLines === 3) return 13.0;
-    if (maxLines === 2) return 9.5;
-    return 6.5;
+    if (maxLines >= 4) return 19.0;
+    if (maxLines === 3) return 15.0;
+    if (maxLines === 2) return 11.0;
+    return 7.5;
   };
-  const SEC_HDR_HEIGHT = 11.5; // section sub-header bar + table thead
+  const SEC_HDR_HEIGHT = 18.0; // section sub-header bar + table thead + margins
+  const MAX_ITEMS_WITH_SUMMARY = 80; // max items height (mm) allowed to share a page with summary cards
 
   const paginateQuotation = (allItems) => {
     if (!allItems || allItems.length === 0) {
@@ -97,8 +98,8 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       prevSec = s;
     });
 
-    // Single-Page check: fits all items + client details + summary cards if items height <= 105mm
-    if (totalItemsHeight <= 105) {
+    // 1. Single-Page check: fits all items + client details + summary cards if items height <= MAX_ITEMS_WITH_SUMMARY
+    if (totalItemsHeight <= MAX_ITEMS_WITH_SUMMARY) {
       return [{
         pageNum: 1,
         totalPages: 1,
@@ -109,10 +110,9 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       }];
     }
 
-    // Multi-Page Splitting:
-    // Page 1 capacity: 190mm (packs maximum items with header & client details)
-    // Middle page capacity: 225mm
-    // Last page capacity with summary: 135mm
+    // 2. Multi-Page Splitting:
+    // Page 1 capacity: 180mm (packs maximum items with header & client details)
+    // Subsequent full-items page capacity: 220mm (header + items + footer)
     const pages = [];
     let currIdx = 0;
     let pageNum = 1;
@@ -130,13 +130,14 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         rSec = s;
       });
 
-      // If NOT page 1 and remaining items fit comfortably on last page with summary (<= 135mm):
-      if (!isP1 && remH <= 135) {
+      // If NOT page 1 and remaining items fit comfortably on last page with summary (<= MAX_ITEMS_WITH_SUMMARY):
+      if (!isP1 && remH <= MAX_ITEMS_WITH_SUMMARY) {
         pages.push({ items: rem, isFirst: false, isLast: true, usedH: remH });
+        currIdx = allItems.length;
         break;
       }
 
-      const cap = isP1 ? 190 : 225;
+      const cap = isP1 ? 180 : 220;
       const pageItems = [];
       let pageH = 0;
       let pSec = null;
@@ -152,16 +153,23 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         currIdx++;
       }
 
-      const isLast = (currIdx >= allItems.length);
-      // If Page 1 packed all items but summary cannot fit on Page 1, create Page 2 for summary cards
-      if (isP1 && isLast && totalItemsHeight > 105) {
-        pages.push({ items: pageItems, isFirst: true, isLast: false, usedH: pageH });
-        pages.push({ items: [], isFirst: false, isLast: true, usedH: 0 });
+      const allPacked = (currIdx >= allItems.length);
+
+      if (allPacked) {
+        // All items have been assigned to pages!
+        // Check if summary cards can safely share this page without pushing content past 297mm:
+        if (!isP1 && pageH <= MAX_ITEMS_WITH_SUMMARY) {
+          pages.push({ items: pageItems, isFirst: false, isLast: true, usedH: pageH });
+        } else {
+          // Put remaining items on this page, and place summary cards cleanly on the next page
+          pages.push({ items: pageItems, isFirst: isP1, isLast: false, usedH: pageH });
+          pages.push({ items: [], isFirst: false, isLast: true, usedH: 0 });
+        }
         break;
+      } else {
+        pages.push({ items: pageItems, isFirst: isP1, isLast: false, usedH: pageH });
       }
 
-      pages.push({ items: pageItems, isFirst: isP1, isLast, usedH: pageH });
-      if (isLast) break;
       pageNum++;
     }
 
@@ -380,29 +388,29 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
 
   // Commercial Summary Cards (Last Page)
   const renderSummaryCards = () => (
-    <div className="grid grid-cols-2 gap-3 items-start mt-2">
+    <div className="grid grid-cols-2 gap-2.5 items-start mt-2">
       {/* Left Column: Bank Details, Terms, Digital Approval */}
-      <div className="space-y-1.5">
-        <div className="bg-slate-50/80 border border-slate-200 rounded-xl p-2.5 shadow-xs">
-          <div className="flex items-center gap-1.5 text-[9.5px] font-black text-[#0b1e36] uppercase tracking-wider mb-1.5 border-b border-slate-200 pb-1">
+      <div className="space-y-1">
+        <div className="bg-slate-50/80 border border-slate-200 rounded-xl p-2 shadow-xs">
+          <div className="flex items-center gap-1.5 text-[9px] font-black text-[#0b1e36] uppercase tracking-wider mb-1 border-b border-slate-200 pb-0.5">
             <span>🏦</span>
             <span>BANK TRANSFER DETAILS</span>
           </div>
-          <div className="grid grid-cols-[85px_auto] gap-y-1 text-[9.5px]">
+          <div className="grid grid-cols-[80px_auto] gap-y-0.5 text-[9px]">
             <span className="text-slate-500 font-semibold">Bank Name:</span>
             <span className="font-bold text-slate-900">YES BANK</span>
             <span className="text-slate-500 font-semibold">Account Name:</span>
             <span className="font-bold text-slate-900">BLACK STONE INTERIOR</span>
             <span className="text-slate-500 font-semibold">Account No:</span>
-            <span className="font-mono font-black text-[#0b1e36] text-[10.5px]">072261900003797</span>
+            <span className="font-mono font-black text-[#0b1e36] text-[10px]">072261900003797</span>
             <span className="text-slate-500 font-semibold">IFSC Code:</span>
-            <span className="font-mono font-bold text-[#0d5c63] text-[10px]">YESB0000722</span>
+            <span className="font-mono font-bold text-[#0d5c63] text-[9.5px]">YESB0000722</span>
           </div>
         </div>
 
-        <div className="bg-slate-50/80 border border-slate-200 rounded-xl p-2.5 shadow-xs text-[9px]">
-          <div className="text-[9.5px] font-black text-[#0b1e36] uppercase tracking-wider mb-1 border-b border-slate-200 pb-1">TERMS & CONDITIONS</div>
-          <ol className="list-decimal pl-3.5 space-y-1 text-slate-600 leading-relaxed font-medium text-[9px]">
+        <div className="bg-slate-50/80 border border-slate-200 rounded-xl p-2 shadow-xs text-[8.5px]">
+          <div className="text-[9px] font-black text-[#0b1e36] uppercase tracking-wider mb-0.5 border-b border-slate-200 pb-0.5">TERMS & CONDITIONS</div>
+          <ol className="list-decimal pl-3 space-y-0.5 text-slate-600 leading-normal font-medium text-[8.5px]">
             <li>Quotation estimate is valid for 30 days from date of issue.</li>
             <li>Delivery Timeline: {safe.deliveryTimeline || "3 to 4 Weeks from final drawing sign-off."}</li>
             <li>Comprehensive 7 Years warranty on woodwork; OEM warranty on hardware.</li>
@@ -410,85 +418,85 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
           </ol>
         </div>
 
-        <div className="pt-1 flex justify-between items-end pr-1 border-t border-slate-200">
+        <div className="pt-0.5 flex justify-between items-end pr-1 border-t border-slate-200">
           <div>
-            <div className="text-[8.5px] font-bold text-slate-600">Thank you for choosing</div>
-            <div className="text-[10px] font-black text-[#0b1e36] tracking-wide uppercase">Black Stone Interiors!</div>
+            <div className="text-[8px] font-bold text-slate-600">Thank you for choosing</div>
+            <div className="text-[9.5px] font-black text-[#0b1e36] tracking-wide uppercase">Black Stone Interiors!</div>
           </div>
           <div className="text-right max-w-[240px]">
-            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-lg text-[8.5px] font-bold">
+            <div className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-lg text-[8px] font-bold">
               <span>✓</span>
               <span>Digitally Approved by Authorised Signatory</span>
             </div>
-            <p className="text-[7.5px] text-slate-400 mt-0.5 italic leading-tight">Computer-generated document digitally approved; no physical signature required.</p>
+            <p className="text-[7px] text-slate-400 mt-0.5 italic leading-tight">Computer-generated document digitally approved; no physical signature required.</p>
           </div>
         </div>
       </div>
 
       {/* Right Column: Financial Breakdown, Payment Plan */}
-      <div className="space-y-1.5">
+      <div className="space-y-1">
         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
-          <table className="w-full text-[10px]">
+          <table className="w-full text-[9.5px]">
             <tbody className="divide-y divide-slate-100">
               <tr className="bg-slate-50/80">
-                <td className="py-1 px-2.5 font-bold text-slate-700">Sub Total</td>
-                <td className="py-1 px-2.5 text-right font-black text-slate-900 text-[10.5px]">INR {fmt(subTotal)}</td>
+                <td className="py-0.5 px-2 font-bold text-slate-700">Sub Total</td>
+                <td className="py-0.5 px-2 text-right font-black text-slate-900 text-[10px]">INR {fmt(subTotal)}</td>
               </tr>
               <tr>
-                <td className="py-1 px-2.5 text-slate-600 font-medium">Installation Material</td>
-                <td className="py-1 px-2.5 text-right font-semibold text-slate-800">{installation ? `INR ${fmt(installation)}` : "Included"}</td>
+                <td className="py-0.5 px-2 text-slate-600 font-medium">Installation Material</td>
+                <td className="py-0.5 px-2 text-right font-semibold text-slate-800">{installation ? `INR ${fmt(installation)}` : "Included"}</td>
               </tr>
               <tr>
-                <td className="py-1 px-2.5 text-slate-600 font-medium">Delivery and Transport</td>
-                <td className="py-1 px-2.5 text-right font-semibold text-slate-800">{(delivery + transport) > 0 ? `INR ${fmt(delivery + transport)}` : "Included"}</td>
+                <td className="py-0.5 px-2 text-slate-600 font-medium">Delivery and Transport</td>
+                <td className="py-0.5 px-2 text-right font-semibold text-slate-800">{(delivery + transport) > 0 ? `INR ${fmt(delivery + transport)}` : "Included"}</td>
               </tr>
               {discount > 0 && (
                 <tr className="text-rose-600">
-                  <td className="py-1 px-2.5 font-semibold">Additional Discount</td>
-                  <td className="py-1 px-2.5 text-right font-bold">- INR {fmt(discount)}</td>
+                  <td className="py-0.5 px-2 font-semibold">Additional Discount</td>
+                  <td className="py-0.5 px-2 text-right font-bold">- INR {fmt(discount)}</td>
                 </tr>
               )}
               <tr className="bg-slate-50 font-bold border-t border-slate-200">
-                <td className="py-1 px-2.5 text-[#0d5c63] text-[10.5px]">Taxable Total</td>
-                <td className="py-1 px-2.5 text-right text-[#0d5c63] text-[11px] font-black">INR {fmt(taxableTotal)}</td>
+                <td className="py-0.5 px-2 text-[#0d5c63] text-[10px]">Taxable Total</td>
+                <td className="py-0.5 px-2 text-right text-[#0d5c63] text-[10.5px] font-black">INR {fmt(taxableTotal)}</td>
               </tr>
               {isGST && !isInterState && (
                 <>
                   <tr>
-                    <td className="py-1 px-2.5 text-slate-600 font-medium">CGST @ {cgstRate}%</td>
-                    <td className="py-1 px-2.5 text-right font-semibold text-slate-800">INR {fmt(cgst)}</td>
+                    <td className="py-0.5 px-2 text-slate-600 font-medium">CGST @ {cgstRate}%</td>
+                    <td className="py-0.5 px-2 text-right font-semibold text-slate-800">INR {fmt(cgst)}</td>
                   </tr>
                   <tr>
-                    <td className="py-1 px-2.5 text-slate-600 font-medium">SGST @ {sgstRate}%</td>
-                    <td className="py-1 px-2.5 text-right font-semibold text-slate-800">INR {fmt(sgst)}</td>
+                    <td className="py-0.5 px-2 text-slate-600 font-medium">SGST @ {sgstRate}%</td>
+                    <td className="py-0.5 px-2 text-right font-semibold text-slate-800">INR {fmt(sgst)}</td>
                   </tr>
                 </>
               )}
               {isGST && isInterState && (
                 <tr>
-                  <td className="py-1 px-2.5 text-slate-600 font-medium">IGST @ {igstRate}%</td>
-                  <td className="py-1 px-2.5 text-right font-semibold text-slate-800">INR {fmt(igst)}</td>
+                  <td className="py-0.5 px-2 text-slate-600 font-medium">IGST @ {igstRate}%</td>
+                  <td className="py-0.5 px-2 text-right font-semibold text-slate-800">INR {fmt(igst)}</td>
                 </tr>
               )}
             </tbody>
           </table>
 
-          <div className="bg-[#0b1e36] text-white px-3 py-1.5 flex justify-between items-center">
+          <div className="bg-[#0b1e36] text-white px-2.5 py-1.5 flex justify-between items-center">
             <div>
-              <div className="text-[8.5px] uppercase tracking-wider text-slate-300 font-bold">{isGST ? "ESTIMATED TOTAL (INCL. GST)" : "ESTIMATED TOTAL (GST - EXTRA)"}</div>
-              <div className="text-[7.5px] text-teal-300 font-medium">{isGST ? `Inclusive of ${cgstRate + sgstRate}% GST` : "GST - Extra as Applicable"}</div>
+              <div className="text-[8px] uppercase tracking-wider text-slate-300 font-bold">{isGST ? "ESTIMATED TOTAL (INCL. GST)" : "ESTIMATED TOTAL (GST - EXTRA)"}</div>
+              <div className="text-[7px] text-teal-300 font-medium">{isGST ? `Inclusive of ${cgstRate + sgstRate}% GST` : "GST - Extra as Applicable"}</div>
             </div>
-            <div className="text-right font-black text-sm md:text-base text-white">INR {fmt(grandTotal)}</div>
+            <div className="text-right font-black text-sm text-white">INR {fmt(grandTotal)}</div>
           </div>
         </div>
 
-        <div className="bg-slate-50/80 border border-slate-200 rounded-xl p-2.5 shadow-xs text-[9px]">
-          <div className="text-[9.5px] font-black text-[#0b1e36] uppercase tracking-wider mb-1 border-b border-slate-200 pb-1">STANDARD PAYMENT PLAN</div>
-          <div className="space-y-1 font-semibold">
-            <div className="flex justify-between text-slate-700"><span>1. 10% on Booking</span><span className="font-bold text-slate-900 text-[9.5px]">INR {fmt(grandTotal * 0.1)}</span></div>
-            <div className="flex justify-between text-slate-700"><span>2. 40% on Production Start</span><span className="font-bold text-slate-900 text-[9.5px]">INR {fmt(grandTotal * 0.4)}</span></div>
-            <div className="flex justify-between text-slate-700"><span>3. 40% Before Dispatch</span><span className="font-bold text-slate-900 text-[9.5px]">INR {fmt(grandTotal * 0.4)}</span></div>
-            <div className="flex justify-between text-slate-700"><span>4. 10% on Handover</span><span className="font-bold text-slate-900 text-[9.5px]">INR {fmt(grandTotal * 0.1)}</span></div>
+        <div className="bg-slate-50/80 border border-slate-200 rounded-xl p-2 shadow-xs text-[8.5px]">
+          <div className="text-[9px] font-black text-[#0b1e36] uppercase tracking-wider mb-0.5 border-b border-slate-200 pb-0.5">STANDARD PAYMENT PLAN</div>
+          <div className="space-y-0.5 font-semibold">
+            <div className="flex justify-between text-slate-700"><span>1. 10% on Booking</span><span className="font-bold text-slate-900 text-[9px]">INR {fmt(grandTotal * 0.1)}</span></div>
+            <div className="flex justify-between text-slate-700"><span>2. 40% on Production Start</span><span className="font-bold text-slate-900 text-[9px]">INR {fmt(grandTotal * 0.4)}</span></div>
+            <div className="flex justify-between text-slate-700"><span>3. 40% Before Dispatch</span><span className="font-bold text-slate-900 text-[9px]">INR {fmt(grandTotal * 0.4)}</span></div>
+            <div className="flex justify-between text-slate-700"><span>4. 10% on Handover</span><span className="font-bold text-slate-900 text-[9px]">INR {fmt(grandTotal * 0.1)}</span></div>
           </div>
         </div>
       </div>
@@ -497,13 +505,13 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
 
   // Bottom brand banner
   const renderFooter = (page) => (
-    <div className="mt-auto pt-1">
+    <div className="mt-auto pt-1 shrink-0">
       {!page.isLast && (
-        <div className="text-right text-[8.5px] text-slate-400 font-bold uppercase tracking-wider mb-1">
+        <div className="text-right text-[8px] text-slate-500 font-bold uppercase tracking-wider mb-1">
           Quotation Items & Financial Summary Continue on Page {page.pageNum + 1} →
         </div>
       )}
-      <div className="bg-gradient-to-r from-[#0b1e36] via-[#0d5c63] to-[#0b1e36] text-white rounded-xl px-4 py-1.5 flex flex-wrap justify-between items-center text-[9px] font-medium shadow-sm">
+      <div className="bg-gradient-to-r from-[#0b1e36] via-[#0d5c63] to-[#0b1e36] text-white rounded-xl px-3.5 py-1.5 flex flex-wrap justify-between items-center text-[8.5px] font-medium shadow-sm">
         <div className="flex items-center gap-1.5"><span>📍</span><span>Plot No 72 Sector 6 IMT Manesar, Haryana 122050</span></div>
         <div className="flex items-center gap-1.5"><span>📞</span><span>+91 9555174096</span></div>
         <div className="flex items-center gap-1.5"><span>✉️</span><span>Nakul.blackstoneinterior@gmail.com</span></div>
@@ -589,7 +597,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
           {renderDecorativeCurves()}
 
           {/* Top content area: Header, Client Info, Items, and/or Summary */}
-          <div>
+          <div className="flex-1 flex flex-col justify-start overflow-hidden">
             {renderHeader(page.pageNum, page.totalPages)}
             {page.isFirst && renderClientDetails()}
 
