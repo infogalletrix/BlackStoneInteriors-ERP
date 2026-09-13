@@ -511,8 +511,8 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       totalItemsHeight += getItemHeight(it);
     });
 
-    // 1. Single-Page Check (Safe capacity: ~110mm)
-    if (totalItemsHeight <= 110) {
+    // 1. Single-Page Check (Safe capacity: ~130mm for items + summary cards)
+    if (totalItemsHeight <= 130) {
       return [{
         pageNum: 1,
         totalPages: 1,
@@ -524,11 +524,9 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
     }
 
     // 2. Multi-Page Splitting:
-    // Page 1 capacity: up to 170mm (leaving at least ~25mm for last page if doc fits in 2 pages)
-    // Middle page capacity: 195mm
-    // Last page capacity WITH summary: 135mm
-    const cap1 = 170;
-    const leaveForLast = 25;
+    // Page 1 capacity without summary: 190mm (packs maximum items, eliminates blank space)
+    // Middle page capacity without summary: 195mm
+    // Last page capacity WITH summary: 145mm
     const pages = [];
     let currentIndex = 0;
     let pageNum = 1;
@@ -549,8 +547,8 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         remHeight += getItemHeight(it);
       });
 
-      // If NOT page 1 and remaining items fit comfortably on last page with summary (<= 135mm):
-      if (!isFirstPage && remHeight <= 135) {
+      // If NOT page 1 and remaining items fit comfortably on last page with summary (<= 145mm):
+      if (!isFirstPage && remHeight <= 145) {
         pages.push({
           items: remainingItems,
           isFirst: false,
@@ -560,20 +558,8 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         break;
       }
 
-      // Page capacity determination:
-      // Middle pages: 195mm
-      // Page 1:
-      // If remaining items <= cap1 + leaveForLast, we know this 2-page doc must leave at least
-      // leaveForLast (25mm) for the last page so summary cards have items.
-      // Otherwise, fill Page 1 up to full 170mm capacity!
-      let pageCapacity = 195;
-      if (isFirstPage) {
-        if (remHeight <= cap1 + leaveForLast) {
-          pageCapacity = Math.max(80, remHeight - leaveForLast);
-        } else {
-          pageCapacity = cap1;
-        }
-      }
+      // Page capacity: Fill Page 1 up to full 190mm capacity without throttling
+      const pageCapacity = isFirstPage ? 190 : 195;
 
       let currentHeight = 0;
       let pageItems = [];
@@ -610,9 +596,21 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       pageNum++;
     }
 
-    // Safety check: ensure last page has items <= 135mm
+    // If all items fit on Page 1, but totalItemsHeight > 130mm (so summary cannot fit on Page 1),
+    // Page 1 is items-only, and Page 2 is created for the commercial summary cards.
+    if (pages.length === 1 && totalItemsHeight > 130) {
+      pages[0].isLast = false;
+      pages.push({
+        items: [],
+        isFirst: false,
+        isLast: true,
+        usedHeight: 0
+      });
+    }
+
+    // Safety check: ensure last page with items AND summary <= 145mm
     const lastIdx = pages.length - 1;
-    if (pages.length > 1 && pages[lastIdx].usedHeight > 135) {
+    if (pages.length > 1 && pages[lastIdx].usedHeight > 145) {
       const lastPage = pages[lastIdx];
       const overflowItems = [];
       let oHeight = 0;
@@ -630,7 +628,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         oHeight += cost;
         oSec = sec;
         lastPage.usedHeight -= cost;
-        if (lastPage.usedHeight <= 135) break;
+        if (lastPage.usedHeight <= 145) break;
       }
 
       if (overflowItems.length > 0) {
@@ -643,8 +641,8 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       }
     }
 
-    // Explicit guarantee: Filter out any empty pages
-    const validPages = pages.filter((p) => p.items && p.items.length > 0);
+    // Valid pages must either have items OR be the last page (summary cards)
+    const validPages = pages.filter((p) => (p.items && p.items.length > 0) || p.isLast);
     const totalPages = validPages.length > 0 ? validPages.length : 1;
 
     // Precompute continuedSections for each page
@@ -748,9 +746,23 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
             {page.isFirst && renderClientProjectDetails()}
 
             {/* Items Table for this page */}
-            <div className={page.isFirst ? "" : "mt-2"}>
-              {renderItemsTable(page.items, page.continuedSections)}
-            </div>
+            {page.items && page.items.length > 0 ? (
+              <div className={page.isFirst ? "" : "mt-2"}>
+                {renderItemsTable(page.items, page.continuedSections)}
+              </div>
+            ) : page.isLast && !page.isFirst ? (
+              <div className="mt-3 mb-2 bg-gradient-to-r from-slate-100 to-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl flex justify-between items-center shadow-sm">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#0d5c63]"></span>
+                  <span className="text-[9px] font-black text-[#0b1e36] uppercase tracking-wider">
+                    Commercial Terms & Financial Summary
+                  </span>
+                </div>
+                <span className="text-[8px] font-bold text-[#0d5c63] uppercase">
+                  Official Sign-off
+                </span>
+              </div>
+            ) : null}
 
             {/* If THIS IS the last page, render all summary cards directly below items table */}
             {page.isLast && (
