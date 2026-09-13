@@ -141,30 +141,30 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
 
   // 3. Client & Project Details Box (Page 1)
   const renderClientProjectDetails = () => (
-    <div className="grid grid-cols-2 gap-2.5 my-2.5">
+    <div className="grid grid-cols-2 gap-2 my-1.5">
       {/* Client Info */}
-      <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 shadow-sm">
-        <div className="flex items-center justify-between border-b border-slate-200/80 pb-1 mb-1.5">
-          <span className="text-[8.5px] font-extrabold text-[#0d5c63] uppercase tracking-wider">
+      <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 shadow-xs">
+        <div className="flex items-center justify-between border-b border-slate-200/80 pb-0.5 mb-1">
+          <span className="text-[8px] font-extrabold text-[#0d5c63] uppercase tracking-wider">
             Quotation Issued To
           </span>
-          <span className="text-[7.5px] text-slate-400 font-semibold uppercase">Client Details</span>
+          <span className="text-[7px] text-slate-400 font-semibold uppercase">Client Details</span>
         </div>
-        <div className="space-y-0.5">
-          <div className="text-xs font-black text-slate-900 leading-tight">
+        <div className="space-y-0.5 text-[8px]">
+          <div className="text-[10px] font-black text-slate-900 leading-tight">
             {safeData.customer || "Valued Client"}
           </div>
           {safeData.organizationName && (
-            <div className="text-[9px] font-bold text-slate-600">
+            <div className="text-[8.5px] font-bold text-slate-600">
               {safeData.organizationName}
             </div>
           )}
           {safeData.address && (
-            <div className="text-[8.5px] text-slate-600 leading-relaxed pt-0.5">
+            <div className="text-[8px] text-slate-600 leading-tight">
               📍 {safeData.address}
             </div>
           )}
-          <div className="flex flex-wrap gap-x-3 gap-y-0.5 pt-0.5 text-[8px] text-slate-600 font-semibold">
+          <div className="flex flex-wrap gap-x-2.5 text-[7.5px] text-slate-600 font-semibold">
             {safeData.mobileNo && <span>📞 +91 {safeData.mobileNo}</span>}
             {safeData.emailId && <span>✉️ {safeData.emailId}</span>}
           </div>
@@ -172,14 +172,14 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       </div>
 
       {/* Project Specs */}
-      <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 shadow-sm">
-        <div className="flex items-center justify-between border-b border-slate-200/80 pb-1 mb-1.5">
-          <span className="text-[8.5px] font-extrabold text-[#0d5c63] uppercase tracking-wider">
+      <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 shadow-xs">
+        <div className="flex items-center justify-between border-b border-slate-200/80 pb-0.5 mb-1">
+          <span className="text-[8px] font-extrabold text-[#0d5c63] uppercase tracking-wider">
             Project & Delivery Details
           </span>
-          <span className="text-[7.5px] text-slate-400 font-semibold uppercase">Terms & Timeline</span>
+          <span className="text-[7px] text-slate-400 font-semibold uppercase">Terms & Timeline</span>
         </div>
-        <div className="grid grid-cols-[95px_auto] gap-y-1 text-[8.5px]">
+        <div className="grid grid-cols-[85px_auto] gap-y-0.5 text-[8px]">
           {safeData.projectTitle && (
             <>
               <span className="text-slate-500 font-bold">Project Name:</span>
@@ -229,23 +229,23 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
     });
 
     return (
-      <div className="space-y-2 mb-2">
+      <div className="space-y-1 mb-1.5">
         {sectionGroups.map((group, sIdx) => {
           const isContinued = continuedSections?.has(group.sectionName);
           const pageSecTotal = group.items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
           const overallSecTotal = sectionTotals[group.sectionName] || pageSecTotal;
 
           return (
-            <div key={sIdx} className="border border-slate-200 rounded-xl shadow-sm bg-white overflow-visible mb-2">
+            <div key={sIdx} className="border border-slate-200 rounded-lg shadow-xs bg-white overflow-visible mb-1.5">
               {/* Section Sub-Header Bar */}
-              <div className="bg-gradient-to-r from-slate-100 to-slate-50 border-b border-slate-200 px-3 py-1 flex justify-between items-center rounded-t-xl">
+              <div className="bg-gradient-to-r from-slate-100 to-slate-50 border-b border-slate-200 px-2.5 py-0.5 flex justify-between items-center rounded-t-lg">
                 <div className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#0d5c63]"></span>
-                  <span className="font-black text-[9.5px] text-[#0b1e36] uppercase tracking-wider">
-                    {group.sectionName} {isContinued && <span className="text-slate-400 font-bold text-[8px] lowercase tracking-normal">(contd.)</span>}
+                  <span className="font-black text-[9px] text-[#0b1e36] uppercase tracking-wider">
+                    {group.sectionName} {isContinued && <span className="text-slate-400 font-bold text-[7.5px] lowercase tracking-normal">(contd.)</span>}
                   </span>
                 </div>
-                <span className="text-[8.5px] font-extrabold text-[#0d5c63]">
+                <span className="text-[8px] font-extrabold text-[#0d5c63]">
                   Section Total: INR {fmt(overallSecTotal)}
                 </span>
               </div>
@@ -253,37 +253,37 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
               {/* Table */}
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase text-[8px]">
-                    <th className="py-1 px-2 text-center w-7">SI</th>
-                    <th className="py-1 px-2 w-28">Product</th>
-                    <th className="py-1 px-2">Specification & Material</th>
-                    <th className="py-1 px-1.5 text-center w-12">Qty</th>
-                    <th className="py-1 px-1.5 text-center w-12">Unit</th>
-                    <th className="py-1 px-2 text-right w-20">Rate</th>
-                    <th className="py-1 px-2 text-right w-24">Amount</th>
+                  <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase text-[7.5px]">
+                    <th className="py-0.5 px-2 text-center w-6">SI</th>
+                    <th className="py-0.5 px-2 w-28">Product</th>
+                    <th className="py-0.5 px-2">Specification & Material</th>
+                    <th className="py-0.5 px-1.5 text-center w-10">Qty</th>
+                    <th className="py-0.5 px-1.5 text-center w-10">Unit</th>
+                    <th className="py-0.5 px-2 text-right w-16">Rate</th>
+                    <th className="py-0.5 px-2 text-right w-20">Amount</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-[8.5px]">
+                <tbody className="divide-y divide-slate-100 text-[8px]">
                   {group.items.map((item, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50/50" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
-                      <td className="py-1 px-2 text-center text-slate-400 font-bold">
+                    <tr key={idx} className="hover:bg-slate-50/50 leading-tight" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                      <td className="py-0.5 px-2 text-center text-slate-400 font-bold">
                         {item._globalIndex !== undefined ? item._globalIndex : idx + 1}
                       </td>
-                      <td className="py-1 px-2 align-top text-slate-900">
+                      <td className="py-0.5 px-2 align-top text-slate-900">
                         <div className="font-bold">{item.product || "—"}</div>
                         {item.category && (
-                          <div className="text-[7.5px] font-semibold text-[#0d5c63] mt-0.5 inline-block bg-teal-50 px-1 py-0.5 rounded border border-teal-100">
+                          <div className="text-[7px] font-semibold text-[#0d5c63] inline-block bg-teal-50 px-1 py-0.2 rounded border border-teal-100">
                             {item.category}
                           </div>
                         )}
                       </td>
-                      <td className="py-1 px-2 align-top text-slate-600 leading-snug">{item.specification || "Standard Material & Hardware"}</td>
-                      <td className="py-1 px-1.5 text-center align-top font-bold text-slate-800">{item.qty || 1}</td>
-                      <td className="py-1 px-1.5 text-center align-top text-slate-500">{item.unit || "Sq.Ft"}</td>
-                      <td className="py-1 px-2 text-right align-top font-medium text-slate-700">
+                      <td className="py-0.5 px-2 align-top text-slate-600 leading-snug">{item.specification || "Standard Material & Hardware"}</td>
+                      <td className="py-0.5 px-1.5 text-center align-top font-bold text-slate-800">{item.qty || 1}</td>
+                      <td className="py-0.5 px-1.5 text-center align-top text-slate-500">{item.unit || "Sq.Ft"}</td>
+                      <td className="py-0.5 px-2 text-right align-top font-medium text-slate-700">
                         {item.rate ? `₹${fmt(item.rate)}` : "—"}
                       </td>
-                      <td className="py-1 px-2 text-right align-top font-black text-slate-900">
+                      <td className="py-0.5 px-2 text-right align-top font-black text-slate-900">
                         {item.amount ? `₹${fmt(item.amount)}` : "Incl."}
                       </td>
                     </tr>
@@ -299,18 +299,18 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
 
   // 5. Bank Transfer Details Card
   const renderBankDetailsCard = () => (
-    <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 shadow-sm">
-      <div className="flex items-center gap-1.5 text-[8.5px] font-black text-[#0b1e36] uppercase tracking-wider mb-1.5 border-b border-slate-200 pb-1">
+    <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 shadow-xs">
+      <div className="flex items-center gap-1 text-[8px] font-black text-[#0b1e36] uppercase tracking-wider mb-1 border-b border-slate-200 pb-0.5">
         <span>🏦</span>
         <span>BANK TRANSFER DETAILS</span>
       </div>
-      <div className="grid grid-cols-[90px_auto] gap-y-0.5 text-[8px]">
+      <div className="grid grid-cols-[80px_auto] gap-y-0.5 text-[7.5px]">
         <span className="text-slate-500 font-semibold">Bank Name:</span>
         <span className="font-bold text-slate-900">YES BANK</span>
         <span className="text-slate-500 font-semibold">Account Name:</span>
         <span className="font-bold text-slate-900">BLACK STONE INTERIOR</span>
         <span className="text-slate-500 font-semibold">Account No:</span>
-        <span className="font-mono font-bold text-[#0b1e36] text-[9px]">072261900003797</span>
+        <span className="font-mono font-bold text-[#0b1e36] text-[8.5px]">072261900003797</span>
         <span className="text-slate-500 font-semibold">IFSC Code:</span>
         <span className="font-mono font-bold text-[#0d5c63]">YESB0000722</span>
       </div>
@@ -319,11 +319,11 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
 
   // 6. Terms & Conditions Card
   const renderTermsConditionsCard = () => (
-    <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 shadow-sm text-[8px]">
-      <div className="text-[8.5px] font-black text-[#0b1e36] uppercase tracking-wider mb-1 border-b border-slate-200 pb-1">
+    <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 shadow-xs text-[7.5px]">
+      <div className="text-[8px] font-black text-[#0b1e36] uppercase tracking-wider mb-0.5 border-b border-slate-200 pb-0.5">
         TERMS & CONDITIONS
       </div>
-      <ol className="list-decimal pl-3 space-y-0.5 text-slate-600 leading-tight font-medium text-[7.8px]">
+      <ol className="list-decimal pl-3 space-y-0.5 text-slate-600 leading-tight font-medium text-[7.2px]">
         <li>Above quotation estimate is valid for 30 days from date of issue.</li>
         <li>Delivery Timeline: {safeData.deliveryTimeline || "3 to 4 Weeks from final drawing sign-off."}</li>
         <li>Comprehensive 7 Years warranty on woodwork; OEM warranty on hardware.</li>
@@ -334,22 +334,22 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
 
   // 7. Thank you & Digitally Approved Notice Card
   const renderDigitalApprovalCard = () => (
-    <div className="pt-2 flex justify-between items-end pr-1 border-t border-slate-200/80 mt-1">
+    <div className="pt-1 flex justify-between items-end pr-1 border-t border-slate-200/80 mt-0.5">
       <div>
-        <div className="text-[8px] font-bold text-slate-600 leading-tight">
+        <div className="text-[7.5px] font-bold text-slate-600 leading-tight">
           Thank you for choosing
         </div>
-        <div className="text-[8.5px] font-black text-[#0b1e36] tracking-wide uppercase">
+        <div className="text-[8px] font-black text-[#0b1e36] tracking-wide uppercase">
           Black Stone Interiors!
         </div>
       </div>
-      <div className="text-right max-w-[270px]">
-        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200/80 rounded-lg text-[8px] font-bold">
+      <div className="text-right max-w-[260px]">
+        <div className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200/80 rounded-md text-[7.5px] font-bold">
           <span>✓</span>
           <span>Digitally Approved by Authorised Signatory</span>
         </div>
-        <p className="text-[7px] text-slate-400 mt-0.5 italic leading-tight">
-          This is a computer-generated document and digitally approved by authorized signatory, hence no physical signature is required.
+        <p className="text-[6.5px] text-slate-400 mt-0.5 italic leading-tight">
+          Computer-generated document digitally approved by authorized signatory; no physical signature required.
         </p>
       </div>
     </div>
@@ -357,52 +357,52 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
 
   // 8. Financial Breakdown Table Card
   const renderFinancialBreakdownCard = () => (
-    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-      <table className="w-full text-[8.5px]">
+    <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-xs">
+      <table className="w-full text-[8px]">
         <tbody className="divide-y divide-slate-100">
           <tr className="bg-slate-50/80">
-            <td className="p-1.5 font-bold text-slate-600">Sub Total</td>
-            <td className="p-1.5 text-right font-black text-slate-900">
+            <td className="py-1 px-1.5 font-bold text-slate-600">Sub Total</td>
+            <td className="py-1 px-1.5 text-right font-black text-slate-900">
               INR {fmt(subTotal)}
             </td>
           </tr>
           <tr>
-            <td className="p-1.5 text-slate-600 font-medium">Installation Material</td>
-            <td className="p-1.5 text-right font-semibold text-slate-800">
+            <td className="py-1 px-1.5 text-slate-600 font-medium">Installation Material</td>
+            <td className="py-1 px-1.5 text-right font-semibold text-slate-800">
               {installation ? `INR ${fmt(installation)}` : "Included"}
             </td>
           </tr>
           <tr>
-            <td className="p-1.5 text-slate-600 font-medium">Delivery and Transport</td>
-            <td className="p-1.5 text-right font-semibold text-slate-800">
+            <td className="py-1 px-1.5 text-slate-600 font-medium">Delivery and Transport</td>
+            <td className="py-1 px-1.5 text-right font-semibold text-slate-800">
               {(delivery + transport) > 0 ? `INR ${fmt(delivery + transport)}` : "Included"}
             </td>
           </tr>
           {discount > 0 && (
             <tr className="text-rose-600">
-              <td className="p-1.5 font-semibold">Additional Discount</td>
-              <td className="p-1.5 text-right font-bold">
+              <td className="py-1 px-1.5 font-semibold">Additional Discount</td>
+              <td className="py-1 px-1.5 text-right font-bold">
                 - INR {fmt(discount)}
               </td>
             </tr>
           )}
           <tr className="bg-slate-50 font-bold border-t border-slate-200">
-            <td className="p-1.5 text-[#0d5c63]">Taxable Total</td>
-            <td className="p-1.5 text-right text-[#0d5c63]">
+            <td className="py-1 px-1.5 text-[#0d5c63]">Taxable Total</td>
+            <td className="py-1 px-1.5 text-right text-[#0d5c63]">
               INR {fmt(taxableTotal)}
             </td>
           </tr>
           {isGST && !isInterState && (
             <>
               <tr>
-                <td className="p-1.5 text-slate-600 font-medium">CGST @ {cgstRate}%</td>
-                <td className="p-1.5 text-right font-semibold text-slate-800">
+                <td className="py-1 px-1.5 text-slate-600 font-medium">CGST @ {cgstRate}%</td>
+                <td className="py-1 px-1.5 text-right font-semibold text-slate-800">
                   INR {fmt(cgst)}
                 </td>
               </tr>
               <tr>
-                <td className="p-1.5 text-slate-600 font-medium">SGST @ {sgstRate}%</td>
-                <td className="p-1.5 text-right font-semibold text-slate-800">
+                <td className="py-1 px-1.5 text-slate-600 font-medium">SGST @ {sgstRate}%</td>
+                <td className="py-1 px-1.5 text-right font-semibold text-slate-800">
                   INR {fmt(sgst)}
                 </td>
               </tr>
@@ -410,8 +410,8 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
           )}
           {isGST && isInterState && (
             <tr>
-              <td className="p-1.5 text-slate-600 font-medium">IGST @ {igstRate}%</td>
-              <td className="p-1.5 text-right font-semibold text-slate-800">
+              <td className="py-1 px-1.5 text-slate-600 font-medium">IGST @ {igstRate}%</td>
+              <td className="py-1 px-1.5 text-right font-semibold text-slate-800">
                 INR {fmt(igst)}
               </td>
             </tr>
@@ -420,17 +420,17 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       </table>
 
       {/* Grand Total Highlight Badge */}
-      <div className="bg-[#0b1e36] text-white p-2.5 flex justify-between items-center">
+      <div className="bg-[#0b1e36] text-white px-2 py-1.5 flex justify-between items-center">
         <div>
-          <div className="text-[7.5px] uppercase tracking-widest text-slate-300 font-bold">
+          <div className="text-[7px] uppercase tracking-widest text-slate-300 font-bold">
             {isGST ? "ESTIMATED TOTAL (INCL. GST)" : "ESTIMATED TOTAL (GST - EXTRA)"}
           </div>
-          <div className="text-[7px] text-teal-300 font-medium">
+          <div className="text-[6.5px] text-teal-300 font-medium">
             {isGST ? `Inclusive of ${cgstRate + sgstRate}% GST` : "GST - Extra as Applicable"}
           </div>
         </div>
         <div className="text-right">
-          <div className="text-sm font-black tracking-tight text-white">
+          <div className="text-xs font-black tracking-tight text-white">
             INR {fmt(grandTotal)}
           </div>
         </div>
@@ -440,11 +440,11 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
 
   // 9. Standard Payment Plan Card
   const renderPaymentPlanCard = () => (
-    <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 shadow-sm text-[8px]">
-      <div className="text-[8.5px] font-black text-[#0b1e36] uppercase tracking-wider mb-1.5 border-b border-slate-200 pb-1">
+    <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 shadow-xs text-[7.5px]">
+      <div className="text-[8px] font-black text-[#0b1e36] uppercase tracking-wider mb-1 border-b border-slate-200 pb-0.5">
         STANDARD PAYMENT PLAN
       </div>
-      <div className="space-y-1 font-semibold">
+      <div className="space-y-0.5 font-semibold">
         <div className="flex justify-between text-slate-700">
           <span>1. 10% on Booking</span>
           <span className="font-bold text-slate-900">INR {fmt(grandTotal * 0.1)}</span>
@@ -493,11 +493,11 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
 
     const getItemHeight = (item) => {
       const spec = (item.specification || "") + (item.product || "");
-      if (spec.length > 120) return 13;
-      if (spec.length > 50) return 10;
-      return 7.5;
+      if (spec.length > 120) return 9;
+      if (spec.length > 50) return 7;
+      return 5.5;
     };
-    const SEC_HDR_HEIGHT = 13; // section sub-header (6.5mm) + table thead (6.5mm)
+    const SEC_HDR_HEIGHT = 8; // section sub-header (4mm) + table thead (4mm)
 
     // Compute total height of all items
     let totalItemsHeight = 0;
@@ -511,8 +511,8 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       totalItemsHeight += getItemHeight(it);
     });
 
-    // 1. Single-Page Check (Safe capacity: ~130mm for items + summary cards)
-    if (totalItemsHeight <= 130) {
+    // 1. Single-Page Check (Safe capacity: ~170mm for items + summary cards)
+    if (totalItemsHeight <= 170) {
       return [{
         pageNum: 1,
         totalPages: 1,
@@ -524,9 +524,9 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
     }
 
     // 2. Multi-Page Splitting:
-    // Page 1 capacity without summary: 190mm (packs maximum items, eliminates blank space)
-    // Middle page capacity without summary: 195mm
-    // Last page capacity WITH summary: 145mm
+    // Page 1 capacity without summary: 200mm (packs maximum items, eliminates blank space)
+    // Middle page capacity without summary: 205mm
+    // Last page capacity WITH summary: 160mm
     const pages = [];
     let currentIndex = 0;
     let pageNum = 1;
@@ -547,8 +547,8 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         remHeight += getItemHeight(it);
       });
 
-      // If NOT page 1 and remaining items fit comfortably on last page with summary (<= 145mm):
-      if (!isFirstPage && remHeight <= 145) {
+      // If NOT page 1 and remaining items fit comfortably on last page with summary (<= 160mm):
+      if (!isFirstPage && remHeight <= 160) {
         pages.push({
           items: remainingItems,
           isFirst: false,
@@ -558,8 +558,8 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         break;
       }
 
-      // Page capacity: Fill Page 1 up to full 190mm capacity without throttling
-      const pageCapacity = isFirstPage ? 190 : 195;
+      // Page capacity: Fill Page 1 up to full 200mm capacity without throttling
+      const pageCapacity = isFirstPage ? 200 : 205;
 
       let currentHeight = 0;
       let pageItems = [];
@@ -596,21 +596,9 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       pageNum++;
     }
 
-    // If all items fit on Page 1, but totalItemsHeight > 130mm (so summary cannot fit on Page 1),
-    // Page 1 is items-only, and Page 2 is created for the commercial summary cards.
-    if (pages.length === 1 && totalItemsHeight > 130) {
-      pages[0].isLast = false;
-      pages.push({
-        items: [],
-        isFirst: false,
-        isLast: true,
-        usedHeight: 0
-      });
-    }
-
-    // Safety check: ensure last page with items AND summary <= 145mm
+    // Safety check: ensure last page with items AND summary <= 160mm
     const lastIdx = pages.length - 1;
-    if (pages.length > 1 && pages[lastIdx].usedHeight > 145) {
+    if (pages.length > 1 && pages[lastIdx].usedHeight > 160) {
       const lastPage = pages[lastIdx];
       const overflowItems = [];
       let oHeight = 0;
@@ -622,13 +610,13 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         let cost = getItemHeight(item);
         if (sec !== oSec) cost += SEC_HDR_HEIGHT;
 
-        if (oHeight + cost > 130 && overflowItems.length > 0) break;
+        if (oHeight + cost > 150 && overflowItems.length > 0) break;
 
         overflowItems.unshift(lastPage.items.pop());
         oHeight += cost;
         oSec = sec;
         lastPage.usedHeight -= cost;
-        if (lastPage.usedHeight <= 145) break;
+        if (lastPage.usedHeight <= 160) break;
       }
 
       if (overflowItems.length > 0) {
@@ -678,7 +666,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         @media print {
           @page {
             size: A4 portrait;
-            margin: 6mm 8mm 6mm 8mm;
+            margin: 5mm 6mm;
           }
           html, body {
             margin: 0 !important;
@@ -693,9 +681,9 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
           }
           .print-page {
             width: 100% !important;
-            max-width: 194mm !important;
-            height: 275mm !important;
-            max-height: 275mm !important;
+            max-width: 198mm !important;
+            height: 282mm !important;
+            max-height: 282mm !important;
             page-break-after: always !important;
             break-after: page !important;
             page-break-inside: avoid !important;
@@ -719,10 +707,10 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         }
         @media screen {
           .print-page {
-            width: 210mm;
-            min-height: 297mm;
+            width: 198mm;
+            min-height: 282mm;
             box-sizing: border-box;
-            padding: 8mm 12mm 6mm 12mm;
+            padding: 5mm 6mm;
             margin: 0 auto 24px auto;
             box-shadow: 0 4px 25px rgba(0,0,0,0.12);
             position: relative;
@@ -747,18 +735,18 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
 
             {/* Items Table for this page */}
             {page.items && page.items.length > 0 ? (
-              <div className={page.isFirst ? "" : "mt-2"}>
+              <div className={page.isFirst ? "" : "mt-1.5"}>
                 {renderItemsTable(page.items, page.continuedSections)}
               </div>
             ) : page.isLast && !page.isFirst ? (
-              <div className="mt-3 mb-2 bg-gradient-to-r from-slate-100 to-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl flex justify-between items-center shadow-sm">
+              <div className="mt-2 mb-1.5 bg-gradient-to-r from-slate-100 to-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg flex justify-between items-center shadow-xs">
                 <div className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#0d5c63]"></span>
-                  <span className="text-[9px] font-black text-[#0b1e36] uppercase tracking-wider">
+                  <span className="text-[8.5px] font-black text-[#0b1e36] uppercase tracking-wider">
                     Commercial Terms & Financial Summary
                   </span>
                 </div>
-                <span className="text-[8px] font-bold text-[#0d5c63] uppercase">
+                <span className="text-[7.5px] font-bold text-[#0d5c63] uppercase">
                   Official Sign-off
                 </span>
               </div>
@@ -766,16 +754,16 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
 
             {/* If THIS IS the last page, render all summary cards directly below items table */}
             {page.isLast && (
-              <div className="grid grid-cols-2 gap-2.5 items-start mt-2.5 mb-2">
+              <div className="grid grid-cols-2 gap-2 items-start mt-1.5 mb-1">
                 {/* Left Column: Bank Details, Terms, Digital Approval */}
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   {renderBankDetailsCard()}
                   {renderTermsConditionsCard()}
                   {renderDigitalApprovalCard()}
                 </div>
 
                 {/* Right Column: Financial Breakdown, Payment Plan */}
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   {renderFinancialBreakdownCard()}
                   {renderPaymentPlanCard()}
                 </div>
