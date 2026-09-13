@@ -235,7 +235,8 @@ const PrintableInvoice = forwardRef(({ data }, ref) => {
                 <thead>
                   <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase text-[8px]">
                     <th className="py-1 px-2 text-center w-7">SI</th>
-                    <th className="py-1 px-2 w-28">Product</th>
+                    <th className="py-1 px-2 w-24">Product</th>
+                    <th className="py-1 px-2 w-24">Category</th>
                     <th className="py-1 px-2">Specification & Material</th>
                     <th className="py-1 px-1.5 text-center w-12">Qty</th>
                     <th className="py-1 px-1.5 text-center w-12">Unit</th>
@@ -248,6 +249,7 @@ const PrintableInvoice = forwardRef(({ data }, ref) => {
                     <tr key={idx} className="hover:bg-slate-50/50">
                       <td className="py-1 px-2 text-center text-slate-400 font-bold">{startIdxOffset + idx + 1}</td>
                       <td className="py-1 px-2 align-top font-bold text-slate-900">{item.product || "—"}</td>
+                      <td className="py-1 px-2 align-top font-medium text-slate-700">{item.category || "—"}</td>
                       <td className="py-1 px-2 align-top text-slate-600 leading-snug">{item.specification || "Standard Material & Hardware"}</td>
                       <td className="py-1 px-1.5 text-center align-top font-bold text-slate-800">{item.qty || 1}</td>
                       <td className="py-1 px-1.5 text-center align-top text-slate-500">{item.unit || "Sq.Ft"}</td>
