@@ -291,6 +291,7 @@ export default function CatalogPage() {
   // Selected hierarchy state
   const [selectedProductId, setSelectedProductId] = useState(() => INITIAL_DEFAULT_TREE[0]?.id || "");
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [selectedSpecId, setSelectedSpecId] = useState("");
 
   // Modal states for adding new catalog items
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -362,25 +363,39 @@ export default function CatalogPage() {
 
   // Derive active selected items
   const activeProduct = useMemo(() => {
-    return catalogTree.find(p => p.id === selectedProductId) || catalogTree[0] || null;
+    if (!selectedProductId) return null;
+    return catalogTree.find(p => p.id === selectedProductId) || null;
   }, [catalogTree, selectedProductId]);
 
-  // Auto-select first category if current selection becomes invalid
+  const activeCategory = useMemo(() => {
+    if (!activeProduct || !activeProduct.categories || !selectedCategoryId) return null;
+    return activeProduct.categories.find(c => c.id === selectedCategoryId) || null;
+  }, [activeProduct, selectedCategoryId]);
+
+  const activeSpec = useMemo(() => {
+    if (!activeCategory || !activeCategory.specifications || !selectedSpecId) return null;
+    return activeCategory.specifications.find(s => s.id === selectedSpecId) || null;
+  }, [activeCategory, selectedSpecId]);
+
+  // Clean up selected category if it no longer exists under active product
   useEffect(() => {
-    if (activeProduct && activeProduct.categories && activeProduct.categories.length > 0) {
-      const exists = activeProduct.categories.some(c => c.id === selectedCategoryId);
+    if (selectedCategoryId) {
+      const exists = activeProduct?.categories?.some(c => c.id === selectedCategoryId);
       if (!exists) {
-        setSelectedCategoryId(activeProduct.categories[0].id);
+        setSelectedCategoryId("");
       }
-    } else {
-      setSelectedCategoryId("");
     }
   }, [activeProduct, selectedCategoryId]);
 
-  const activeCategory = useMemo(() => {
-    if (!activeProduct || !activeProduct.categories) return null;
-    return activeProduct.categories.find(c => c.id === selectedCategoryId) || null;
-  }, [activeProduct, selectedCategoryId]);
+  // Clean up selected specification if it no longer exists under active category
+  useEffect(() => {
+    if (selectedSpecId) {
+      const exists = activeCategory?.specifications?.some(s => s.id === selectedSpecId);
+      if (!exists) {
+        setSelectedSpecId("");
+      }
+    }
+  }, [activeCategory, selectedSpecId]);
 
   // ── SAVE CATALOG ITEM (FROM UNIFIED MODAL) ────────────────────
   const handleSaveCatalogItem = (itemData) => {
@@ -490,7 +505,8 @@ export default function CatalogPage() {
         if (selectedProductId === prodId) {
           const next = updated[0];
           setSelectedProductId(next ? next.id : "");
-          setSelectedCategoryId(next && next.categories[0] ? next.categories[0].id : "");
+          setSelectedCategoryId("");
+          setSelectedSpecId("");
         }
         persistToServer(updated);
       }
@@ -501,11 +517,11 @@ export default function CatalogPage() {
   const handleDeleteCategory = (catId, catName) => {
     showDialog({
       title: "Delete Category",
-      message: `Are you sure you want to remove "${catName}" from ${activeProduct.name}?`,
+      message: `Are you sure you want to remove "${catName}" from ${activeProduct?.name || "this product"}?`,
       type: "confirm",
       onConfirm: () => {
         const updated = catalogTree.map(p => {
-          if (p.id === activeProduct.id) {
+          if (activeProduct && p.id === activeProduct.id) {
             return {
               ...p,
               categories: (p.categories || []).filter(c => c.id !== catId)
@@ -514,6 +530,10 @@ export default function CatalogPage() {
           return p;
         });
         setCatalogTree(updated);
+        if (selectedCategoryId === catId) {
+          setSelectedCategoryId("");
+          setSelectedSpecId("");
+        }
         persistToServer(updated);
       }
     });
@@ -528,11 +548,11 @@ export default function CatalogPage() {
       type: "confirm",
       onConfirm: () => {
         const updated = catalogTree.map(p => {
-          if (p.id === activeProduct.id) {
+          if (activeProduct && p.id === activeProduct.id) {
             return {
               ...p,
               categories: (p.categories || []).map(c => {
-                if (c.id === activeCategory.id) {
+                if (activeCategory && c.id === activeCategory.id) {
                   return {
                     ...c,
                     specifications: (c.specifications || []).filter(s => s.id !== specId)
@@ -545,6 +565,9 @@ export default function CatalogPage() {
           return p;
         });
         setCatalogTree(updated);
+        if (selectedSpecId === specId) {
+          setSelectedSpecId("");
+        }
         persistToServer(updated);
       }
     });
@@ -661,13 +684,29 @@ export default function CatalogPage() {
             <Package size={15} /> All Products ({catalogTree.length})
           </span>
           <ChevronRight size={14} className="text-slate-400 flex-shrink-0" />
-          <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 flex-shrink-0">
-            {activeProduct ? activeProduct.name : "No Product"}
+          <span className={`px-2.5 py-1 rounded-lg border flex-shrink-0 transition-all ${
+            activeProduct
+              ? "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20"
+              : "bg-slate-100 dark:bg-slate-800 text-slate-400 border-transparent"
+          }`}>
+            {activeProduct ? activeProduct.name : "Select Product"}
           </span>
           <ChevronRight size={14} className="text-slate-400 flex-shrink-0" />
-          <span className="px-2.5 py-1 rounded-lg bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/20 flex-shrink-0">
+          <span className={`px-2.5 py-1 rounded-lg border flex-shrink-0 transition-all ${
+            activeCategory
+              ? "bg-teal-500/10 text-teal-700 dark:text-teal-300 border-teal-500/20"
+              : "bg-slate-100 dark:bg-slate-800 text-slate-400 border-transparent"
+          }`}>
             {activeCategory ? activeCategory.name : "Select Category"}
           </span>
+          {activeSpec && (
+            <>
+              <ChevronRight size={14} className="text-slate-400 flex-shrink-0" />
+              <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 flex-shrink-0 truncate max-w-[200px]">
+                {activeSpec.name}
+              </span>
+            </>
+          )}
         </div>
 
         {/* Global Search & Add Item Button */}
@@ -742,11 +781,14 @@ export default function CatalogPage() {
                 <div
                   key={prod.id}
                   onClick={() => {
-                    setSelectedProductId(prod.id);
-                    if (prod.categories && prod.categories.length > 0) {
-                      setSelectedCategoryId(prod.categories[0].id);
-                    } else {
+                    if (selectedProductId === prod.id) {
+                      setSelectedProductId("");
                       setSelectedCategoryId("");
+                      setSelectedSpecId("");
+                    } else {
+                      setSelectedProductId(prod.id);
+                      setSelectedCategoryId("");
+                      setSelectedSpecId("");
                     }
                   }}
                   className={`group p-3 flex items-center justify-between cursor-pointer transition-all ${
@@ -817,9 +859,13 @@ export default function CatalogPage() {
                 <h2 className="text-sm font-black uppercase tracking-wider text-themed flex items-center gap-1.5 truncate">
                   <FolderTree size={15} className="text-teal-600" /> Categories
                 </h2>
-                {activeProduct && (
+                {activeProduct ? (
                   <p className="text-[10px] text-muted truncate">
                     under <strong className="text-themed">{activeProduct.name}</strong>
+                  </p>
+                ) : (
+                  <p className="text-[10px] text-muted truncate">
+                    No product selected
                   </p>
                 )}
               </div>
@@ -848,7 +894,15 @@ export default function CatalogPage() {
               return (
                 <div
                   key={cat.id}
-                  onClick={() => setSelectedCategoryId(cat.id)}
+                  onClick={() => {
+                    if (selectedCategoryId === cat.id) {
+                      setSelectedCategoryId("");
+                      setSelectedSpecId("");
+                    } else {
+                      setSelectedCategoryId(cat.id);
+                      setSelectedSpecId("");
+                    }
+                  }}
                   className={`group p-3 flex items-center justify-between cursor-pointer transition-all ${
                     isSelected
                       ? "bg-teal-500/10 border-l-4 border-l-teal-600 shadow-inner font-bold"
@@ -899,6 +953,12 @@ export default function CatalogPage() {
                 <p className="text-[11px] mt-1 text-slate-400">Click "+ Add" above to add a category.</p>
               </div>
             )}
+
+            {!activeProduct && (
+              <div className="p-8 text-center text-muted text-xs font-semibold">
+                ← Select a Product to view its categories
+              </div>
+            )}
           </div>
         </div>
 
@@ -914,9 +974,13 @@ export default function CatalogPage() {
                 <h2 className="text-sm font-black uppercase tracking-wider text-themed flex items-center gap-1.5 truncate">
                   <FileText size={15} className="text-emerald-600" /> Specifications
                 </h2>
-                {activeCategory && (
+                {activeCategory ? (
                   <p className="text-[10px] text-muted truncate">
                     under <strong className="text-themed">{activeCategory.name}</strong>
+                  </p>
+                ) : (
+                  <p className="text-[10px] text-muted truncate">
+                    No category selected
                   </p>
                 )}
               </div>
@@ -938,67 +1002,86 @@ export default function CatalogPage() {
 
           {/* Specifications List */}
           <div className="divide-y divide-[var(--border-color)] max-h-[640px] overflow-y-auto">
-            {activeCategory && (activeCategory.specifications || []).map((spec) => (
-              <div
-                key={spec.id}
-                className="p-3 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition group"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-themed leading-snug">
-                      {spec.name}
-                    </p>
-                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-black bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
-                        ₹{Number(spec.unitPrice || 0).toLocaleString("en-IN")} / {spec.unit || "Sq.Ft"}
-                      </span>
+            {activeCategory && (activeCategory.specifications || []).map((spec) => {
+              const isSelected = spec.id === selectedSpecId;
+              return (
+                <div
+                  key={spec.id}
+                  onClick={() => setSelectedSpecId(prev => prev === spec.id ? "" : spec.id)}
+                  className={`group p-3 cursor-pointer transition-all ${
+                    isSelected
+                      ? "bg-emerald-500/10 border-l-4 border-l-emerald-600 shadow-inner font-bold"
+                      : "hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        {isSelected && (
+                          <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
+                        )}
+                        <p className={`text-xs leading-snug ${isSelected ? "font-black text-emerald-800 dark:text-emerald-300" : "font-semibold text-themed"}`}>
+                          {spec.name}
+                        </p>
+                      </div>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-black bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                          ₹{Number(spec.unitPrice || 0).toLocaleString("en-IN")} / {spec.unit || "Sq.Ft"}
+                        </span>
 
-                      {spec.discountType === "price" && spec.discountPrice > 0 ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20">
-                          Disc: ₹{Number(spec.discountPrice).toLocaleString("en-IN")}
-                        </span>
-                      ) : spec.discountPercent > 0 ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
-                          {spec.discountPercent}% OFF
-                        </span>
-                      ) : spec.discountPrice > 0 ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20">
-                          Disc: ₹{Number(spec.discountPrice).toLocaleString("en-IN")}
-                        </span>
-                      ) : null}
+                        {spec.discountType === "price" && spec.discountPrice > 0 ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20">
+                            Disc: ₹{Number(spec.discountPrice).toLocaleString("en-IN")}
+                          </span>
+                        ) : spec.discountPercent > 0 ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+                            {spec.discountPercent}% OFF
+                          </span>
+                        ) : spec.discountPrice > 0 ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20">
+                            Disc: ₹{Number(spec.discountPrice).toLocaleString("en-IN")}
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingItem({
+                            type: "specification",
+                            id: spec.id,
+                            name: spec.name,
+                            unitPrice: spec.unitPrice || 0,
+                            unit: spec.unit || "Sq.Ft",
+                            discountType: spec.discountType || (spec.discountPrice && !spec.discountPercent ? "price" : "percent"),
+                            discountPercent: spec.discountPercent !== undefined && spec.discountPercent !== null ? String(spec.discountPercent) : "",
+                            discountPrice: spec.discountPrice !== undefined && spec.discountPrice !== null ? String(spec.discountPrice) : ""
+                          });
+                        }}
+                        className="p-1.5 text-slate-400 hover:text-emerald-600 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+                        title="Edit Specification & Rate"
+                      >
+                        <Edit3 size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteSpecification(spec.id, spec.name);
+                        }}
+                        className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-500/10 transition"
+                        title="Delete Specification"
+                      >
+                        <Trash2 size={13} />
+                      </button>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setEditingItem({
-                        type: "specification",
-                        id: spec.id,
-                        name: spec.name,
-                        unitPrice: spec.unitPrice || 0,
-                        unit: spec.unit || "Sq.Ft",
-                        discountType: spec.discountType || (spec.discountPrice && !spec.discountPercent ? "price" : "percent"),
-                        discountPercent: spec.discountPercent !== undefined && spec.discountPercent !== null ? String(spec.discountPercent) : "",
-                        discountPrice: spec.discountPrice !== undefined && spec.discountPrice !== null ? String(spec.discountPrice) : ""
-                      })}
-                      className="p-1.5 text-slate-400 hover:text-emerald-600 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition"
-                      title="Edit Specification & Rate"
-                    >
-                      <Edit3 size={13} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteSpecification(spec.id, spec.name)}
-                      className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-500/10 transition"
-                      title="Delete Specification"
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
             {activeCategory && (!activeCategory.specifications || activeCategory.specifications.length === 0) && (
               <div className="p-8 text-center text-muted text-xs font-semibold">
