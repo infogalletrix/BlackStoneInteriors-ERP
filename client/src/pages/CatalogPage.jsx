@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { useDialog } from "../contexts/DialogContext";
 import { useThemeClasses } from "../hooks/useThemeClasses";
+import CatalogItemModal from "../components/CatalogItemModal";
 
 export const STANDARD_UNITS = [
   "Sq.Ft",
@@ -291,56 +292,15 @@ export default function CatalogPage() {
   const [selectedProductId, setSelectedProductId] = useState(() => INITIAL_DEFAULT_TREE[0]?.id || "");
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
 
-  // Input states for adding new items
-  const [newProductName, setNewProductName] = useState("");
-  const [newCategoryName, setNewCategoryName] = useState("");
+  // Modal states for adding new catalog items
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [addModalInitialProduct, setAddModalInitialProduct] = useState("");
+  const [addModalInitialCategory, setAddModalInitialCategory] = useState("");
 
-  const [newSpecName, setNewSpecName] = useState("");
-  const [newSpecPrice, setNewSpecPrice] = useState("");
-  const [newSpecUnit, setNewSpecUnit] = useState("Sq.Ft");
-  const [newSpecDiscType, setNewSpecDiscType] = useState("percent"); // 'percent' | 'price'
-  const [newSpecDiscPercent, setNewSpecDiscPercent] = useState("");
-  const [newSpecDiscPrice, setNewSpecDiscPrice] = useState("");
-
-  const handleSpecPriceChange = (val) => {
-    const clean = val.replace(/[^0-9.]/g, "").replace(/(\..*?)\..*/g, "$1");
-    setNewSpecPrice(clean);
-    const numPrice = parseFloat(clean) || 0;
-    if (newSpecDiscType === "price" && newSpecDiscPrice && numPrice > 0) {
-      const dp = parseFloat(newSpecDiscPrice) || 0;
-      const p = (((numPrice - dp) / numPrice) * 100).toFixed(1);
-      setNewSpecDiscPercent(p > 0 ? p : "0");
-    } else if (newSpecDiscPercent && numPrice > 0) {
-      const p = parseFloat(newSpecDiscPercent) || 0;
-      const dp = numPrice - (numPrice * p) / 100;
-      setNewSpecDiscPrice(dp > 0 ? dp.toFixed(2) : "0");
-    }
-  };
-
-  const handleSpecDiscPercentChange = (val) => {
-    const clean = val.replace(/[^0-9.]/g, "").replace(/(\..*?)\..*/g, "$1");
-    setNewSpecDiscPercent(clean);
-    const numPrice = parseFloat(newSpecPrice) || 0;
-    if (clean && parseFloat(clean) > 0 && numPrice > 0) {
-      const p = parseFloat(clean);
-      const dp = numPrice - (numPrice * p) / 100;
-      setNewSpecDiscPrice(dp > 0 ? dp.toFixed(2) : "0");
-    } else {
-      setNewSpecDiscPrice("");
-    }
-  };
-
-  const handleSpecDiscPriceChange = (val) => {
-    const clean = val.replace(/[^0-9.]/g, "").replace(/(\..*?)\..*/g, "$1");
-    setNewSpecDiscPrice(clean);
-    const numPrice = parseFloat(newSpecPrice) || 0;
-    if (clean && parseFloat(clean) > 0 && numPrice > 0) {
-      const dp = parseFloat(clean);
-      const p = (((numPrice - dp) / numPrice) * 100).toFixed(1);
-      setNewSpecDiscPercent(p > 0 ? p : "0");
-    } else {
-      setNewSpecDiscPercent("");
-    }
+  const handleOpenAddModal = ({ product = "", category = "" } = {}) => {
+    setAddModalInitialProduct(product || activeProduct?.name || "");
+    setAddModalInitialCategory(category || (product ? activeCategory?.name || "" : ""));
+    setIsAddModalOpen(true);
   };
 
   // Editing modal/inline states
@@ -422,35 +382,94 @@ export default function CatalogPage() {
     return activeProduct.categories.find(c => c.id === selectedCategoryId) || null;
   }, [activeProduct, selectedCategoryId]);
 
-  // ── PRODUCT ACTIONS ──────────────────────────────────────────
-  const handleAddProduct = (e) => {
-    e.preventDefault();
-    const name = newProductName.trim();
-    if (!name) return;
-    if (catalogTree.some(p => p.name.toLowerCase() === name.toLowerCase())) {
-      showDialog({ title: "Product Exists", message: `A product named "${name}" already exists.`, type: "alert" });
-      return;
+  // ── SAVE CATALOG ITEM (FROM UNIFIED MODAL) ────────────────────
+  const handleSaveCatalogItem = (itemData) => {
+    const {
+      product,
+      category,
+      specification,
+      unitPrice,
+      unit,
+      discountType,
+      discountPercent,
+      discountPrice
+    } = itemData;
+
+    let updated = [...catalogTree];
+
+    // 1. Find or create Product
+    let prodIdx = updated.findIndex(
+      (p) => p.name.trim().toLowerCase() === product.trim().toLowerCase()
+    );
+    let prodId;
+    if (prodIdx === -1) {
+      const newProd = {
+        id: "prod-" + Date.now(),
+        name: product.trim(),
+        categories: []
+      };
+      updated.push(newProd);
+      prodIdx = updated.length - 1;
+    }
+    prodId = updated[prodIdx].id;
+
+    // 2. Find or create Category under this Product
+    const finalCatName = category ? category.trim() : "Carcass / Core Structure";
+    let prodCategories = [...(updated[prodIdx].categories || [])];
+    let catIdx = prodCategories.findIndex(
+      (c) => c.name.trim().toLowerCase() === finalCatName.toLowerCase()
+    );
+    let catId;
+    if (catIdx === -1) {
+      const newCat = {
+        id: "cat-" + Date.now() + Math.floor(Math.random() * 1000),
+        name: finalCatName,
+        specifications: []
+      };
+      prodCategories.push(newCat);
+      catIdx = prodCategories.length - 1;
+    }
+    catId = prodCategories[catIdx].id;
+
+    // 3. If specification & unit price provided, add or update specification
+    if (specification && specification.trim() && unitPrice !== null && !isNaN(unitPrice) && Number(unitPrice) > 0) {
+      const newSpec = {
+        id: "spec-" + Date.now() + Math.floor(Math.random() * 1000),
+        name: specification.trim(),
+        unitPrice: Number(unitPrice),
+        unit: unit || "Sq.Ft",
+        discountType: discountType || "percent",
+        discountPercent: discountPercent !== null && discountPercent !== undefined ? Number(discountPercent) : null,
+        discountPrice: discountPrice !== null && discountPrice !== undefined ? Number(discountPrice) : null
+      };
+
+      const existingSpecs = [...(prodCategories[catIdx].specifications || [])];
+      const specIdx = existingSpecs.findIndex(
+        (s) => s.name.trim().toLowerCase() === specification.trim().toLowerCase()
+      );
+      if (specIdx >= 0) {
+        existingSpecs[specIdx] = { ...existingSpecs[specIdx], ...newSpec, id: existingSpecs[specIdx].id };
+      } else {
+        existingSpecs.push(newSpec);
+      }
+      prodCategories[catIdx] = {
+        ...prodCategories[catIdx],
+        specifications: existingSpecs
+      };
     }
 
-    const newProd = {
-      id: "prod-" + Date.now(),
-      name,
-      categories: [
-        {
-          id: "cat-" + Date.now(),
-          name: "Carcass / Core Structure",
-          specifications: []
-        }
-      ]
+    updated[prodIdx] = {
+      ...updated[prodIdx],
+      categories: prodCategories
     };
-    const updated = [...catalogTree, newProd];
+
     setCatalogTree(updated);
-    setSelectedProductId(newProd.id);
-    setSelectedCategoryId(newProd.categories[0].id);
-    setNewProductName("");
+    setSelectedProductId(prodId);
+    setSelectedCategoryId(catId);
     persistToServer(updated);
   };
 
+  // ── PRODUCT ACTIONS ──────────────────────────────────────────
   const handleDeleteProduct = (prodId, prodName) => {
     showDialog({
       title: "Delete Product",
@@ -470,41 +489,6 @@ export default function CatalogPage() {
   };
 
   // ── CATEGORY ACTIONS ─────────────────────────────────────────
-  const handleAddCategory = (catNameToAdd = null) => {
-    if (!activeProduct) {
-      showDialog({ title: "No Product Selected", message: "Please select or create a product first.", type: "alert" });
-      return;
-    }
-    const name = (catNameToAdd || newCategoryName).trim();
-    if (!name) return;
-
-    if (activeProduct.categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
-      showDialog({ title: "Category Exists", message: `Category "${name}" already exists under ${activeProduct.name}.`, type: "alert" });
-      return;
-    }
-
-    const newCat = {
-      id: "cat-" + Date.now(),
-      name,
-      specifications: []
-    };
-
-    const updated = catalogTree.map(p => {
-      if (p.id === activeProduct.id) {
-        return {
-          ...p,
-          categories: [...(p.categories || []), newCat]
-        };
-      }
-      return p;
-    });
-
-    setCatalogTree(updated);
-    setSelectedCategoryId(newCat.id);
-    setNewCategoryName("");
-    persistToServer(updated);
-  };
-
   const handleDeleteCategory = (catId, catName) => {
     showDialog({
       title: "Delete Category",
@@ -527,66 +511,6 @@ export default function CatalogPage() {
   };
 
   // ── SPECIFICATION ACTIONS ────────────────────────────────────
-  const handleAddSpecification = (e) => {
-    e.preventDefault();
-    if (!activeProduct || !activeCategory) {
-      showDialog({ title: "Selection Missing", message: "Please select both a Product and a Category first.", type: "alert" });
-      return;
-    }
-
-    const name = newSpecName.trim();
-    if (!name) {
-      showDialog({ title: "Specification Name Missing", message: "Please enter a specification description.", type: "alert" });
-      return;
-    }
-
-    const price = parseFloat(newSpecPrice);
-    if (!newSpecPrice || isNaN(price) || price <= 0) {
-      showDialog({ title: "Unit Price Required", message: "Unit price is mandatory and must be greater than 0.", type: "alert" });
-      return;
-    }
-
-    const unit = newSpecUnit.trim() || "Sq.Ft";
-    const discPercent = newSpecDiscPercent && !isNaN(parseFloat(newSpecDiscPercent)) ? parseFloat(newSpecDiscPercent) : null;
-    const discPrice = newSpecDiscPrice && !isNaN(parseFloat(newSpecDiscPrice)) ? parseFloat(newSpecDiscPrice) : null;
-
-    const newSpec = {
-      id: "spec-" + Date.now(),
-      name,
-      unitPrice: price,
-      unit,
-      discountType: newSpecDiscType,
-      discountPercent: discPercent,
-      discountPrice: discPrice
-    };
-
-    const updated = catalogTree.map(p => {
-      if (p.id === activeProduct.id) {
-        return {
-          ...p,
-          categories: (p.categories || []).map(c => {
-            if (c.id === activeCategory.id) {
-              return {
-                ...c,
-                specifications: [...(c.specifications || []), newSpec]
-              };
-            }
-            return c;
-          })
-        };
-      }
-      return p;
-    });
-
-    setCatalogTree(updated);
-    setNewSpecName("");
-    setNewSpecPrice("");
-    setNewSpecDiscPercent("");
-    setNewSpecDiscPrice("");
-    setNewSpecDiscType("percent");
-    setNewSpecUnit("Sq.Ft");
-    persistToServer(updated);
-  };
 
   const handleDeleteSpecification = (specId, specName) => {
     showDialog({
@@ -737,24 +661,34 @@ export default function CatalogPage() {
           </span>
         </div>
 
-        {/* Global Search */}
-        <div className="relative w-full md:w-72">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search products, specs..."
-            className="w-full pl-9 pr-4 py-2 text-xs font-medium rounded-xl border border-[var(--border-color)] bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-            >
-              <X size={13} />
-            </button>
-          )}
+        {/* Global Search & Add Item Button */}
+        <div className="flex items-center gap-2.5 w-full md:w-auto shrink-0">
+          <div className="relative flex-1 md:w-64">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search products, specs..."
+              className="w-full pl-9 pr-4 py-2 text-xs font-medium rounded-xl border border-[var(--border-color)] bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => handleOpenAddModal({ product: activeProduct?.name || "", category: activeCategory?.name || "" })}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-[#C9A227] hover:bg-[#B8911F] text-white rounded-xl font-bold text-xs shadow-sm hover:shadow transition-all shrink-0 cursor-pointer"
+          >
+            <Plus size={14} strokeWidth={2.5} /> Add Item
+          </button>
         </div>
       </div>
 
@@ -773,33 +707,23 @@ export default function CatalogPage() {
                 <Package size={15} className="text-[#C9A227]" /> Products
               </h2>
             </div>
-            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-              {filteredProducts.length}
-            </span>
-          </div>
-
-          {/* Quick Add Product Form */}
-          <form onSubmit={handleAddProduct} className="p-3 border-b border-[var(--border-color)] bg-slate-50/50 dark:bg-slate-900/50">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={newProductName}
-                onChange={(e) => setNewProductName(e.target.value)}
-                placeholder="New product (e.g. Bar Counter)..."
-                className="flex-1 px-3 py-2 text-xs font-medium rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
-              />
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                {filteredProducts.length}
+              </span>
               <button
-                type="submit"
-                disabled={!newProductName.trim()}
-                className="px-3.5 py-2 bg-[#C9A227] hover:bg-[#B8911F] disabled:opacity-40 text-white rounded-xl font-bold text-xs shadow-sm flex items-center gap-1 transition"
+                type="button"
+                onClick={() => handleOpenAddModal({ product: "", category: "" })}
+                className="flex items-center gap-1 px-2.5 py-1 bg-[#C9A227] hover:bg-[#B8911F] text-white rounded-lg text-xs font-bold shadow-xs hover:shadow transition cursor-pointer"
+                title="Add New Product"
               >
-                <Plus size={14} /> Add
+                <Plus size={12} strokeWidth={2.5} /> Add
               </button>
             </div>
-          </form>
+          </div>
 
           {/* Product Items List */}
-          <div className="divide-y divide-[var(--border-color)] max-h-[580px] overflow-y-auto">
+          <div className="divide-y divide-[var(--border-color)] max-h-[640px] overflow-y-auto">
             {filteredProducts.map((prod) => {
               const isSelected = prod.id === selectedProductId;
               const totalCats = (prod.categories || []).length;
@@ -891,39 +815,23 @@ export default function CatalogPage() {
                 )}
               </div>
             </div>
-            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-              {activeProduct ? (activeProduct.categories || []).length : 0}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                {activeProduct ? (activeProduct.categories || []).length : 0}
+              </span>
+              <button
+                type="button"
+                onClick={() => handleOpenAddModal({ product: activeProduct?.name || "", category: "" })}
+                className="flex items-center gap-1 px-2.5 py-1 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-bold shadow-xs hover:shadow transition cursor-pointer"
+                title="Add Category to this Product"
+              >
+                <Plus size={12} strokeWidth={2.5} /> Add
+              </button>
+            </div>
           </div>
 
-          {/* Quick Add Category Form */}
-          {activeProduct ? (
-            <form onSubmit={(e) => { e.preventDefault(); handleAddCategory(); }} className="p-3 border-b border-[var(--border-color)] bg-slate-50/50 dark:bg-slate-900/50">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                  placeholder="New category (e.g. Carcass, Shutters)..."
-                  className="flex-1 px-3 py-2 text-xs font-medium rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/30"
-                />
-                <button
-                  type="submit"
-                  disabled={!newCategoryName.trim()}
-                  className="px-3.5 py-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white rounded-xl font-bold text-xs shadow-sm flex items-center gap-1 transition"
-                >
-                  <Plus size={14} /> Add
-                </button>
-              </div>
-            </form>
-          ) : (
-            <div className="p-4 text-center text-xs text-muted font-medium bg-slate-50/50 dark:bg-slate-900/50">
-              Select a Product first
-            </div>
-          )}
-
           {/* Categories List */}
-          <div className="divide-y divide-[var(--border-color)] max-h-[580px] overflow-y-auto">
+          <div className="divide-y divide-[var(--border-color)] max-h-[640px] overflow-y-auto">
             {activeProduct && (activeProduct.categories || []).map((cat) => {
               const isSelected = cat.id === selectedCategoryId;
               const specCount = (cat.specifications || []).length;
@@ -1004,117 +912,23 @@ export default function CatalogPage() {
                 )}
               </div>
             </div>
-            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-              {activeCategory ? (activeCategory.specifications || []).length : 0}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                {activeCategory ? (activeCategory.specifications || []).length : 0}
+              </span>
+              <button
+                type="button"
+                onClick={() => handleOpenAddModal({ product: activeProduct?.name || "", category: activeCategory?.name || "" })}
+                className="flex items-center gap-1 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs hover:shadow transition cursor-pointer"
+                title="Add Specification"
+              >
+                <Plus size={12} strokeWidth={2.5} /> Add
+              </button>
+            </div>
           </div>
 
-          {/* Add Specification Form */}
-          {activeCategory ? (
-            <form onSubmit={handleAddSpecification} className="p-3 border-b border-[var(--border-color)] bg-slate-50/50 dark:bg-slate-900/50 space-y-2.5">
-              <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">
-                  Specification Description <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={newSpecName}
-                  onChange={(e) => setNewSpecName(e.target.value)}
-                  placeholder="Material description (e.g. 18mm BWP Ply)..."
-                  className="w-full px-3 py-1.5 text-xs font-medium rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-12 gap-2">
-                <div className="col-span-7">
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">
-                    Unit Price <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      required
-                      value={newSpecPrice}
-                      onChange={(e) => handleSpecPriceChange(e.target.value)}
-                      placeholder="0.00 *"
-                      className="w-full pl-6 pr-2 py-1.5 text-xs font-black rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 text-emerald-700 dark:text-emerald-400"
-                    />
-                  </div>
-                </div>
-
-                <div className="col-span-5">
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">
-                    Unit
-                  </label>
-                  <select
-                    value={newSpecUnit}
-                    onChange={(e) => setNewSpecUnit(e.target.value)}
-                    className="w-full px-2 py-1.5 text-xs font-bold rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-900 focus:outline-none text-slate-700 dark:text-slate-200"
-                  >
-                    {STANDARD_UNITS.map((u, idx) => (
-                      <option key={idx} value={u}>{u}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase">
-                    Disc ({newSpecDiscType === "price" ? "₹" : "%"})
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setNewSpecDiscType(prev => prev === "percent" ? "price" : "percent")}
-                    className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-[var(--accent)] border border-amber-500/30 hover:bg-amber-500/20 transition"
-                    title="Switch between Percentage and Direct Price discount"
-                  >
-                    {newSpecDiscType === "price" ? "Switch to %" : "Switch to ₹"}
-                  </button>
-                </div>
-                <div className="relative">
-                  {newSpecDiscType === "price" && (
-                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
-                  )}
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={newSpecDiscType === "price" ? newSpecDiscPrice : newSpecDiscPercent}
-                    onChange={(e) => {
-                      if (newSpecDiscType === "price") {
-                        handleSpecDiscPriceChange(e.target.value);
-                      } else {
-                        handleSpecDiscPercentChange(e.target.value);
-                      }
-                    }}
-                    placeholder={newSpecDiscType === "price" ? "0.00 ₹" : "0 %"}
-                    className={`w-full ${newSpecDiscType === "price" ? "pl-6 pr-2.5" : "pl-2.5 pr-6"} py-1.5 text-xs font-semibold rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30 text-amber-600 dark:text-amber-400`}
-                  />
-                  {newSpecDiscType === "percent" && (
-                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] font-bold">%</span>
-                  )}
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={!newSpecName.trim() || !newSpecPrice || parseFloat(newSpecPrice) <= 0}
-                className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 transition mt-0.5"
-              >
-                <Plus size={13} /> Add Specification & Unit Rate
-              </button>
-            </form>
-          ) : (
-            <div className="p-4 text-center text-xs text-muted font-medium bg-slate-50/50 dark:bg-slate-900/50">
-              ← Select a Category to view or add specifications
-            </div>
-          )}
-
           {/* Specifications List */}
-          <div className="divide-y divide-[var(--border-color)] max-h-[580px] overflow-y-auto">
+          <div className="divide-y divide-[var(--border-color)] max-h-[640px] overflow-y-auto">
             {activeCategory && (activeCategory.specifications || []).map((spec) => (
               <div
                 key={spec.id}
@@ -1179,14 +993,40 @@ export default function CatalogPage() {
 
             {activeCategory && (!activeCategory.specifications || activeCategory.specifications.length === 0) && (
               <div className="p-8 text-center text-muted text-xs font-semibold">
-                No specifications configured for {activeCategory.name}.
-                <p className="text-[11px] mt-1 text-slate-400">Use the form above to add specifications and default unit rates.</p>
+                No specifications configured for {activeCategory.name} yet.
+                <div className="mt-2">
+                  <button
+                    type="button"
+                    onClick={() => handleOpenAddModal({ product: activeProduct?.name, category: activeCategory.name })}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs transition cursor-pointer"
+                  >
+                    <Plus size={12} /> Add Specification
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {!activeCategory && (
+              <div className="p-8 text-center text-muted text-xs font-semibold">
+                ← Select a Category to view or manage its specifications
               </div>
             )}
           </div>
         </div>
 
       </div>
+
+      {/* ── ADD ITEM MODAL ── */}
+      <CatalogItemModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSave={handleSaveCatalogItem}
+        catalogTree={catalogTree}
+        presetCategories={PRESET_CATEGORIES}
+        standardUnits={STANDARD_UNITS}
+        initialProduct={addModalInitialProduct}
+        initialCategory={addModalInitialCategory}
+      />
 
       {/* ── EDIT ITEM MODAL ── */}
       {editingItem && (
