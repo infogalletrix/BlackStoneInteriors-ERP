@@ -541,8 +541,8 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       totalItemsHeight += cost;
     });
 
-    // 1. Single-Page Check (Safe capacity: ~185mm for items + summary cards)
-    if (totalItemsHeight <= 185) {
+    // 1. Single-Page Check (Safe capacity: ~145mm for items + summary cards)
+    if (totalItemsHeight <= 145) {
       return [{
         pageNum: 1,
         totalPages: 1,
@@ -554,9 +554,9 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
     }
 
     // 2. Multi-Page Splitting:
-    // Page 1 capacity without summary: 228mm (packs maximum items, eliminates blank space)
-    // Middle page capacity without summary: 242mm
-    // Last page capacity WITH summary: 200mm
+    // Page 1 capacity without summary: 210mm (packs maximum items, eliminates blank space)
+    // Middle page capacity without summary: 235mm
+    // Last page capacity WITH summary: 170mm
     const pages = [];
     let currentIndex = 0;
     let pageNum = 1;
@@ -578,8 +578,8 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         remHeight += cost;
       });
 
-      // If NOT page 1 and remaining items fit comfortably on last page with summary (<= 200mm):
-      if (!isFirstPage && remHeight <= 200) {
+      // If NOT page 1 and remaining items fit comfortably on last page with summary (<= 170mm):
+      if (!isFirstPage && remHeight <= 170) {
         pages.push({
           items: remainingItems,
           isFirst: false,
@@ -589,8 +589,8 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         break;
       }
 
-      // Page capacity: Fill Page 1 up to full 228mm capacity without throttling
-      const pageCapacity = isFirstPage ? 228 : 242;
+      // Page capacity: Fill Page 1 up to full 210mm capacity without throttling
+      const pageCapacity = isFirstPage ? 210 : 235;
 
       let currentHeight = 0;
       let pageItems = [];
@@ -627,9 +627,9 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       pageNum++;
     }
 
-    // Safety check: ensure last page with items AND summary <= 200mm
+    // Safety check: ensure last page with items AND summary <= 170mm
     const lastIdx = pages.length - 1;
-    if (pages.length > 1 && pages[lastIdx].usedHeight > 200) {
+    if (pages.length > 1 && pages[lastIdx].usedHeight > 170) {
       const lastPage = pages[lastIdx];
       const overflowItems = [];
       let oHeight = 0;
@@ -643,13 +643,13 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
           cost += SEC_HDR_HEIGHT;
         }
 
-        if (oHeight + cost > 190 && overflowItems.length > 0) break;
+        if (oHeight + cost > 160 && overflowItems.length > 0) break;
 
         overflowItems.unshift(lastPage.items.pop());
         oHeight += cost;
         oSec = sec;
         lastPage.usedHeight -= cost;
-        if (lastPage.usedHeight <= 200) break;
+        if (lastPage.usedHeight <= 170) break;
       }
 
       if (overflowItems.length > 0) {
@@ -700,24 +700,27 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         @media print {
           @page {
             size: A4 portrait;
-            margin: 5mm 6mm;
+            margin: 0;
           }
           html, body {
             margin: 0 !important;
             padding: 0 !important;
+            width: 210mm !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
           .print-document {
             margin: 0 !important;
             padding: 0 !important;
-            width: 100% !important;
+            width: 210mm !important;
           }
           .print-page {
-            width: 100% !important;
-            max-width: 198mm !important;
-            height: 282mm !important;
-            max-height: 282mm !important;
+            width: 210mm !important;
+            min-width: 210mm !important;
+            max-width: 210mm !important;
+            height: 297mm !important;
+            min-height: 297mm !important;
+            max-height: 297mm !important;
             page-break-after: always !important;
             break-after: page !important;
             page-break-inside: avoid !important;
@@ -725,11 +728,12 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
             display: flex !important;
             flex-direction: column !important;
             justify-content: flex-start !important;
-            padding: 0 !important;
-            margin: 0 auto !important;
+            padding: 8mm 10mm 6mm 10mm !important;
+            margin: 0 !important;
             box-sizing: border-box !important;
             position: relative !important;
             overflow: hidden !important;
+            background: white !important;
           }
           .print-page:last-child {
             page-break-after: avoid !important;
@@ -741,10 +745,12 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         }
         @media screen {
           .print-page {
-            width: 198mm;
-            min-height: 282mm;
+            width: 210mm;
+            min-height: 297mm;
+            height: 297mm;
+            max-height: 297mm;
             box-sizing: border-box;
-            padding: 5mm 6mm;
+            padding: 8mm 10mm 6mm 10mm;
             margin: 0 auto 24px auto;
             box-shadow: 0 4px 25px rgba(0,0,0,0.12);
             position: relative;
@@ -752,6 +758,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
             flex-direction: column;
             justify-content: flex-start;
             background: white;
+            overflow: hidden;
           }
         }
       `}</style>
