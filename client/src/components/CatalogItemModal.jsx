@@ -145,20 +145,25 @@ export default function CatalogItemModal({
 
     const trimmedCategory = category.trim();
     const trimmedSpec = specification.trim();
+    const trimmedPrice = String(unitPrice || "").trim();
+    const parsedPrice = parseFloat(trimmedPrice);
 
-    // If specification is provided, category is required to know where to place it
-    if (trimmedSpec && !trimmedCategory) {
-      setValidationError("Please select or enter a Category for this specification.");
+    // Rule 1: If unit price is typed, specification is required
+    if (trimmedPrice !== "" && !trimmedSpec) {
+      setValidationError("Specification description is required when Unit Price is entered.");
       return null;
     }
 
-    // If specification is provided, unitPrice is mandatory
-    if (trimmedSpec) {
-      const parsedPrice = parseFloat(unitPrice);
-      if (!unitPrice || isNaN(parsedPrice) || parsedPrice <= 0) {
-        setValidationError("Unit Price is required and must be greater than 0 when adding a specification.");
-        return null;
-      }
+    // Rule 2: If specification is typed, unit price is required
+    if (trimmedSpec && (trimmedPrice === "" || isNaN(parsedPrice) || parsedPrice <= 0)) {
+      setValidationError("Unit Price is required and must be greater than 0 when adding a specification.");
+      return null;
+    }
+
+    // Rule 3: If specification or unit price is provided, category is required to know where to place it
+    if ((trimmedSpec || trimmedPrice !== "") && !trimmedCategory) {
+      setValidationError("Please select or enter a Category for this specification.");
+      return null;
     }
 
     setValidationError("");
@@ -166,7 +171,7 @@ export default function CatalogItemModal({
       product: trimmedProduct,
       category: trimmedCategory,
       specification: trimmedSpec,
-      unitPrice: trimmedSpec ? parseFloat(unitPrice) : null,
+      unitPrice: trimmedSpec && trimmedPrice !== "" ? parsedPrice : null,
       unit: unit || "Sq.Ft",
       discountType,
       discountPercent: discountPercent ? parseFloat(discountPercent) : null,
@@ -259,9 +264,13 @@ export default function CatalogItemModal({
           <div>
             <div className="flex justify-between items-center mb-1">
               <label className="text-[11px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
-                <FolderTree size={13} className="text-teal-600" /> Category
+                <FolderTree size={13} className="text-teal-600" /> Category {(specification.trim() || unitPrice.trim()) && <span className="text-red-500 font-black">*</span>}
               </label>
-              {product && availableCategories.length > 0 ? (
+              {specification.trim() || unitPrice.trim() ? (
+                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">
+                  Required for specification
+                </span>
+              ) : product && availableCategories.length > 0 ? (
                 <span className="text-[10px] text-teal-600 dark:text-teal-400 font-bold">
                   {availableCategories.length} categories available
                 </span>
@@ -286,10 +295,14 @@ export default function CatalogItemModal({
           <div>
             <div className="flex justify-between items-center mb-1">
               <label className="text-[11px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
-                <FileText size={13} className="text-emerald-600" /> Specification & Material Description
+                <FileText size={13} className="text-emerald-600" /> Specification & Material Description {unitPrice.trim() && <span className="text-red-500 font-black">*</span>}
               </label>
-              <span className="text-[10px] text-slate-400 font-semibold">
-                Optional if only adding product/category
+              <span className="text-[10px] font-semibold">
+                {unitPrice.trim() ? (
+                  <span className="text-amber-600 dark:text-amber-400 font-bold">Required because Unit Price is entered</span>
+                ) : (
+                  <span className="text-slate-400">Optional if only adding product/category</span>
+                )}
               </span>
             </div>
             <input
@@ -310,18 +323,22 @@ export default function CatalogItemModal({
               <span className="text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
                 <Sparkles size={13} className="text-amber-500" /> Rates & Discount Settings
               </span>
-              {specification.trim() && (
+              {specification.trim() ? (
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
-                  Rate Required for Spec
+                  Unit Price Required
                 </span>
-              )}
+              ) : unitPrice.trim() ? (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+                  Specification Required
+                </span>
+              ) : null}
             </div>
 
             <div className="grid grid-cols-12 gap-3">
               {/* Unit Price */}
               <div className="col-span-5">
                 <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">
-                  Unit Price (₹) {specification.trim() && <span className="text-red-500">*</span>}
+                  Unit Price (₹) {specification.trim() && <span className="text-red-500 font-black">*</span>}
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
@@ -329,7 +346,10 @@ export default function CatalogItemModal({
                     type="text"
                     inputMode="decimal"
                     value={unitPrice}
-                    onChange={(e) => handlePriceChange(e.target.value)}
+                    onChange={(e) => {
+                      handlePriceChange(e.target.value);
+                      setValidationError("");
+                    }}
                     placeholder="0.00"
                     className="w-full pl-7 pr-3 py-2 text-xs font-black rounded-xl border border-[var(--border-color)] bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 text-emerald-700 dark:text-emerald-400"
                   />
