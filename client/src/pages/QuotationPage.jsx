@@ -486,23 +486,75 @@ export default function QuotationPage() {
   };
 
   const handleSaveItem = (savedItem) => {
-    const isNew = !items.some(i => i.id === savedItem.id);
+    let targetItemId = savedItem.id;
+    let isMerge = false;
+
     setItems(prev => {
-      const exists = prev.some(i => i.id === savedItem.id);
-      if (exists) {
+      const isEditingExisting = prev.some(i => i.id === savedItem.id);
+      if (isEditingExisting) {
         return prev.map(i => i.id === savedItem.id ? savedItem : i);
-      } else {
-        return [...prev, savedItem];
       }
+
+      // Check if an identical item already exists in the same section with the same product & specification
+      const existingMatchIndex = prev.findIndex(i =>
+        i.id !== savedItem.id &&
+        (i.section || "").trim().toLowerCase() === (savedItem.section || "").trim().toLowerCase() &&
+        (i.product || "").trim().toLowerCase() === (savedItem.product || "").trim().toLowerCase() &&
+        (i.category || "").trim().toLowerCase() === (savedItem.category || "").trim().toLowerCase() &&
+        (i.specification || "").trim().toLowerCase() === (savedItem.specification || "").trim().toLowerCase() &&
+        (i.unit || "").trim().toLowerCase() === (savedItem.unit || "").trim().toLowerCase()
+      );
+
+      if (existingMatchIndex !== -1) {
+        isMerge = true;
+        const existing = prev[existingMatchIndex];
+        targetItemId = existing.id;
+        const oldQty = parseFloat(existing.qty) || 0;
+        const addedQty = parseFloat(savedItem.qty) || 0;
+        const combinedQty = oldQty + addedQty;
+        const formattedQty = Number.isInteger(combinedQty) ? String(combinedQty) : String(parseFloat(combinedQty.toFixed(2)));
+
+        const numericRate = parseFloat(existing.rate || savedItem.rate) || 0;
+        const discountType = existing.discountType || savedItem.discountType || "percent";
+        const discountPercent = existing.discountPercent !== undefined && existing.discountPercent !== "" ? existing.discountPercent : savedItem.discountPercent;
+        const discountPrice = existing.discountPrice !== undefined && existing.discountPrice !== "" ? existing.discountPrice : savedItem.discountPrice;
+
+        let effectiveRate = numericRate;
+        if (discountType === "percent" && discountPercent) {
+          const p = parseFloat(discountPercent) || 0;
+          effectiveRate = Math.max(0, numericRate - (numericRate * p) / 100);
+        } else if (discountType === "price" && discountPrice) {
+          effectiveRate = Math.max(0, parseFloat(discountPrice) || 0);
+        }
+
+        const newAmount = combinedQty * effectiveRate;
+        const totalBeforeDiscount = combinedQty * numericRate;
+        const newDiscountAmount = Math.max(0, totalBeforeDiscount - newAmount);
+
+        const mergedItem = {
+          ...existing,
+          qty: formattedQty,
+          amount: newAmount,
+          discountAmount: newDiscountAmount,
+        };
+
+        const updated = [...prev];
+        updated[existingMatchIndex] = mergedItem;
+        return updated;
+      }
+
+      return [...prev, savedItem];
     });
+
     persistEnteredSections([savedItem]);
 
-    if (isNew) {
+    setNewlyAddedItemId(targetItemId);
+    setTimeout(() => {
+      setNewlyAddedItemId(null);
+    }, 2500);
+
+    if (!isMerge) {
       shouldScrollToBottomRef.current = true;
-      setNewlyAddedItemId(savedItem.id);
-      setTimeout(() => {
-        setNewlyAddedItemId(null);
-      }, 2500);
     }
   };
 
