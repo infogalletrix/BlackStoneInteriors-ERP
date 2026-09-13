@@ -511,8 +511,8 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       totalItemsHeight += getItemHeight(it);
     });
 
-    // 1. Single-Page Check (Safe capacity: ~115mm)
-    if (totalItemsHeight <= 115) {
+    // 1. Single-Page Check (Safe capacity: ~110mm)
+    if (totalItemsHeight <= 110) {
       return [{
         pageNum: 1,
         totalPages: 1,
@@ -524,9 +524,11 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
     }
 
     // 2. Multi-Page Splitting:
-    // Page 1 capacity: 165mm
+    // Page 1 capacity: up to 170mm (leaving at least ~25mm for last page if doc fits in 2 pages)
     // Middle page capacity: 195mm
-    // Last page capacity WITH summary: 145mm
+    // Last page capacity WITH summary: 135mm
+    const cap1 = 170;
+    const leaveForLast = 25;
     const pages = [];
     let currentIndex = 0;
     let pageNum = 1;
@@ -547,8 +549,8 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         remHeight += getItemHeight(it);
       });
 
-      // If NOT page 1 and remaining items fit comfortably on last page with summary (<= 145mm):
-      if (!isFirstPage && remHeight <= 145) {
+      // If NOT page 1 and remaining items fit comfortably on last page with summary (<= 135mm):
+      if (!isFirstPage && remHeight <= 135) {
         pages.push({
           items: remainingItems,
           isFirst: false,
@@ -558,12 +560,19 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         break;
       }
 
-      // Page capacity
-      let pageCapacity = isFirstPage ? 165 : 195;
-
-      // For 2-page documents, balance Page 1 so Page 2 has adequate items
-      if (isFirstPage && remHeight > 115 && remHeight <= 280) {
-        pageCapacity = Math.min(165, Math.max(90, remHeight - 110));
+      // Page capacity determination:
+      // Middle pages: 195mm
+      // Page 1:
+      // If remaining items <= cap1 + leaveForLast, we know this 2-page doc must leave at least
+      // leaveForLast (25mm) for the last page so summary cards have items.
+      // Otherwise, fill Page 1 up to full 170mm capacity!
+      let pageCapacity = 195;
+      if (isFirstPage) {
+        if (remHeight <= cap1 + leaveForLast) {
+          pageCapacity = Math.max(80, remHeight - leaveForLast);
+        } else {
+          pageCapacity = cap1;
+        }
       }
 
       let currentHeight = 0;
@@ -601,9 +610,9 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
       pageNum++;
     }
 
-    // Safety check: ensure last page has items <= 145mm
+    // Safety check: ensure last page has items <= 135mm
     const lastIdx = pages.length - 1;
-    if (pages.length > 1 && pages[lastIdx].usedHeight > 145) {
+    if (pages.length > 1 && pages[lastIdx].usedHeight > 135) {
       const lastPage = pages[lastIdx];
       const overflowItems = [];
       let oHeight = 0;
