@@ -27,6 +27,8 @@ services:
       - ConnectionStrings__DefaultConnection=server=db;port=3306;database=black_stone_interiors_erp;user=blackstone_user;password=StrongPassword123!;
     ports:
       - "5051:5000"
+    volumes:
+      - blackstone_catalog_data:/app/data
     depends_on:
       - db
 
@@ -43,3 +45,4 @@ services:
 
 volumes:
   blackstone_db_data:
+  blackstone_catalog_data:

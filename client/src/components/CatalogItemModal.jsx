@@ -171,11 +171,11 @@ export default function CatalogItemModal({
       product: trimmedProduct,
       category: trimmedCategory,
       specification: trimmedSpec,
-      unitPrice: trimmedSpec && trimmedPrice !== "" ? parsedPrice : null,
+      unitPrice: trimmedSpec && trimmedPrice !== "" && !isNaN(parsedPrice) ? parsedPrice : null,
       unit: unit || "Sq.Ft",
       discountType,
-      discountPercent: discountPercent ? parseFloat(discountPercent) : null,
-      discountPrice: discountPrice ? parseFloat(discountPrice) : null
+      discountPercent: discountPercent && !isNaN(parseFloat(discountPercent)) ? parseFloat(discountPercent) : null,
+      discountPrice: discountPrice && !isNaN(parseFloat(discountPrice)) ? parseFloat(discountPrice) : null
     };
   };
 

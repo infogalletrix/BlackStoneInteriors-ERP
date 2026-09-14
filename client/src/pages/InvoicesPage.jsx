@@ -3,11 +3,13 @@ import { useReactToPrint } from "react-to-print";
 import PrintableQuotation from "../components/PrintableQuotation";
 import PrintableReceipt from "../components/PrintableReceipt";
 import ReceiptPreviewModal from "../components/ReceiptPreviewModal";
+import QuotationPdfPreviewModal from "../components/QuotationPdfPreviewModal";
 import {
   FileText, Search, Eye, Printer, CheckCircle2, Clock, AlertCircle,
   IndianRupee, TrendingUp, Calendar, X, Filter, Edit2, Trash2,
-  History, FileCheck, Receipt, Plus, ArrowUpDown
+  History, FileCheck, Receipt, Plus, ArrowUpDown, Download, Loader2
 } from "lucide-react";
+import { viewQuotationPDF, downloadQuotationPDF } from "../utils/quotationPdfGenerator";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useDialog } from "../contexts/DialogContext";
 import NotificationWidget from "../components/NotificationWidget";
@@ -36,8 +38,10 @@ export default function HistoryPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState("desc"); // 'desc' (Recent transactions on top by default) | 'asc'
   const [previewInvoice, setPreviewInvoice] = useState(null);
+  const [previewQuotationDoc, setPreviewQuotationDoc] = useState(null);
   const [previewReceipt, setPreviewReceipt] = useState(null);
   const [receiptPrintData, setReceiptPrintData] = useState([]);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
   const componentRef = useRef();
   const handlePrint = useReactToPrint({ contentRef: componentRef });
@@ -326,7 +330,7 @@ export default function HistoryPage() {
                         <td className="px-8 py-5">
                           <div className="flex items-center justify-center gap-2">
                             <button onClick={() => navigate("/quotations", { state: { editQuote: q } })} className="p-2 bg-violet-500/10 text-violet-500 rounded-xl hover:bg-violet-500/20 transition" title="Edit"><Edit2 size={16} /></button>
-                            <button onClick={() => setPreviewInvoice(q)} className="p-2 bg-blue-500/10 text-blue-500 rounded-xl hover:bg-blue-500/20 transition" title="Preview"><Eye size={16} /></button>
+                            <button onClick={() => setPreviewQuotationDoc(q)} className="p-2 bg-blue-500/10 text-blue-500 rounded-xl hover:bg-blue-500/20 transition cursor-pointer" title="View Quotation PDF"><Eye size={16} /></button>
                             <button onClick={() => { setPreviewInvoice(q); setTimeout(() => handlePrint(), 400); }} className="p-2 bg-teal-500/10 text-teal-500 rounded-xl hover:bg-teal-500/20 transition" title="Print"><Printer size={16} /></button>
                             <button onClick={() => deleteQuotation(q.id)} className="p-2 bg-rose-500/10 text-rose-500 rounded-xl hover:bg-rose-500/20 transition" title="Delete"><Trash2 size={16} /></button>
                           </div>
@@ -607,9 +611,58 @@ export default function HistoryPage() {
                   )}
                 </p>
               </div>
-              <div className="flex gap-2">
-                <button onClick={handlePrint} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 transition"><Printer size={16} /> Print</button>
-                <button onClick={() => setPreviewInvoice(null)} className="text-slate-400 hover:text-white transition p-2"><X size={24} /></button>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setPreviewQuotationDoc(previewInvoice)}
+                  className="bg-[#C9A227] hover:bg-[#B8911F] active:bg-[#A8811A] text-white px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 transition shadow-sm cursor-pointer"
+                  title="View PDF directly in browser"
+                >
+                  <Eye size={16} /> View PDF
+                </button>
+                <button
+                  type="button"
+                  disabled={isDownloadingPdf}
+                  onClick={async () => {
+                    setIsDownloadingPdf(true);
+                    try {
+                      await downloadQuotationPDF(previewInvoice);
+                    } catch (err) {
+                      console.error("PDF download failed:", err);
+                      showDialog({ title: "Export Error", message: "Failed to download PDF: " + err.message, type: "alert" });
+                    } finally {
+                      setIsDownloadingPdf(false);
+                    }
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-60 text-white px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 transition shadow-sm cursor-pointer"
+                  title="Download Printable Quotation PDF"
+                >
+                  {isDownloadingPdf ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>Generating PDF...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download size={16} />
+                      <span>Download PDF</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePrint}
+                  className="bg-teal-600 hover:bg-teal-700 text-white px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 transition cursor-pointer"
+                >
+                  <Printer size={16} /> Print
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewInvoice(null)}
+                  className="text-slate-400 hover:text-white transition p-2 cursor-pointer"
+                >
+                  <X size={24} />
+                </button>
               </div>
             </div>
             <div className="p-8 max-h-[70vh] overflow-y-auto">
@@ -696,6 +749,15 @@ export default function HistoryPage() {
               }
             })
           }
+        />
+      )}
+
+      {/* ── INTERACTIVE QUOTATION PDF VIEWER (Shows existing printable quote in PDF format) ── */}
+      {previewQuotationDoc && (
+        <QuotationPdfPreviewModal
+          isOpen={!!previewQuotationDoc}
+          onClose={() => setPreviewQuotationDoc(null)}
+          quoteData={previewQuotationDoc}
         />
       )}
 

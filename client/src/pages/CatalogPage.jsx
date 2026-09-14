@@ -273,6 +273,92 @@ export const DEFAULT_SPECIFICATIONS = INITIAL_DEFAULT_TREE.flatMap(p =>
   p.categories.flatMap(c => c.specifications.map(s => s.name))
 );
 
+// ── SMART MERGE HELPER: Combines server and local items so locally added items are never lost ──
+export const mergeCatalogTrees = (serverTree = [], localTree = []) => {
+  if (!Array.isArray(serverTree) || serverTree.length === 0) return Array.isArray(localTree) ? localTree : [];
+  if (!Array.isArray(localTree) || localTree.length === 0) return serverTree;
+
+  const merged = JSON.parse(JSON.stringify(serverTree));
+
+  localTree.forEach(localProd => {
+    if (!localProd || !localProd.name) return;
+    let targetProd = merged.find(
+      p => (p.id && localProd.id && p.id === localProd.id) ||
+           p.name.trim().toLowerCase() === localProd.name.trim().toLowerCase()
+    );
+
+    if (!targetProd) {
+      merged.push(JSON.parse(JSON.stringify(localProd)));
+      return;
+    }
+
+    if (!Array.isArray(targetProd.categories)) targetProd.categories = [];
+    (localProd.categories || []).forEach(localCat => {
+      if (!localCat || !localCat.name) return;
+      let targetCat = targetProd.categories.find(
+        c => (c.id && localCat.id && c.id === localCat.id) ||
+             c.name.trim().toLowerCase() === localCat.name.trim().toLowerCase()
+      );
+
+      if (!targetCat) {
+        targetProd.categories.push(JSON.parse(JSON.stringify(localCat)));
+        return;
+      }
+
+      if (!Array.isArray(targetCat.specifications)) targetCat.specifications = [];
+      (localCat.specifications || []).forEach(localSpec => {
+        if (!localSpec || !localSpec.name) return;
+        const specIdx = targetCat.specifications.findIndex(
+          s => (s.id && localSpec.id && s.id === localSpec.id) ||
+               s.name.trim().toLowerCase() === localSpec.name.trim().toLowerCase()
+        );
+
+        if (specIdx === -1) {
+          targetCat.specifications.push(JSON.parse(JSON.stringify(localSpec)));
+        } else {
+          targetCat.specifications[specIdx] = {
+            ...targetCat.specifications[specIdx],
+            ...localSpec,
+            unitPrice: typeof localSpec.unitPrice === "number" && !isNaN(localSpec.unitPrice)
+              ? localSpec.unitPrice
+              : (parseFloat(localSpec.unitPrice) || targetCat.specifications[specIdx].unitPrice || 0)
+          };
+        }
+      });
+    });
+  });
+
+  return merged;
+};
+
+// ── SANITIZE HELPER: Guarantees safe numeric and string formats for API transport ──
+export const sanitizeCatalogTree = (tree = []) => {
+  if (!Array.isArray(tree)) return [];
+  return tree.map(p => ({
+    id: String(p.id || ("prod-" + Math.random().toString(36).substring(2, 9))),
+    name: String(p.name || "").trim(),
+    categories: (p.categories || []).map(c => ({
+      id: String(c.id || ("cat-" + Math.random().toString(36).substring(2, 9))),
+      name: String(c.name || "").trim(),
+      specifications: (c.specifications || []).map(s => ({
+        id: String(s.id || ("spec-" + Math.random().toString(36).substring(2, 9))),
+        name: String(s.name || "").trim(),
+        unitPrice: typeof s.unitPrice === "number" && !isNaN(s.unitPrice)
+          ? s.unitPrice
+          : (parseFloat(s.unitPrice) || 0),
+        unit: String(s.unit || "Sq.Ft").trim(),
+        discountType: s.discountType === "price" ? "price" : "percent",
+        discountPercent: s.discountPercent !== null && s.discountPercent !== undefined && s.discountPercent !== "" && !isNaN(Number(s.discountPercent))
+          ? Number(s.discountPercent)
+          : null,
+        discountPrice: s.discountPrice !== null && s.discountPrice !== undefined && s.discountPrice !== "" && !isNaN(Number(s.discountPrice))
+          ? Number(s.discountPrice)
+          : null
+      }))
+    }))
+  }));
+};
+
 export default function CatalogPage() {
   const { showDialog } = useDialog();
   const t = useThemeClasses();
@@ -288,10 +374,40 @@ export default function CatalogPage() {
     return INITIAL_DEFAULT_TREE;
   });
 
-  // Selected hierarchy state
-  const [selectedProductId, setSelectedProductId] = useState(() => INITIAL_DEFAULT_TREE[0]?.id || "");
-  const [selectedCategoryId, setSelectedCategoryId] = useState("");
-  const [selectedSpecId, setSelectedSpecId] = useState("");
+  // Selected hierarchy state with localStorage persistence across refreshes
+  const [selectedProductId, setSelectedProductId] = useState(() => {
+    try {
+      const saved = localStorage.getItem("bsi_catalog_selected_product");
+      if (saved) return saved;
+    } catch {}
+    return INITIAL_DEFAULT_TREE[0]?.id || "";
+  });
+  const [selectedCategoryId, setSelectedCategoryId] = useState(() => {
+    try {
+      const saved = localStorage.getItem("bsi_catalog_selected_category");
+      if (saved) return saved;
+    } catch {}
+    return "";
+  });
+  const [selectedSpecId, setSelectedSpecId] = useState(() => {
+    try {
+      const saved = localStorage.getItem("bsi_catalog_selected_spec");
+      if (saved) return saved;
+    } catch {}
+    return "";
+  });
+
+  // Persist selected hierarchy to localStorage
+  useEffect(() => {
+    try {
+      if (selectedProductId) localStorage.setItem("bsi_catalog_selected_product", selectedProductId);
+      else localStorage.removeItem("bsi_catalog_selected_product");
+      if (selectedCategoryId) localStorage.setItem("bsi_catalog_selected_category", selectedCategoryId);
+      else localStorage.removeItem("bsi_catalog_selected_category");
+      if (selectedSpecId) localStorage.setItem("bsi_catalog_selected_spec", selectedSpecId);
+      else localStorage.removeItem("bsi_catalog_selected_spec");
+    } catch {}
+  }, [selectedProductId, selectedCategoryId, selectedSpecId]);
 
   // Modal states for adding new catalog items
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -305,31 +421,75 @@ export default function CatalogPage() {
   };
 
   // Editing modal/inline states
-  const [editingItem, setEditingItem] = useState(null); // { type: 'product'|'category'|'spec', id, name, unitPrice, unit }
+  const [editingItem, setEditingItem] = useState(null);
 
-  // Global search query
+  // Global search query & sync states
   const [searchQuery, setSearchQuery] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState("");
+  const [saveErrorMsg, setSaveErrorMsg] = useState("");
 
-  // Load from backend on mount
+  // Persist to backend helper
+  const persistToServer = async (treeToSave) => {
+    const clean = sanitizeCatalogTree(treeToSave);
+    setIsSaving(true);
+    setSaveErrorMsg("");
+    try {
+      const res = await fetch("/api/catalog", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tree: clean })
+      });
+      if (res.ok) {
+        setSaveSuccessMsg("Saved to cloud");
+        setSaveErrorMsg("");
+        setTimeout(() => setSaveSuccessMsg(""), 3500);
+      } else {
+        const errText = await res.text();
+        console.warn("Catalog sync response not OK:", res.status, errText);
+        setSaveErrorMsg("Cloud sync pending (saved locally)");
+      }
+    } catch (err) {
+      console.warn("Failed to persist catalog to server:", err);
+      setSaveErrorMsg("Working offline (saved locally)");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Load from backend on mount with SMART MERGE
   useEffect(() => {
     fetch("/api/catalog")
       .then(res => res.ok ? res.json() : null)
-      .then(data => {
-        if (data && Array.isArray(data.tree) && data.tree.length > 0) {
-          setCatalogTree(data.tree);
-          localStorage.setItem("quote_catalog_tree", JSON.stringify(data.tree));
+      .then(serverData => {
+        if (serverData && Array.isArray(serverData.tree) && serverData.tree.length > 0) {
+          setCatalogTree(currentLocal => {
+            const merged = mergeCatalogTrees(serverData.tree, currentLocal);
+            localStorage.setItem("quote_catalog_tree", JSON.stringify(merged));
+            
+            // Check if local has items missing from server; if so, push merged to cloud!
+            const countSpecs = (tree) => (tree || []).reduce((sum, p) => 
+              sum + (p.categories || []).reduce((s2, c) => s2 + (c.specifications || []).length, 0), 0
+            );
+            const serverCount = countSpecs(serverData.tree);
+            const mergedCount = countSpecs(merged);
+            if (mergedCount > serverCount || merged.length > serverData.tree.length) {
+              persistToServer(merged);
+            }
+            return merged;
+          });
         }
       })
-      .catch(err => console.error("Failed to load catalog tree:", err));
+      .catch(err => {
+        console.warn("Failed to load catalog tree from server:", err);
+        setSaveErrorMsg("Offline (local catalog active)");
+      });
   }, []);
 
-  // Sync to localStorage
+  // Sync to localStorage and flat lists for quotation auto-fill
   useEffect(() => {
     try {
       localStorage.setItem("quote_catalog_tree", JSON.stringify(catalogTree));
-      // Also sync flat arrays for legacy compatibility
       const flatProducts = catalogTree.map(p => p.name).filter(Boolean);
       const flatCategories = Array.from(new Set(catalogTree.flatMap(p => (p.categories || []).map(c => c.name)).filter(Boolean)));
       const flatSpecs = Array.from(new Set(catalogTree.flatMap(p => (p.categories || []).flatMap(c => (c.specifications || []).map(s => s.name))).filter(Boolean)));
@@ -340,26 +500,6 @@ export default function CatalogPage() {
       console.error("Local sync error:", e);
     }
   }, [catalogTree]);
-
-  // Persist to backend helper
-  const persistToServer = async (newTree) => {
-    setIsSaving(true);
-    try {
-      const res = await fetch("/api/catalog", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tree: newTree })
-      });
-      if (res.ok) {
-        setSaveSuccessMsg("Saved to cloud");
-        setTimeout(() => setSaveSuccessMsg(""), 3000);
-      }
-    } catch (err) {
-      console.warn("Failed to persist catalog to server:", err);
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   // Derive active selected items
   const activeProduct = useMemo(() => {
@@ -449,15 +589,16 @@ export default function CatalogPage() {
       catId = prodCategories[catIdx].id;
 
       // 3. If specification & unit price provided, add or update specification under this category
-      if (specification && specification.trim() && unitPrice !== null && !isNaN(unitPrice) && Number(unitPrice) > 0) {
+      const numPrice = typeof unitPrice === "number" ? unitPrice : parseFloat(unitPrice);
+      if (specification && specification.trim() && !isNaN(numPrice) && numPrice > 0) {
         const newSpec = {
           id: "spec-" + Date.now() + Math.floor(Math.random() * 1000),
           name: specification.trim(),
-          unitPrice: Number(unitPrice),
+          unitPrice: numPrice,
           unit: unit || "Sq.Ft",
           discountType: discountType || "percent",
-          discountPercent: discountPercent !== null && discountPercent !== undefined ? Number(discountPercent) : null,
-          discountPrice: discountPrice !== null && discountPrice !== undefined ? Number(discountPrice) : null
+          discountPercent: discountPercent !== null && discountPercent !== undefined && discountPercent !== "" && !isNaN(Number(discountPercent)) ? Number(discountPercent) : null,
+          discountPrice: discountPrice !== null && discountPrice !== undefined && discountPrice !== "" && !isNaN(Number(discountPrice)) ? Number(discountPrice) : null
         };
 
         const existingSpecs = [...(prodCategories[catIdx].specifications || [])];
@@ -490,7 +631,13 @@ export default function CatalogPage() {
     } else {
       setSelectedCategoryId("");
     }
+    try {
+      localStorage.setItem("bsi_catalog_selected_product", prodId);
+      if (catId) localStorage.setItem("bsi_catalog_selected_category", catId);
+    } catch {}
     persistToServer(updated);
+    setSaveSuccessMsg("Item saved to catalog!");
+    setTimeout(() => setSaveSuccessMsg(""), 3500);
   };
 
   // ── PRODUCT ACTIONS ──────────────────────────────────────────
@@ -667,10 +814,35 @@ export default function CatalogPage() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            {saveSuccessMsg && (
-              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/20 text-white text-xs font-bold border border-white/30 backdrop-blur-sm">
+            {isSaving && (
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/20 text-white text-xs font-bold border border-white/30 backdrop-blur-sm animate-pulse">
+                <Sparkles size={13} className="animate-spin" /> Saving...
+              </span>
+            )}
+            {saveSuccessMsg && !isSaving && (
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-600/90 text-white text-xs font-bold border border-emerald-400/40 backdrop-blur-sm shadow-sm">
                 <CheckCircle2 size={13} /> {saveSuccessMsg}
               </span>
+            )}
+            {saveErrorMsg && !isSaving && (
+              <button
+                type="button"
+                onClick={() => persistToServer(catalogTree)}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-600/90 hover:bg-amber-600 text-white text-xs font-bold border border-amber-300/40 backdrop-blur-sm shadow-sm transition cursor-pointer"
+                title="Click to retry saving to server"
+              >
+                <AlertCircle size={13} /> {saveErrorMsg} • Retry
+              </button>
+            )}
+            {!isSaving && !saveSuccessMsg && !saveErrorMsg && (
+              <button
+                type="button"
+                onClick={() => persistToServer(catalogTree)}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white/95 text-xs font-bold border border-white/25 transition cursor-pointer"
+                title="Catalog is synced with cloud. Click to sync now."
+              >
+                <CheckCircle2 size={13} /> Cloud Synced
+              </button>
             )}
           </div>
         </div>

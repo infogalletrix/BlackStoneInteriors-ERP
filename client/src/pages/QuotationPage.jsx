@@ -1,15 +1,20 @@
 import { useState, useRef, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useReactToPrint } from "react-to-print";
 import { useNavigate, useLocation } from "react-router-dom";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import PrintableQuotation from "../components/PrintableQuotation";
 import {
   DEFAULT_PRODUCTS,
   DEFAULT_CATEGORIES,
-  DEFAULT_SPECIFICATIONS
+  DEFAULT_SPECIFICATIONS,
+  mergeCatalogTrees
 } from "./CatalogPage";
 import SectionInput from "../components/SectionInput";
 import QuotationItemModal from "../components/QuotationItemModal";
 import ClientDetailsModal from "../components/ClientDetailsModal";
+import QuotationPdfPreviewModal from "../components/QuotationPdfPreviewModal";
 
 const formatINR = (val) => {
   const num = Number(val) || 0;
@@ -28,7 +33,13 @@ import {
   Edit3,
   Building,
   ExternalLink,
+  Download,
+  Eye,
+  CheckCircle2,
+  Sparkles,
+  Loader2
 } from "lucide-react";
+import { buildQuotationPDF, downloadQuotationPDF, viewQuotationPDF, exportPrintableQuotationToPDF } from "../utils/quotationPdfGenerator";
 import { useDialog } from "../contexts/DialogContext";
 import NotificationWidget from "../components/NotificationWidget";
 
@@ -137,8 +148,11 @@ export default function QuotationPage() {
       .then(data => {
         if (data) {
           if (Array.isArray(data.tree) && data.tree.length > 0) {
-            setCatalogTree(data.tree);
-            localStorage.setItem("quote_catalog_tree", JSON.stringify(data.tree));
+            setCatalogTree(currentLocal => {
+              const merged = mergeCatalogTrees(data.tree, currentLocal);
+              localStorage.setItem("quote_catalog_tree", JSON.stringify(merged));
+              return merged;
+            });
           }
           if (Array.isArray(data.products) && data.products.length > 0) {
             setProductsList(data.products);
@@ -414,6 +428,74 @@ export default function QuotationPage() {
 
   const handlePrint = useReactToPrint({ contentRef: componentRef });
 
+  // ── DIRECT TOP-LEVEL PRINTING SYSTEM (100% Mobile Safari & AirPrint Safe) ──
+  const [isMobilePrintModalOpen, setIsMobilePrintModalOpen] = useState(false);
+  const [isPreviewPdfModalOpen, setIsPreviewPdfModalOpen] = useState(false);
+  const [savedQuoteDetails, setSavedQuoteDetails] = useState(null);
+
+  const handleDirectPrint = () => {
+    document.body.classList.add("bsi-direct-print-active");
+    const cleanup = () => {
+      document.body.classList.remove("bsi-direct-print-active");
+      window.removeEventListener("afterprint", cleanup);
+    };
+    window.addEventListener("afterprint", cleanup);
+    setTimeout(() => {
+      document.body.classList.remove("bsi-direct-print-active");
+    }, 3000);
+    window.print();
+  };
+
+  const getCurrentQuoteData = () => ({
+    clientName,
+    organizationName,
+    clientAddress,
+    projectTitle,
+    workDescription,
+    quoteNo: savedQuoteDetails?.quoteNo || quoteNo,
+    date: quoteDate,
+    billType,
+    emailId,
+    mobileNo,
+    customerGst,
+    deliveryTimeline,
+    installationMaterial,
+    deliveryLoading,
+    transportationCharges,
+    additionalDiscount,
+    cgstPercent,
+    sgstPercent,
+    items
+  });
+
+  const handleViewPDF = () => {
+    if (items.length === 0) {
+      showDialog({ title: "No Items", message: "Please add at least one item to view the quotation PDF.", type: "alert" });
+      return;
+    }
+    setIsPreviewPdfModalOpen(true);
+  };
+
+  const hiddenPrintDocRef = useRef(null);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+
+  const handleDownloadPDF = async () => {
+    try {
+      if (items.length === 0) {
+        showDialog({ title: "No Items", message: "Please add at least one item to download the quotation PDF.", type: "alert" });
+        return;
+      }
+      setIsDownloadingPdf(true);
+      const data = getCurrentQuoteData();
+      await downloadQuotationPDF(data, hiddenPrintDocRef.current);
+    } catch (err) {
+      console.error("Printable quote PDF export error:", err);
+      showDialog({ title: "Export Error", message: "Failed to generate PDF: " + err.message, type: "alert" });
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
+
   useEffect(() => {
     if (location.state?.autoFillClient) {
       const c = location.state.autoFillClient;
@@ -609,17 +691,39 @@ export default function QuotationPage() {
     0
   );
 
-  const saveQuotation = async () => {
+  const resetQuotationForm = () => {
+    setItems([]);
+    setClientName("");
+    setOrganizationName("");
+    setClientAddress("");
+    setProjectTitle("");
+    setWorkDescription("");
+    setEmailId("");
+    setMobileNo("");
+    setCustomerGst("");
+    setDeliveryTimeline("3 to 4 Weeks");
+    setInstallationMaterial("");
+    setDeliveryLoading("");
+    setTransportationCharges("");
+    setAdditionalDiscount("");
+    setQuoteId(null);
+    fetch(`/api/quotations/next-number?date=${quoteDate}`)
+      .then(res => res.json())
+      .then(data => { if (data && data.nextNumber) setQuoteNo(data.nextNumber); })
+      .catch(() => setQuoteNo(""));
+  };
+
+  const saveQuotation = async ({ forPrint = false } = {}) => {
     if (!clientName || items.length === 0) {
       showDialog({ title: "Missing Information", message: "Add client name and at least one item.", type: "alert" });
-      return;
+      return null;
     }
     
     if (mobileNo) {
       const cleanedPhone = mobileNo.replace(/\D/g, "");
       if (cleanedPhone.length !== 10) {
         showDialog({ title: "Invalid Phone Number", message: "Mobile number must be exactly 10 digits.", type: "alert" });
-        return;
+        return null;
       }
     }
 
@@ -689,31 +793,27 @@ export default function QuotationPage() {
           : s
         ));
       }
+
+      setSavedQuoteDetails(saved);
+
+      if (forPrint) {
+        // Open Print & Export Modal directly without clearing items yet
+        setIsMobilePrintModalOpen(true);
+        return saved;
+      }
+
       showDialog({ title: "Success", message: "Quotation Saved Successfully!", type: "success" });
       setTimeout(() => {
         if (!quoteId) {
-          // Reset the form for the next quotation
-          setItems([]);
-          setClientName("");
-          setOrganizationName("");
-          setClientAddress("");
-          setProjectTitle("");
-          setWorkDescription("");
-          setEmailId("");
-          setMobileNo("");
-          setCustomerGst("");
-          setDeliveryTimeline("3 to 4 Weeks");
-          setInstallationMaterial("");
-          setDeliveryLoading("");
-          setAdditionalDiscount("");
-          setQuoteId(null);
-          fetch(`/api/quotations/next-number?date=${quoteDate}`)
-            .then(res => res.json())
-            .then(data => { if (data && data.nextNumber) setQuoteNo(data.nextNumber); })
-            .catch(() => setQuoteNo(""));
+          resetQuotationForm();
         }
       }, 1500);
-    } catch(err) { console.error(err); }
+      return saved;
+    } catch(err) {
+      console.error(err);
+      showDialog({ title: "Error", message: "Failed to save quotation: " + (err.message || "Unknown error"), type: "error" });
+      return null;
+    }
   };
 
   // ── CONVERT TO INVOICE ──────────────────────────────────────────
@@ -1269,15 +1369,24 @@ export default function QuotationPage() {
           <History size={16} /> Quotations
         </button>
         <button
-          onClick={async () => { await saveQuotation(); handlePrint(); }}
+          type="button"
+          onClick={handleViewPDF}
           disabled={items.length === 0}
-          className="bg-teal-500 hover:bg-teal-600 disabled:opacity-50 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 text-sm font-bold transition shadow-sm hover:shadow"
+          className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 text-sm font-bold transition shadow-sm hover:shadow cursor-pointer"
+          title="View PDF directly in browser"
+        >
+          <Eye size={16} /> View PDF
+        </button>
+        <button
+          onClick={() => saveQuotation({ forPrint: true })}
+          disabled={items.length === 0}
+          className="bg-teal-500 hover:bg-teal-600 disabled:opacity-50 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 text-sm font-bold transition shadow-sm hover:shadow cursor-pointer"
         >
           <Printer size={16} /> Generate & Print
         </button>
         <button
-          onClick={saveQuotation}
-          className="bg-amber-600 hover:bg-amber-700 text-white px-7 py-2.5 rounded-xl flex items-center gap-2 text-sm font-bold transition shadow-sm hover:shadow"
+          onClick={() => saveQuotation({ forPrint: false })}
+          className="bg-amber-600 hover:bg-amber-700 text-white px-7 py-2.5 rounded-xl flex items-center gap-2 text-sm font-bold transition shadow-sm hover:shadow cursor-pointer"
         >
           <Save size={16} /> Generate
         </button>
@@ -1290,12 +1399,123 @@ export default function QuotationPage() {
         </button>
       </div>
 
-      <div className="opacity-0 fixed top-0 left-0 pointer-events-none">
-        <PrintableQuotation
-          ref={componentRef}
-          data={{ customer: clientName, address: clientAddress, projectTitle, workDescription, items, quoteNo, date: quoteDate, billType, emailId, mobileNo, customerGst, deliveryTimeline, installationMaterial, deliveryLoading, transportationCharges, additionalDiscount, cgstPercent, sgstPercent }}
-        />
-      </div>
+      {/* ── PRINT & PDF EXPORT MODAL (Mobile Safari & AirPrint Safe) ── */}
+      {isMobilePrintModalOpen && (
+        <div className="fixed inset-0 z-[150] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl sm:rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-black">
+                  <CheckCircle2 size={22} />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-themed">Quotation Ready!</h3>
+                  <p className="text-xs text-muted font-bold">{savedQuoteDetails?.quoteNo || quoteNo || "Quotation Saved"}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobilePrintModalOpen(false);
+                  if (!quoteId) resetQuotationForm();
+                }}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3.5 space-y-1.5 text-xs">
+              <div className="flex justify-between font-bold">
+                <span className="text-muted">Client:</span>
+                <span className="text-themed">{clientName}</span>
+              </div>
+              {projectTitle && (
+                <div className="flex justify-between font-bold">
+                  <span className="text-muted">Project:</span>
+                  <span className="text-themed">{projectTitle}</span>
+                </div>
+              )}
+              <div className="flex justify-between font-bold">
+                <span className="text-muted">Items:</span>
+                <span className="text-themed">{items.length} work items</span>
+              </div>
+              <div className="flex justify-between font-black text-sm pt-2 border-t border-[var(--border-color)] text-amber-700 dark:text-[var(--accent)]">
+                <span>Total Amount:</span>
+                <span>₹{formatINR(grandTotal)}</span>
+              </div>
+            </div>
+
+            <div className="space-y-2.5 pt-1">
+              <button
+                type="button"
+                onClick={handleViewPDF}
+                className="w-full py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 shadow-sm transition active:scale-[0.98] cursor-pointer"
+              >
+                <Eye size={18} /> View PDF
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDirectPrint}
+                className="w-full py-3 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 shadow-sm transition active:scale-[0.98] cursor-pointer"
+              >
+                <Printer size={18} /> Print Document (AirPrint)
+              </button>
+
+              <button
+                type="button"
+                disabled={isDownloadingPdf}
+                onClick={handleDownloadPDF}
+                className="w-full py-3 bg-[#C9A227] hover:bg-[#B8911F] active:bg-[#A8811A] disabled:opacity-60 text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 shadow-sm transition active:scale-[0.98] cursor-pointer"
+              >
+                {isDownloadingPdf ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" /> Generating PDF...
+                  </>
+                ) : (
+                  <>
+                    <Download size={18} /> Download / Share PDF
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobilePrintModalOpen(false);
+                  if (!quoteId) resetQuotationForm();
+                }}
+                className="w-full py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-themed rounded-xl font-bold text-xs transition cursor-pointer"
+              >
+                Close & Start New
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── INTERACTIVE PDF DOCUMENT VIEWER (Displays exact printable quote in PDF format) ── */}
+      <QuotationPdfPreviewModal
+        isOpen={isPreviewPdfModalOpen}
+        onClose={() => setIsPreviewPdfModalOpen(false)}
+        quoteData={getCurrentQuoteData()}
+        onPrint={handleDirectPrint}
+      />
+
+      {/* Top-Level Portal for Direct Window Printing & PDF Export (Zero Iframe, AirPrint & Mobile Safari Safe) */}
+      {typeof document !== "undefined" && createPortal(
+        <div
+          id="bsi-portal-print-root"
+          ref={hiddenPrintDocRef}
+          style={{ position: "fixed", left: "-9999px", top: 0, width: "210mm", zIndex: -100, pointerEvents: "none" }}
+        >
+          <PrintableQuotation
+            data={getCurrentQuoteData()}
+          />
+        </div>,
+        document.body
+      )}
       {/* ── QUOTATION ITEM MODAL ── */}
       <QuotationItemModal
         isOpen={isItemModalOpen}

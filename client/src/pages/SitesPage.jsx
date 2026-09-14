@@ -758,14 +758,10 @@ export default function SitesPage() {
                     </div>
                     <div className="flex items-center gap-4">
                       {(() => {
-                        const { billed, paid, balance } = getSiteFinancials(selectedSite.id);
+                        const { paid, balance } = getSiteFinancials(selectedSite.id);
                         return (
                           <>
                             <div className="flex flex-col items-start pr-4">
-                              <span className="text-[10px] text-muted uppercase tracking-widest font-black">Invoiced</span>
-                              <span className="text-blue-400 font-black text-sm tracking-tight">₹{billed.toLocaleString()}</span>
-                            </div>
-                            <div className="flex flex-col items-start border-l border-[var(--border-color)] pl-4 pr-4">
                               <span className="text-[10px] text-muted uppercase tracking-widest font-black">Receipts</span>
                               <span className="text-emerald-500 font-black text-sm tracking-tight">₹{paid.toLocaleString()}</span>
                             </div>
@@ -785,48 +781,6 @@ export default function SitesPage() {
                     </div>
                   </div>
                 </div>
-
-                {/* Closing Payment Warning Banner */}
-                {(() => {
-                  const { billed, paid } = getSiteFinancials(selectedSite.id);
-                  const mismatch = billed - paid;
-                  // Only show warning if there are invoices (billed > 0) and the receipts haven't covered them
-                  if (billed > 0 && mismatch > 0) {
-                    return (
-                      <div className="bg-rose-500/10 border-b border-rose-500/20 p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="flex items-start md:items-center gap-3">
-                          <AlertTriangle className="text-rose-500 shrink-0" size={20} />
-                          <div>
-                            <h4 className="text-rose-500 font-bold text-sm">Pending Receipt Validation</h4>
-                            <p className="text-rose-400/80 text-xs mt-0.5 font-medium">
-                              Invoiced amount exceeds total receipts by <strong className="font-black text-rose-400">₹{mismatch.toLocaleString()}</strong>. Please complete the closing payment.
-                            </p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => {
-                            navigate("/receipts", {
-                              state: {
-                                autoFill: {
-                                  siteId: selectedSite.id,
-                                  name: selectedSite.clientName,
-                                  organizationName: selectedSite.organizationName,
-                                  amountPaid: mismatch,
-                                  category: "Final Settlement",
-                                  desc: `Closing payment for Work Order #${selectedSite.id}`
-                                }
-                              }
-                            });
-                          }}
-                          className="shrink-0 bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm"
-                        >
-                          Complete Payment
-                        </button>
-                      </div>
-                    );
-                  }
-                  return null;
-                })()}
 
                 {/* Profile Tabs */}
                 <div className="flex bg-white dark:bg-slate-900 border-b border-[var(--border-color)]">

@@ -291,3 +291,28 @@ html.dark .themed-card {
   right: 0;
   border-right-color: var(--border);
 }
+
+/* ═══════════════════════════════════════════════════
+   DIRECT PRINT SYSTEM FOR MOBILE & DESKTOP
+   Bypasses iframe restrictions in iOS Safari & WebKit
+════════════════════════════════════════════════════ */
+@media print {
+  body.bsi-direct-print-active > #root {
+    display: none !important;
+  }
+  body.bsi-direct-print-active > #bsi-portal-print-root {
+    display: block !important;
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    width: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    background: white !important;
+  }
+  body.bsi-direct-print-active > #bsi-portal-print-root * {
+    visibility: visible !important;
+  }
+}

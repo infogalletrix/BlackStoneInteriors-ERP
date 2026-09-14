@@ -17,8 +17,18 @@ namespace Blackstone_Interior.Controllers
 
         private string GetFilePath()
         {
-            var contentRoot = _env.ContentRootPath;
-            return Path.Combine(contentRoot, "catalog_data.json");
+            var dataDir = Path.Combine(_env.ContentRootPath, "data");
+            if (!Directory.Exists(dataDir))
+            {
+                try { Directory.CreateDirectory(dataDir); } catch { }
+            }
+            var pathInData = Path.Combine(dataDir, "catalog_data.json");
+            var pathInRoot = Path.Combine(_env.ContentRootPath, "catalog_data.json");
+            if (System.IO.File.Exists(pathInRoot) && !System.IO.File.Exists(pathInData))
+            {
+                try { System.IO.File.Copy(pathInRoot, pathInData, true); } catch { }
+            }
+            return System.IO.File.Exists(pathInData) || Directory.Exists(dataDir) ? pathInData : pathInRoot;
         }
 
         public static CatalogPayload GetDefaultCatalog()
@@ -387,6 +397,23 @@ namespace Blackstone_Interior.Controllers
             }
             else
             {
+                // Ensure all specs have valid non-null UnitPrice
+                foreach (var p in payload.Tree)
+                {
+                    if (p.Categories != null)
+                    {
+                        foreach (var c in p.Categories)
+                        {
+                            if (c.Specifications != null)
+                            {
+                                foreach (var s in c.Specifications)
+                                {
+                                    if (!s.UnitPrice.HasValue) s.UnitPrice = 0;
+                                }
+                            }
+                        }
+                    }
+                }
                 SyncFlatLists(payload);
             }
 
@@ -395,6 +422,17 @@ namespace Blackstone_Interior.Controllers
                 var filePath = GetFilePath();
                 var json = JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true });
                 System.IO.File.WriteAllText(filePath, json);
+
+                // Also write to root directory as persistent backup
+                try
+                {
+                    var rootBackup = Path.Combine(_env.ContentRootPath, "catalog_data.json");
+                    if (filePath != rootBackup)
+                    {
+                        System.IO.File.WriteAllText(rootBackup, json);
+                    }
+                }
+                catch { }
             }
 
             return Ok(new { message = "Catalog saved successfully", data = payload });
@@ -409,6 +447,16 @@ namespace Blackstone_Interior.Controllers
                 var filePath = GetFilePath();
                 var json = JsonSerializer.Serialize(defaults, new JsonSerializerOptions { WriteIndented = true });
                 System.IO.File.WriteAllText(filePath, json);
+
+                try
+                {
+                    var rootBackup = Path.Combine(_env.ContentRootPath, "catalog_data.json");
+                    if (filePath != rootBackup)
+                    {
+                        System.IO.File.WriteAllText(rootBackup, json);
+                    }
+                }
+                catch { }
             }
 
             return Ok(new { message = "Catalog reset to defaults", data = defaults });
@@ -419,8 +467,11 @@ namespace Blackstone_Interior.Controllers
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
         public string Name { get; set; } = string.Empty;
-        public decimal UnitPrice { get; set; } = 0;
+        public decimal? UnitPrice { get; set; } = 0;
         public string Unit { get; set; } = "Sq.Ft";
+        public string? DiscountType { get; set; }
+        public decimal? DiscountPercent { get; set; }
+        public decimal? DiscountPrice { get; set; }
     }
 
     public class CatalogCategoryItem

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import {
   User, Briefcase, Calendar, Plus, Phone, MapPin, Search, DollarSign, Activity, CheckCircle, Clock, Mail, Tag, Percent, BarChart2, Download, Filter, PieChart, Trash2, List, Grid, Edit3, Settings, FileText, ChevronDown, Play, Pause, XCircle, RotateCcw,
-  Building2, Building, UserCheck, ExternalLink
+  Building2, Building, UserCheck, ExternalLink, ArrowUpDown, ArrowUp, ArrowDown, SlidersHorizontal
 } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -36,6 +36,25 @@ const CRMPage = () => {
   const [companyFilter, setCompanyFilter] = useState("all"); // "all" | company name
   const [quotations, setQuotations] = useState([]);
   const [clientQuotationsModal, setClientQuotationsModal] = useState(null);
+  
+  // Sort States across CRM Pages
+  const [contactSortField, setContactSortField] = useState("date"); // "date" | "name" | "organizationName" | "project" | "source" | "quoteValue"
+  const [contactSortOrder, setContactSortOrder] = useState("desc"); // "desc" | "asc"
+  const [pipelineSort, setPipelineSort] = useState("default"); // "default" | "value-desc" | "value-asc" | "date-desc" | "date-asc" | "title-asc" | "title-desc" | "contact-asc"
+  const [scheduleSort, setScheduleSort] = useState("date-asc"); // "date-asc" | "date-desc" | "client-asc" | "client-desc" | "type-asc" | "priority"
+  const [siteSort, setSiteSort] = useState("date-desc"); // "date-desc" | "date-asc" | "name-asc" | "client-asc"
+  const [telecallSort, setTelecallSort] = useState("date-desc"); // "date-desc" | "date-asc" | "customer-asc"
+  const [campaignSort, setCampaignSort] = useState("budget-desc"); // "budget-desc" | "budget-asc" | "name-asc"
+  const [modalQuoteSort, setModalQuoteSort] = useState("date-desc"); // "date-desc" | "date-asc" | "value-desc" | "value-asc"
+
+  const handleTableSort = (field, defaultOrder = "asc") => {
+    if (contactSortField === field) {
+      setContactSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setContactSortField(field);
+      setContactSortOrder(defaultOrder);
+    }
+  };
   
   useEffect(() => {
     const p = location.pathname.split('/').pop();
@@ -464,7 +483,7 @@ const CRMPage = () => {
     doc.setFont("helvetica", "bold"); doc.setFontSize(20);
     doc.text("Black Stone Interiorss - Client List", 14, 22);
     const tableColumn = ["Name", "Project", "Phone", "Status", "Source"];
-    const tableRows = contacts.map(c => [c.name, c.project, c.phone, c.status, c.source || "N/A"]);
+    const tableRows = (sortedContacts && sortedContacts.length > 0 ? sortedContacts : contacts).map(c => [c.name, c.project, c.phone, c.status, c.source || "N/A"]);
     autoTable(doc, { head: [tableColumn], body: tableRows, startY: 30, theme: 'grid', headStyles: { fillColor: [41, 37, 36] } });
     doc.save("clients_report.pdf");
     showFeedback("PDF Report Exported!");
@@ -600,6 +619,135 @@ const CRMPage = () => {
     return searchMatch && checkMonth(s.startDate);
   });
 
+  const sortedContacts = useMemo(() => {
+    return [...filteredContacts].sort((a, b) => {
+      let comparison = 0;
+      if (contactSortField === "name") {
+        comparison = (a.name || "").localeCompare(b.name || "", undefined, { sensitivity: "base" });
+      } else if (contactSortField === "project") {
+        comparison = (a.project || "").localeCompare(b.project || "", undefined, { sensitivity: "base" });
+      } else if (contactSortField === "organizationName") {
+        comparison = (a.organizationName || "").localeCompare(b.organizationName || "", undefined, { sensitivity: "base" });
+      } else if (contactSortField === "source") {
+        comparison = (a.source || "").localeCompare(b.source || "", undefined, { sensitivity: "base" });
+      } else if (contactSortField === "quoteValue") {
+        const valA = quotations
+          .filter(q => (q.clientName || "").trim().toLowerCase() === (a.name || "").trim().toLowerCase())
+          .reduce((sum, q) => sum + (parseFloat(q.total) || 0), 0);
+        const valB = quotations
+          .filter(q => (q.clientName || "").trim().toLowerCase() === (b.name || "").trim().toLowerCase())
+          .reduce((sum, q) => sum + (parseFloat(q.total) || 0), 0);
+        comparison = valA - valB;
+      } else {
+        // "date" (default)
+        const dateA = a.date ? new Date(a.date).getTime() : 0;
+        const dateB = b.date ? new Date(b.date).getTime() : 0;
+        comparison = dateA - dateB;
+        if (comparison === 0) {
+          comparison = (Number(a.id) || 0) - (Number(b.id) || 0);
+        }
+      }
+      return contactSortOrder === "desc" ? -comparison : comparison;
+    });
+  }, [filteredContacts, contactSortField, contactSortOrder, quotations]);
+
+  const pipelineMetrics = useMemo(() => {
+    let totalDeals = 0;
+    let totalValue = 0;
+    Object.values(pipeline).forEach(col => {
+      (col.deals || []).forEach(d => {
+        totalDeals++;
+        totalValue += Number(d.value) || 0;
+      });
+    });
+    return { totalDeals, totalValue };
+  }, [pipeline]);
+
+  const getSortedDeals = (deals) => {
+    const filtered = (deals || []).filter((d) => (d.title || "").toLowerCase().includes(searchTerm.toLowerCase()) && checkMonth(d.closeDate));
+    if (pipelineSort === "default") return filtered;
+    return [...filtered].sort((a, b) => {
+      if (pipelineSort === "value-desc") return (Number(b.value) || 0) - (Number(a.value) || 0);
+      if (pipelineSort === "value-asc") return (Number(a.value) || 0) - (Number(b.value) || 0);
+      if (pipelineSort === "date-desc") return new Date(b.closeDate || 0) - new Date(a.closeDate || 0);
+      if (pipelineSort === "date-asc") return new Date(a.closeDate || 0) - new Date(b.closeDate || 0);
+      if (pipelineSort === "title-asc") return (a.title || "").localeCompare(b.title || "", undefined, { sensitivity: "base" });
+      if (pipelineSort === "title-desc") return (b.title || "").localeCompare(a.title || "", undefined, { sensitivity: "base" });
+      if (pipelineSort === "contact-asc") {
+        const cA = contacts.find(c => String(c.id) === String(a.contactId))?.name || "";
+        const cB = contacts.find(c => String(c.id) === String(b.contactId))?.name || "";
+        return cA.localeCompare(cB, undefined, { sensitivity: "base" });
+      }
+      return 0;
+    });
+  };
+
+  const sortedActivities = useMemo(() => {
+    return [...filteredActivities].sort((a, b) => {
+      if (scheduleSort === "date-desc") {
+        return new Date(b.date || 0) - new Date(a.date || 0);
+      }
+      if (scheduleSort === "client-asc") {
+        const nameA = contacts.find(c => c.id === a.client)?.name || "";
+        const nameB = contacts.find(c => c.id === b.client)?.name || "";
+        return nameA.localeCompare(nameB, undefined, { sensitivity: "base" });
+      }
+      if (scheduleSort === "client-desc") {
+        const nameA = contacts.find(c => c.id === a.client)?.name || "";
+        const nameB = contacts.find(c => c.id === b.client)?.name || "";
+        return nameB.localeCompare(nameA, undefined, { sensitivity: "base" });
+      }
+      if (scheduleSort === "type-asc") {
+        return (a.type || "").localeCompare(b.type || "", undefined, { sensitivity: "base" });
+      }
+      if (scheduleSort === "priority") {
+        const now = new Date();
+        const isOverdueA = new Date(a.date) < now && a.status !== 'Completed';
+        const isOverdueB = new Date(b.date) < now && b.status !== 'Completed';
+        if (isOverdueA && !isOverdueB) return -1;
+        if (!isOverdueA && isOverdueB) return 1;
+        return new Date(a.date || 0) - new Date(b.date || 0);
+      }
+      // "date-asc" (default)
+      return new Date(a.date || 0) - new Date(b.date || 0);
+    });
+  }, [filteredActivities, scheduleSort, contacts]);
+
+  const sortedSites = useMemo(() => {
+    return [...filteredSites].sort((a, b) => {
+      if (siteSort === "date-asc") return new Date(a.startDate || 0) - new Date(b.startDate || 0);
+      if (siteSort === "name-asc") return (a.name || "").localeCompare(b.name || "", undefined, { sensitivity: "base" });
+      if (siteSort === "client-asc") return (a.clientName || "").localeCompare(b.clientName || "", undefined, { sensitivity: "base" });
+      return new Date(b.startDate || 0) - new Date(a.startDate || 0);
+    });
+  }, [filteredSites, siteSort]);
+
+  const sortedTelecalls = useMemo(() => {
+    return [...telecalls].sort((a, b) => {
+      if (telecallSort === "date-asc") return new Date(a.date || a.timestamp || 0) - new Date(b.date || b.timestamp || 0);
+      if (telecallSort === "customer-asc") return (a.customer || "").localeCompare(b.customer || "", undefined, { sensitivity: "base" });
+      return new Date(b.date || b.timestamp || 0) - new Date(a.date || a.timestamp || 0);
+    });
+  }, [telecalls, telecallSort]);
+
+  const sortedCampaigns = useMemo(() => {
+    return [...campaigns].sort((a, b) => {
+      if (campaignSort === "budget-asc") return (Number(a.budget) || 0) - (Number(b.budget) || 0);
+      if (campaignSort === "name-asc") return (a.name || "").localeCompare(b.name || "", undefined, { sensitivity: "base" });
+      return (Number(b.budget) || 0) - (Number(a.budget) || 0);
+    });
+  }, [campaigns, campaignSort]);
+
+  const sortedModalQuotes = useMemo(() => {
+    if (!clientQuotationsModal?.quotations) return [];
+    return [...clientQuotationsModal.quotations].sort((a, b) => {
+      if (modalQuoteSort === "date-asc") return new Date(a.date || 0) - new Date(b.date || 0);
+      if (modalQuoteSort === "value-desc") return (parseFloat(b.total) || 0) - (parseFloat(a.total) || 0);
+      if (modalQuoteSort === "value-asc") return (parseFloat(a.total) || 0) - (parseFloat(b.total) || 0);
+      return new Date(b.date || 0) - new Date(a.date || 0);
+    });
+  }, [clientQuotationsModal, modalQuoteSort]);
+
   const onDragEnd = async (result) => {
     const { source, destination } = result;
     if (!destination) return;
@@ -698,6 +846,47 @@ const CRMPage = () => {
         {/* SECTION: DEALS (KANBAN) */}
         {activeTab === "pipeline" && (
           <div className="p-4 sm:p-5 overflow-x-auto w-full">
+            {/* Pipeline Header Toolbar with Sort */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 pb-3 border-b border-[var(--border-color)]">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-violet-500 animate-pulse" />
+                  <h2 className="text-base sm:text-lg font-black text-themed">Sales Pipeline</h2>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20">
+                    {pipelineMetrics.totalDeals} Deals
+                  </span>
+                  <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-mono">
+                    ₹{(pipelineMetrics.totalValue / 100000).toFixed(2)}L Volume
+                  </span>
+                </div>
+              </div>
+
+              {/* Sort Deals Selector */}
+              <div className="flex items-center gap-1.5 bg-[var(--bg-surface)] p-1.5 rounded-xl border border-[var(--border-color)] shadow-inner text-xs self-stretch sm:self-auto justify-between sm:justify-start">
+                <div className="flex items-center gap-1 text-muted pl-1">
+                  <SlidersHorizontal size={13} className="text-violet-500" />
+                  <span className="text-[11px] uppercase tracking-wider font-black hidden md:inline">Sort Deals:</span>
+                </div>
+                <select
+                  value={pipelineSort}
+                  onChange={(e) => setPipelineSort(e.target.value)}
+                  className="bg-transparent font-bold text-themed outline-none py-0.5 pr-2 cursor-pointer [&>option]:bg-[var(--modal-bg)]"
+                  title="Sort deals within pipeline columns"
+                >
+                  <option value="default">Default (Board Order)</option>
+                  <option value="value-desc">Deal Value: High to Low</option>
+                  <option value="value-asc">Deal Value: Low to High</option>
+                  <option value="date-desc">Close Date: Newest First</option>
+                  <option value="date-asc">Close Date: Oldest First</option>
+                  <option value="title-asc">Deal Title: A to Z</option>
+                  <option value="title-desc">Deal Title: Z to A</option>
+                  <option value="contact-asc">Client Name: A to Z</option>
+                </select>
+              </div>
+            </div>
+
             <DragDropContext onDragEnd={onDragEnd}>
               <div className="flex flex-row gap-2 sm:gap-3 w-full min-w-[1200px]">
                 {Object.values(pipeline).map((column) => (
@@ -707,12 +896,12 @@ const CRMPage = () => {
                       <span className="themed-card text-muted border border-[var(--border-color)] text-[10px] font-black px-2 py-0.5 rounded-md self-start xl:self-auto">{column.deals.length}</span>
                     </div>
                     <Droppable droppableId={column.id} renderClone={(provided, snapshot, rubric) => {
-                      const deal = column.deals[rubric.source.index];
-                      const contact = contacts.find((c) => c.id === deal.contactId);
+                      const deal = column.deals.find(d => d.id === rubric.draggableId) || column.deals[rubric.source.index];
+                      const contact = contacts.find((c) => c.id === deal?.contactId);
                       return (
                         <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} style={{...provided.draggableProps.style, zIndex: 9999, margin: 0}} className="themed-card p-3 sm:p-4 rounded-xl border shadow-2xl border-violet-500/50 scale-[1.02] rotate-1 opacity-90">
                           <div className="mb-2">
-                            <h4 className="font-black text-themed text-xs sm:text-sm leading-snug truncate">{deal.title}</h4>
+                            <h4 className="font-black text-themed text-xs sm:text-sm leading-snug truncate">{deal?.title}</h4>
                           </div>
                           <div className="flex items-center gap-2 mb-3">
                             <div className="w-5 h-5 rounded-md bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center text-[9px] font-bold flex-shrink-0">
@@ -723,16 +912,16 @@ const CRMPage = () => {
                           <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-slate-400 mb-4">
                             <Phone size={12} className="text-slate-500" /> {contact?.phone || 'N/A'}
                           </div>
-                          <div className="text-xs sm:text-sm font-black text-emerald-400 mb-3 bg-emerald-500/10 w-max px-2 py-0.5 rounded-md border border-emerald-500/20">₹{(deal.value/100000).toFixed(2)}L</div>
+                          <div className="text-xs sm:text-sm font-black text-emerald-400 mb-3 bg-emerald-500/10 w-max px-2 py-0.5 rounded-md border border-emerald-500/20">₹{((deal?.value || 0)/100000).toFixed(2)}L</div>
                           <div className="pt-2 border-t border-[var(--border-color)] flex justify-between items-center">
-                            <span className="flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-slate-500 truncate"><Clock size={10} /> {formatDealDate(deal.closeDate)}</span>
+                            <span className="flex items-center gap-1 text-[9px] sm:text-[10px] font-bold text-slate-500 truncate"><Clock size={10} /> {formatDealDate(deal?.closeDate)}</span>
                           </div>
                         </div>
                       );
                     }}>
                       {(provided, snapshot) => (
                         <div {...provided.droppableProps} ref={provided.innerRef} className={`flex-1 min-h-[300px] rounded-[1rem] transition-colors ${snapshot.isDraggingOver ? "bg-violet-500/10 border-2 border-dashed border-violet-500/40 p-1" : ""}`}>
-                          {column.deals.filter((d) => d.title.toLowerCase().includes(searchTerm.toLowerCase()) && checkMonth(d.closeDate)).map((deal, index) => {
+                          {getSortedDeals(column.deals).map((deal, index) => {
                             const contact = contacts.find((c) => c.id === deal.contactId);
 
                             return (
@@ -895,6 +1084,44 @@ const CRMPage = () => {
                   </div>
                 )}
 
+                {/* Sort Control Dropdown & Direction Toggle */}
+                <div className="flex items-center gap-1.5 bg-[var(--bg-surface)] p-1 rounded-xl border border-[var(--border-color)] shadow-inner">
+                  <div className="flex items-center pl-2 pr-0.5 text-xs font-bold text-muted gap-1">
+                    <SlidersHorizontal size={13} className="text-violet-500" />
+                    <span className="hidden xl:inline text-[11px] uppercase tracking-wider font-black">Sort:</span>
+                  </div>
+                  <select
+                    value={`${contactSortField}-${contactSortOrder}`}
+                    onChange={(e) => {
+                      const [field, order] = e.target.value.split('-');
+                      setContactSortField(field);
+                      setContactSortOrder(order);
+                    }}
+                    className="bg-transparent text-xs font-bold text-themed outline-none py-1 pr-1 cursor-pointer [&>option]:bg-[var(--modal-bg)]"
+                    title="Sort contacts"
+                  >
+                    <option value="date-desc">Recent First (Newest)</option>
+                    <option value="date-asc">Oldest First</option>
+                    <option value="name-asc">Client Name (A - Z)</option>
+                    <option value="name-desc">Client Name (Z - A)</option>
+                    <option value="organizationName-asc">Company / Partner (A - Z)</option>
+                    <option value="organizationName-desc">Company / Partner (Z - A)</option>
+                    <option value="project-asc">Project Focus (A - Z)</option>
+                    <option value="project-desc">Project Focus (Z - A)</option>
+                    <option value="source-asc">Lead Source (A - Z)</option>
+                    <option value="quoteValue-desc">Quote Value (High - Low)</option>
+                    <option value="quoteValue-asc">Quote Value (Low - High)</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setContactSortOrder(prev => prev === "desc" ? "asc" : "desc")}
+                    className="p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-themed transition-colors"
+                    title={`Order: currently ${contactSortOrder === 'desc' ? 'Descending (Click for Ascending)' : 'Ascending (Click for Descending)'}`}
+                  >
+                    {contactSortOrder === "asc" ? <ArrowUp size={13} className="text-violet-500" /> : <ArrowDown size={13} className="text-violet-500" />}
+                  </button>
+                </div>
+
                 <div className="flex bg-[var(--bg-surface)] p-1 rounded-xl border border-[var(--border-color)]">
                   <button onClick={() => setViewMode("list")} className={`p-1.5 rounded-lg transition-colors ${viewMode === "list" ? "bg-[var(--accent)] text-white shadow-sm" : "text-muted hover:text-themed"}`} title="List View"><List size={16}/></button>
                   <button onClick={() => setViewMode("card")} className={`p-1.5 rounded-lg transition-colors ${viewMode === "card" ? "bg-[var(--accent)] text-white shadow-sm" : "text-muted hover:text-themed"}`} title="Card View"><Grid size={16}/></button>
@@ -936,15 +1163,75 @@ const CRMPage = () => {
             <table className="w-full text-left border-collapse" style={{background: 'transparent'}}>
               <thead>
                 <tr className="border-b border-[var(--border-color)] text-[10px] font-black uppercase tracking-widest" style={{color: 'var(--text-muted)', background: 'transparent'}}>
-                  <th className="py-4 pl-8 pr-4">Client Profile</th>
-                  <th className="py-4 px-4">Project Focus</th>
-                  <th className="py-4 px-4">Tags / Source</th>
-                  <th className="py-4 px-4">Contact Details</th>
+                  <th
+                    className="py-4 pl-8 pr-4 cursor-pointer select-none group/th hover:text-themed transition-colors"
+                    onClick={() => handleTableSort("name", "asc")}
+                    title={`Sort by Client Name (${contactSortField === 'name' ? (contactSortOrder === 'asc' ? 'Ascending - click for Descending' : 'Descending - click for Ascending') : 'Click to sort A-Z'})`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Client Profile</span>
+                      <span className={`transition-opacity ${contactSortField === 'name' ? 'opacity-100 text-violet-500' : 'opacity-0 group-hover/th:opacity-50 text-muted'}`}>
+                        {contactSortField === 'name' ? (
+                          contactSortOrder === 'asc' ? <ArrowUp size={12} className="stroke-[2.5]" /> : <ArrowDown size={12} className="stroke-[2.5]" />
+                        ) : (
+                          <ArrowUpDown size={12} />
+                        )}
+                      </span>
+                    </div>
+                  </th>
+                  <th
+                    className="py-4 px-4 cursor-pointer select-none group/th hover:text-themed transition-colors"
+                    onClick={() => handleTableSort("project", "asc")}
+                    title={`Sort by Project Focus (${contactSortField === 'project' ? (contactSortOrder === 'asc' ? 'Ascending - click for Descending' : 'Descending - click for Ascending') : 'Click to sort A-Z'})`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Project Focus</span>
+                      <span className={`transition-opacity ${contactSortField === 'project' ? 'opacity-100 text-violet-500' : 'opacity-0 group-hover/th:opacity-50 text-muted'}`}>
+                        {contactSortField === 'project' ? (
+                          contactSortOrder === 'asc' ? <ArrowUp size={12} className="stroke-[2.5]" /> : <ArrowDown size={12} className="stroke-[2.5]" />
+                        ) : (
+                          <ArrowUpDown size={12} />
+                        )}
+                      </span>
+                    </div>
+                  </th>
+                  <th
+                    className="py-4 px-4 cursor-pointer select-none group/th hover:text-themed transition-colors"
+                    onClick={() => handleTableSort("source", "asc")}
+                    title={`Sort by Source (${contactSortField === 'source' ? (contactSortOrder === 'asc' ? 'Ascending - click for Descending' : 'Descending - click for Ascending') : 'Click to sort A-Z'})`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Tags / Source</span>
+                      <span className={`transition-opacity ${contactSortField === 'source' ? 'opacity-100 text-violet-500' : 'opacity-0 group-hover/th:opacity-50 text-muted'}`}>
+                        {contactSortField === 'source' ? (
+                          contactSortOrder === 'asc' ? <ArrowUp size={12} className="stroke-[2.5]" /> : <ArrowDown size={12} className="stroke-[2.5]" />
+                        ) : (
+                          <ArrowUpDown size={12} />
+                        )}
+                      </span>
+                    </div>
+                  </th>
+                  <th
+                    className="py-4 px-4 cursor-pointer select-none group/th hover:text-themed transition-colors"
+                    onClick={() => handleTableSort("date", "desc")}
+                    title={`Sort by Date / Contact Details (${contactSortField === 'date' ? (contactSortOrder === 'asc' ? 'Oldest first - click for Recent' : 'Recent first - click for Oldest') : 'Click to sort by Date'})`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Contact Details</span>
+                      <span className={`transition-opacity ${contactSortField === 'date' ? 'opacity-100 text-violet-500' : 'opacity-0 group-hover/th:opacity-50 text-muted'}`}>
+                        {contactSortField === 'date' ? (
+                          contactSortOrder === 'asc' ? <ArrowUp size={12} className="stroke-[2.5]" /> : <ArrowDown size={12} className="stroke-[2.5]" />
+                        ) : (
+                          <ArrowUpDown size={12} />
+                        )}
+                      </span>
+                    </div>
+                  </th>
                   <th className="py-4 pr-8 pl-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredContacts.map((c) => {
+                {sortedContacts.map((c) => {
                   const isB2B = (c.clientType === 'B2B') || (!c.clientType && !!c.organizationName?.trim());
                   const clientQuotes = quotations.filter(q => (q.clientName || "").trim().toLowerCase() === c.name.trim().toLowerCase());
 
@@ -1083,7 +1370,7 @@ const CRMPage = () => {
             </table>
             ) : (
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" style={{background: 'transparent'}}>
-                {filteredContacts.map((c) => {
+                {sortedContacts.map((c) => {
                   const isB2B = (c.clientType === 'B2B') || (!c.clientType && !!c.organizationName?.trim());
                   const clientQuotes = quotations.filter(q => (q.clientName || "").trim().toLowerCase() === c.name.trim().toLowerCase());
                   const quoteTotal = clientQuotes.reduce((sum, q) => sum + (parseFloat(q.total) || 0), 0);
@@ -1266,9 +1553,35 @@ const CRMPage = () => {
               ))}
             </div>
             <div className="themed-card rounded-[2rem] p-6 lg:p-8">
-              <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2"><Clock size={14} /> Upcoming Schedule</h3>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+                <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                  <Clock size={14} /> Upcoming Schedule ({sortedActivities.length})
+                </h3>
+
+                {/* Sort Activities Selector */}
+                <div className="flex items-center gap-1.5 bg-[var(--bg-surface)] p-1.5 rounded-xl border border-[var(--border-color)] shadow-inner text-xs self-stretch sm:self-auto justify-between sm:justify-start">
+                  <div className="flex items-center gap-1 text-muted pl-1">
+                    <SlidersHorizontal size={13} className="text-violet-500" />
+                    <span className="text-[11px] uppercase tracking-wider font-black hidden sm:inline">Sort:</span>
+                  </div>
+                  <select
+                    value={scheduleSort}
+                    onChange={(e) => setScheduleSort(e.target.value)}
+                    className="bg-transparent font-bold text-themed outline-none py-0.5 pr-2 cursor-pointer [&>option]:bg-[var(--modal-bg)]"
+                    title="Sort activities"
+                  >
+                    <option value="date-asc">Date: Soonest First</option>
+                    <option value="date-desc">Date: Furthest First</option>
+                    <option value="client-asc">Client Name: A to Z</option>
+                    <option value="client-desc">Client Name: Z to A</option>
+                    <option value="type-asc">Activity Type: A to Z</option>
+                    <option value="priority">Priority: Overdue & Pending First</option>
+                  </select>
+                </div>
+              </div>
+
               <div className="space-y-3">
-                {filteredActivities.sort((a,b) => new Date(a.date) - new Date(b.date)).map((act) => {
+                {sortedActivities.map((act) => {
                   const contact = contacts.find(c => c.id === act.client);
                   const checkDate = new Date(act.date);
                   if (!act.date || !act.date.includes('T') || act.date.endsWith('00:00:00.000Z')) {
@@ -1337,15 +1650,31 @@ const CRMPage = () => {
         {/* SECTION: SITE SURVEYS */}
         {activeTab === "site_surveys" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 lg:p-8">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
               <h2 className="text-xl font-black text-themed">Site Survey Notes</h2>
-              <div className="flex bg-[var(--bg-surface)] p-1 rounded-xl border border-[var(--border-color)]">
-                <button onClick={() => setViewMode("list")} className={`p-1.5 rounded-lg transition-colors ${viewMode === "list" ? "bg-[var(--accent)] text-white shadow-sm" : "text-muted hover:text-themed"}`} title="List View"><List size={16}/></button>
-                <button onClick={() => setViewMode("card")} className={`p-1.5 rounded-lg transition-colors ${viewMode === "card" ? "bg-[var(--accent)] text-white shadow-sm" : "text-muted hover:text-themed"}`} title="Card View"><Grid size={16}/></button>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5 bg-[var(--bg-surface)] p-1.5 rounded-xl border border-[var(--border-color)] text-xs font-bold shadow-inner">
+                  <SlidersHorizontal size={13} className="text-violet-500 ml-1" />
+                  <span className="text-[11px] uppercase tracking-wider font-black text-muted hidden sm:inline">Sort:</span>
+                  <select
+                    value={siteSort}
+                    onChange={(e) => setSiteSort(e.target.value)}
+                    className="bg-transparent text-themed outline-none py-0.5 pr-2 cursor-pointer [&>option]:bg-[var(--modal-bg)]"
+                  >
+                    <option value="date-desc">Date: Recent First</option>
+                    <option value="date-asc">Date: Oldest First</option>
+                    <option value="name-asc">Site Name: A to Z</option>
+                    <option value="client-asc">Client Name: A to Z</option>
+                  </select>
+                </div>
+                <div className="flex bg-[var(--bg-surface)] p-1 rounded-xl border border-[var(--border-color)]">
+                  <button onClick={() => setViewMode("list")} className={`p-1.5 rounded-lg transition-colors ${viewMode === "list" ? "bg-[var(--accent)] text-white shadow-sm" : "text-muted hover:text-themed"}`} title="List View"><List size={16}/></button>
+                  <button onClick={() => setViewMode("card")} className={`p-1.5 rounded-lg transition-colors ${viewMode === "card" ? "bg-[var(--accent)] text-white shadow-sm" : "text-muted hover:text-themed"}`} title="Card View"><Grid size={16}/></button>
+                </div>
               </div>
             </div>
             
-            {filteredSites.length === 0 ? (
+            {sortedSites.length === 0 ? (
               <div className="col-span-full p-12 text-center themed-card rounded-3xl border border-[var(--border-color)] shadow-sm">
                 <MapPin size={48} className="mx-auto text-slate-400 mb-4 opacity-50" />
                 <h3 className="text-xl font-black text-themed">No Sites Found</h3>
@@ -1364,7 +1693,7 @@ const CRMPage = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredSites.map(site => {
+                    {sortedSites.map(site => {
                       const sStatus = site.surveyStatus || 'Not Taken';
                       return (
                         <tr key={site.id} className="border-b border-[var(--border-color)] hover:bg-black/5 dark:hover:bg-white/5 transition-colors group">
@@ -1402,7 +1731,7 @@ const CRMPage = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                {filteredSites.map(site => {
+                {sortedSites.map(site => {
                   const sStatus = site.surveyStatus || 'Not Taken';
                   return (
                     <div key={site.id} className="p-6 themed-card rounded-[2rem] border border-[var(--border-color)] shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
@@ -1512,11 +1841,26 @@ const CRMPage = () => {
               </div>
             </div>
             
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
               <h2 className="text-lg font-black text-themed">Recent Calls</h2>
-              <button onClick={() => setIsLogCallOpen(true)} className="px-4 py-2 bg-accent hover:bg-accent-hover text-white rounded-xl text-xs font-bold transition-colors shadow-md flex items-center gap-2">
-                <Plus size={14}/> Log New Call
-              </button>
+              <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-1.5 bg-[var(--bg-surface)] p-1.5 rounded-xl border border-[var(--border-color)] text-xs font-bold shadow-inner">
+                  <SlidersHorizontal size={13} className="text-violet-500 ml-1" />
+                  <span className="text-[11px] uppercase tracking-wider font-black text-muted hidden sm:inline">Sort:</span>
+                  <select
+                    value={telecallSort}
+                    onChange={(e) => setTelecallSort(e.target.value)}
+                    className="bg-transparent text-themed outline-none py-0.5 pr-2 cursor-pointer [&>option]:bg-[var(--modal-bg)]"
+                  >
+                    <option value="date-desc">Date: Recent First</option>
+                    <option value="date-asc">Date: Oldest First</option>
+                    <option value="customer-asc">Customer: A to Z</option>
+                  </select>
+                </div>
+                <button onClick={() => setIsLogCallOpen(true)} className="px-4 py-2 bg-accent hover:bg-accent-hover text-white rounded-xl text-xs font-bold transition-colors shadow-md flex items-center gap-2">
+                  <Plus size={14}/> Log New Call
+                </button>
+              </div>
             </div>
             
             <div className="overflow-x-auto bg-[var(--bg-card)] rounded-2xl border border-[var(--border-color)]">
@@ -1533,7 +1877,7 @@ const CRMPage = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border-color)]">
-                  {telecalls.map((call) => (
+                  {sortedTelecalls.map((call) => (
                     <tr key={call.id} className="hover:bg-black/5 dark:hover:bg-white/5 transition-colors group">
                       <td className="py-4 pl-6 pr-4 font-black text-sm text-themed">{call.customer}</td>
                       <td className="py-4 px-4 text-xs font-bold text-muted">{call.phone}</td>
@@ -1596,11 +1940,26 @@ const CRMPage = () => {
               </div>
             </div>
 
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
               <h2 className="text-lg font-black text-themed">Marketing Campaigns</h2>
-              <button className="px-4 py-2 bg-accent hover:bg-accent-hover text-white rounded-xl text-xs font-bold transition-colors shadow-md flex items-center gap-2" onClick={() => setEditCampaign({ name: '', platform: 'Email', status: 'Scheduled', date: new Date().toISOString().split('T')[0] })}>
-                <Plus size={14}/> Create Campaign
-              </button>
+              <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-1.5 bg-[var(--bg-surface)] p-1.5 rounded-xl border border-[var(--border-color)] text-xs font-bold shadow-inner">
+                  <SlidersHorizontal size={13} className="text-violet-500 ml-1" />
+                  <span className="text-[11px] uppercase tracking-wider font-black text-muted hidden sm:inline">Sort:</span>
+                  <select
+                    value={campaignSort}
+                    onChange={(e) => setCampaignSort(e.target.value)}
+                    className="bg-transparent text-themed outline-none py-0.5 pr-2 cursor-pointer [&>option]:bg-[var(--modal-bg)]"
+                  >
+                    <option value="budget-desc">Budget: High to Low</option>
+                    <option value="budget-asc">Budget: Low to High</option>
+                    <option value="name-asc">Campaign Name: A to Z</option>
+                  </select>
+                </div>
+                <button className="px-4 py-2 bg-accent hover:bg-accent-hover text-white rounded-xl text-xs font-bold transition-colors shadow-md flex items-center gap-2" onClick={() => setEditCampaign({ name: '', platform: 'Email', status: 'Scheduled', date: new Date().toISOString().split('T')[0] })}>
+                  <Plus size={14}/> Create Campaign
+                </button>
+              </div>
             </div>
             
             <div className="overflow-x-auto bg-[var(--bg-card)] rounded-2xl border border-[var(--border-color)]">
@@ -1617,7 +1976,7 @@ const CRMPage = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border-color)]">
-                  {campaigns.map((camp) => (
+                  {sortedCampaigns.map((camp) => (
                     <tr key={camp.id} className="hover:bg-black/5 dark:hover:bg-white/5 transition-colors group cursor-pointer" onClick={() => setEditCampaign(camp)}>
                       <td className="py-4 pl-6 pr-4 font-black text-sm text-themed">{camp.name}</td>
                       <td className="py-4 px-4 text-center text-xs font-bold text-muted">{camp.channel}</td>
@@ -1731,8 +2090,28 @@ const CRMPage = () => {
               </button>
             </div>
 
+            <div className="flex justify-between items-center px-1 pt-1">
+              <span className="text-xs font-bold text-muted">
+                {sortedModalQuotes.length} {sortedModalQuotes.length === 1 ? 'Quotation' : 'Quotations'} found
+              </span>
+              <div className="flex items-center gap-1.5 bg-[var(--bg-surface)] p-1 rounded-xl border border-[var(--border-color)] text-xs font-bold shadow-inner">
+                <SlidersHorizontal size={12} className="text-violet-500 ml-1" />
+                <span className="text-[10px] uppercase tracking-wider font-black text-muted">Sort:</span>
+                <select
+                  value={modalQuoteSort}
+                  onChange={(e) => setModalQuoteSort(e.target.value)}
+                  className="bg-transparent text-themed outline-none py-0.5 pr-1 cursor-pointer [&>option]:bg-[var(--modal-bg)] text-xs"
+                >
+                  <option value="date-desc">Recent First</option>
+                  <option value="date-asc">Oldest First</option>
+                  <option value="value-desc">Value: High to Low</option>
+                  <option value="value-asc">Value: Low to High</option>
+                </select>
+              </div>
+            </div>
+
             <div className="divide-y divide-[var(--border-color)] max-h-[420px] overflow-y-auto">
-              {clientQuotationsModal.quotations.map((q) => (
+              {sortedModalQuotes.map((q) => (
                 <div key={q.id || q.quoteNo} className="py-3 flex items-center justify-between gap-3 hover:bg-black/5 dark:hover:bg-white/5 px-2 rounded-xl transition">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">

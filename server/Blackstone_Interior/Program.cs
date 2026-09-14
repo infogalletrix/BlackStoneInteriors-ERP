@@ -9,6 +9,8 @@ builder.Services.AddControllers()
     {
         options.JsonSerializerOptions.ReferenceHandler =
             System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.NumberHandling =
+            System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString;
     });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
