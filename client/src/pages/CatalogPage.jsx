@@ -834,16 +834,6 @@ export default function CatalogPage() {
                 <AlertCircle size={13} /> {saveErrorMsg} • Retry
               </button>
             )}
-            {!isSaving && !saveSuccessMsg && !saveErrorMsg && (
-              <button
-                type="button"
-                onClick={() => persistToServer(catalogTree)}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white/95 text-xs font-bold border border-white/25 transition cursor-pointer"
-                title="Catalog is synced with cloud. Click to sync now."
-              >
-                <CheckCircle2 size={13} /> Cloud Synced
-              </button>
-            )}
           </div>
         </div>
       </div>
