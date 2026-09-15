@@ -148,11 +148,11 @@ export default function ReceiptPreviewModal({ receipt, onClose, onPrint, onEdit,
           <button
             type="button"
             onClick={() => viewReceiptPDF(receipt)}
-            className="hidden lg:flex bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-2 rounded-xl font-bold text-xs items-center gap-1.5 transition shadow-sm cursor-pointer"
-            title="Open PDF in new tab"
+            className="flex bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 sm:px-4 py-2 rounded-xl font-bold text-xs sm:text-sm items-center gap-1.5 transition shadow-sm cursor-pointer"
+            title="View / Open PDF in new tab"
           >
             <ExternalLink size={14} />
-            <span>Open PDF</span>
+            <span>View PDF</span>
           </button>
 
           {onPrint && receipt.status !== "Draft" && (

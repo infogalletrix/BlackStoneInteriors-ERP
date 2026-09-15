@@ -10,6 +10,7 @@ import {
   History, FileCheck, Receipt, Plus, ArrowUpDown, Download, Loader2
 } from "lucide-react";
 import { viewQuotationPDF, downloadQuotationPDF } from "../utils/quotationPdfGenerator";
+import { downloadReceiptPDF } from "../utils/receiptPdfGenerator";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useDialog } from "../contexts/DialogContext";
 import NotificationWidget from "../components/NotificationWidget";
@@ -505,24 +506,49 @@ export default function HistoryPage() {
                           </span>
                         </td>
                         <td className="px-8 py-5" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center justify-center gap-2">
+                          <div className="flex items-center justify-center gap-1.5">
                             <button
                               onClick={() => setPreviewReceipt(r)}
-                              className="p-2 bg-blue-500/10 text-blue-500 rounded-xl hover:bg-blue-500/20 transition"
-                              title="View Receipt (In-place)"
+                              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 text-[10px] font-black uppercase tracking-wider transition cursor-pointer"
+                              title="View Receipt"
                             >
-                              <Eye size={16} />
+                              <Eye size={12} /> View
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (r.status === "Draft") {
+                                  showDialog({
+                                    title: "Cannot Download Draft",
+                                    message: "Draft receipts cannot be downloaded as official documents. Please generate the receipt first.",
+                                    type: "alert"
+                                  });
+                                  return;
+                                }
+                                try {
+                                  await downloadReceiptPDF(r);
+                                } catch (err) {
+                                  console.error(err);
+                                }
+                              }}
+                              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition cursor-pointer ${
+                                r.status === "Draft"
+                                  ? "bg-slate-500/10 text-slate-400 opacity-40 cursor-not-allowed"
+                                  : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20"
+                              }`}
+                              title="Download PDF"
+                            >
+                              <Download size={12} /> Download
                             </button>
                             <button
                               onClick={() => printPastReceipt(r)}
-                              className={`p-2 rounded-xl transition ${
+                              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition cursor-pointer ${
                                 r.status === "Draft"
                                   ? "bg-slate-500/10 text-slate-400 opacity-40 cursor-not-allowed"
-                                  : "bg-teal-500/10 text-teal-500 hover:bg-teal-500/20"
+                                  : "bg-teal-500/10 text-teal-600 dark:text-teal-400 hover:bg-teal-500/20"
                               }`}
                               title="Print Receipt"
                             >
-                              <Printer size={16} />
+                              <Printer size={12} /> Print
                             </button>
                             <button
                               onClick={() =>

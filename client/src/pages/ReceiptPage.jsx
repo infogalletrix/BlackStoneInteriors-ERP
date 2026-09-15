@@ -265,6 +265,14 @@ export default function ReceiptPage() {
             resetForm();
             setShowHistory(true);
           }
+        } else if (action === "view") {
+          setPreviewReceipt(storedReceipt);
+          if (location.state?.returnToSites) {
+            // keep state
+          } else {
+            resetForm();
+            setShowHistory(true);
+          }
         } else {
           showDialog({
             title: isEditing ? "Updated" : "Generated",
@@ -659,6 +667,16 @@ export default function ReceiptPage() {
                     {selectedReceipts.length > 0 && (
                       <div className="flex items-center gap-1.5">
                         <button
+                          onClick={() => {
+                            const toView = receipts.find((r) => selectedReceipts.includes(r.id));
+                            if (toView) setPreviewReceipt(toView);
+                          }}
+                          className="px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest transition bg-blue-600 hover:bg-blue-700 text-white shadow flex items-center gap-1.5"
+                          title="View selected receipt"
+                        >
+                          <Eye size={12} /> View Selected ({selectedReceipts.length})
+                        </button>
+                        <button
                           onClick={printSelectedReceipts}
                           className="px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest transition btn-accent shadow flex items-center gap-1.5"
                           title="Print selected receipts"
@@ -787,32 +805,32 @@ export default function ReceiptPage() {
                               <div className="flex items-center justify-center gap-1.5">
                                 <button
                                   onClick={() => setPreviewReceipt(r)}
-                                  className="p-1.5 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 rounded-lg transition"
+                                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 text-[10px] font-black uppercase tracking-wider transition"
                                   title="View Receipt"
                                 >
-                                  <Eye size={13} />
+                                  <Eye size={12} /> View
                                 </button>
                                 <button
                                   onClick={() => handleDownloadReceipt(r)}
-                                  className={`p-1.5 rounded-lg transition ${
+                                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition ${
                                     r.status === "Draft"
                                       ? "bg-slate-500/10 text-slate-400 opacity-40 cursor-not-allowed"
-                                      : "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20"
+                                      : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20"
                                   }`}
                                   title="Download PDF"
                                 >
-                                  <Download size={13} />
+                                  <Download size={12} /> Download
                                 </button>
                                 <button
                                   onClick={() => printPastReceipt(r)}
-                                  className={`p-1.5 rounded-lg transition ${
+                                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition ${
                                     r.status === "Draft"
                                       ? "bg-slate-500/10 text-slate-400 opacity-40 cursor-not-allowed"
-                                      : "bg-teal-500/10 text-teal-500 hover:bg-teal-500/20"
+                                      : "bg-teal-500/10 text-teal-600 dark:text-teal-400 hover:bg-teal-500/20"
                                   }`}
                                   title="Print Receipt"
                                 >
-                                  <Printer size={13} />
+                                  <Printer size={12} /> Print
                                 </button>
                                 <button
                                   onClick={() => handleEditReceipt(r)}
@@ -1018,34 +1036,45 @@ export default function ReceiptPage() {
                     </div>
 
                     <div className="flex flex-col gap-3 mt-4 pt-3 border-t border-[var(--border-color)] shrink-0">
-                      <div className="flex flex-wrap md:flex-nowrap gap-3">
+                      <div className="flex flex-wrap gap-2.5">
                         <button
                           type="button"
                           onClick={saveAsDraft}
-                          className="flex-1 bg-[var(--bg-card)] border border-[var(--border-color)] text-muted hover:bg-[var(--bg-card-hover)] py-2.5 rounded-xl font-black uppercase tracking-widest transition flex justify-center items-center gap-2 text-xs"
+                          className="flex-1 min-w-[110px] bg-[var(--bg-card)] border border-[var(--border-color)] text-muted hover:bg-[var(--bg-card-hover)] py-2.5 rounded-xl font-black uppercase tracking-widest transition flex justify-center items-center gap-2 text-xs"
                         >
                           <Save size={15} /> Save Draft
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleGenerateClick("generate")}
-                          className="flex-1 btn-accent py-2.5 rounded-xl font-black uppercase tracking-widest transition flex justify-center items-center gap-2 text-xs"
+                          onClick={() => handleGenerateClick("view")}
+                          className="flex-1 min-w-[130px] bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl font-black uppercase tracking-widest transition flex justify-center items-center gap-2 text-xs shadow-sm cursor-pointer"
+                          title="Generate and view receipt in modal"
                         >
-                          <CheckCircle2 size={15} /> Generate
+                          <Eye size={15} /> Generate & View
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleGenerateClick("download")}
+                          className="flex-1 min-w-[140px] bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl font-black uppercase tracking-widest transition flex justify-center items-center gap-2 text-xs shadow-sm cursor-pointer"
+                          title="Generate and download receipt as PDF"
+                        >
+                          <Download size={15} /> Generate & Download
                         </button>
                         <button
                           type="button"
                           onClick={() => handleGenerateClick("print")}
-                          className="flex-1 btn-accent py-2.5 rounded-xl font-black uppercase tracking-widest transition flex justify-center items-center gap-2 text-xs"
+                          className="flex-1 min-w-[130px] btn-accent py-2.5 rounded-xl font-black uppercase tracking-widest transition flex justify-center items-center gap-2 text-xs cursor-pointer"
+                          title="Generate and print receipt"
                         >
                           <Printer size={15} /> Generate & Print
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleGenerateClick("download")}
-                          className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl font-black uppercase tracking-widest transition flex justify-center items-center gap-2 text-xs shadow-sm"
+                          onClick={() => handleGenerateClick("generate")}
+                          className="flex-1 min-w-[100px] bg-slate-800 hover:bg-slate-700 text-white py-2.5 rounded-xl font-black uppercase tracking-widest transition flex justify-center items-center gap-2 text-xs cursor-pointer"
+                          title="Generate receipt"
                         >
-                          <Download size={15} /> Generate & Download
+                          <CheckCircle2 size={15} /> Generate
                         </button>
                       </div>
                     </div>
@@ -1071,6 +1100,16 @@ export default function ReceiptPage() {
                       ))}
                       {selectedReceipts.length > 0 && (
                         <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => {
+                              const toView = receipts.find((r) => selectedReceipts.includes(r.id));
+                              if (toView) setPreviewReceipt(toView);
+                            }}
+                            className="px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition bg-blue-600 hover:bg-blue-700 text-white shadow flex items-center gap-1.5"
+                            title="View Selected"
+                          >
+                            <Eye size={12} /> View Selected ({selectedReceipts.length})
+                          </button>
                           <button
                             onClick={printSelectedReceipts}
                             className="px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition btn-accent shadow flex items-center gap-1.5"
@@ -1166,46 +1205,46 @@ export default function ReceiptPage() {
                               <div className="flex justify-end items-center gap-1.5">
                                 <button
                                   onClick={() => setPreviewReceipt(r)}
-                                  className="p-1.5 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 rounded-lg transition"
+                                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 text-[10px] font-black uppercase tracking-wider transition"
                                   title="View Receipt"
                                 >
-                                  <Eye size={14} />
+                                  <Eye size={12} /> View
                                 </button>
                                 <button
                                   onClick={() => handleDownloadReceipt(r)}
-                                  className={`p-1.5 rounded-lg transition ${
+                                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition ${
                                     r.status === "Draft"
                                       ? "bg-slate-500/10 text-slate-400 opacity-40 cursor-not-allowed"
-                                      : "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20"
+                                      : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20"
                                   }`}
                                   title="Download PDF"
                                 >
-                                  <Download size={14} />
+                                  <Download size={12} /> Download
                                 </button>
                                 <button
                                   onClick={() => printPastReceipt(r)}
-                                  className={`font-bold text-[9px] uppercase tracking-widest px-2.5 py-1.5 rounded-lg transition ${
+                                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition ${
                                     r.status === "Draft"
                                       ? "bg-[var(--accent-soft)] text-muted cursor-not-allowed opacity-50"
                                       : "bg-[var(--accent)]/10 text-[var(--accent)] hover:bg-[var(--accent)]/20"
                                   }`}
                                   title="Print Receipt"
                                 >
-                                  Print
+                                  <Printer size={12} /> Print
                                 </button>
                                 <button
                                   onClick={() => handleEditReceipt(r)}
                                   className="text-indigo-500 hover:text-indigo-400 p-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-lg transition"
                                   title="Edit"
                                 >
-                                  <Pencil size={14} />
+                                  <Pencil size={13} />
                                 </button>
                                 <button
                                   onClick={() => deleteReceipt(r.id)}
                                   className="text-rose-500 hover:text-rose-400 p-1.5 bg-rose-500/10 hover:bg-rose-500/20 rounded-lg transition"
                                   title="Delete"
                                 >
-                                  <Trash2 size={14} />
+                                  <Trash2 size={13} />
                                 </button>
                               </div>
                             </td>
