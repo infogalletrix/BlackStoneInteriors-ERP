@@ -433,17 +433,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
                         <td className="py-1 px-1.5 text-center align-top font-bold text-slate-900 text-[10px]">{it.qty || 1}</td>
                         <td className="py-1 px-1.5 text-center align-top text-slate-600 font-medium text-[9.5px]">{it.unit || "Sq.Ft"}</td>
                         <td className="py-1 px-2 text-right align-top font-semibold text-slate-800 text-[10px]">
-                          {it.rate ? (
-                            discInfo.hasDiscount ? (
-                              <span className="line-through text-slate-400 text-[9px] block leading-tight font-medium">
-                                ₹{fmt(it.rate)}
-                              </span>
-                            ) : (
-                              <span>₹{fmt(it.rate)}</span>
-                            )
-                          ) : (
-                            "—"
-                          )}
+                          {it.rate ? `₹${fmt(it.rate)}` : "—"}
                         </td>
                         <td className="py-1 px-2 text-right align-top font-bold text-slate-900 text-[10px]">
                           {discInfo.hasDiscount ? (
