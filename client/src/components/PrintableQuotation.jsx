@@ -10,6 +10,12 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
 
   // Financial Calculations
   const subTotal = items.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+  const grossSubTotal = items.reduce((sum, it) => {
+    const q = parseFloat(it.qty) || 0;
+    const r = parseFloat(it.rate) || 0;
+    return sum + (q * r);
+  }, 0);
+  const totalItemDiscount = Math.max(0, grossSubTotal - subTotal);
   const installation = parseFloat(safe.installationMaterial || 0);
   const delivery = parseFloat(safe.deliveryLoading || 0);
   const transport = parseFloat(safe.transportationCharges || 0);
@@ -28,6 +34,56 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
   const grandTotal = taxableTotal + sgst + cgst + igst;
 
   const fmt = (v) => Number(v || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  // Discount parser helper for items
+  const getDiscountInfo = (it) => {
+    const qty = parseFloat(it.qty) || 0;
+    const rate = parseFloat(it.rate) || 0;
+    const gross = qty * rate;
+    const amount = it.amount !== undefined && it.amount !== null && it.amount !== "" ? parseFloat(it.amount) : gross;
+
+    let discountedPrice = null;
+    let hasDiscount = false;
+    let discountPercent = it.discountPercent !== undefined && it.discountPercent !== null && it.discountPercent !== "" ? parseFloat(it.discountPercent) : 0;
+
+    if (it.discountPrice !== undefined && it.discountPrice !== null && it.discountPrice !== "") {
+      const dp = parseFloat(it.discountPrice);
+      if (!isNaN(dp) && (dp < rate || (rate > 0 && dp === 0))) {
+        discountedPrice = dp;
+        hasDiscount = true;
+      }
+    }
+
+    if (!hasDiscount && discountPercent > 0) {
+      discountedPrice = Math.max(0, rate - (rate * discountPercent) / 100);
+      hasDiscount = true;
+    }
+
+    if (!hasDiscount && it.discountAmount !== undefined && it.discountAmount !== null && parseFloat(it.discountAmount) > 0) {
+      const da = parseFloat(it.discountAmount);
+      if (qty > 0) {
+        discountedPrice = Math.max(0, rate - da / qty);
+        hasDiscount = true;
+      }
+    }
+
+    if (!hasDiscount && qty > 0 && rate > 0 && amount < gross - 0.01) {
+      discountedPrice = Math.max(0, amount / qty);
+      hasDiscount = true;
+    }
+
+    if (hasDiscount && discountedPrice !== null && rate > 0 && (!discountPercent || discountPercent <= 0)) {
+      discountPercent = Math.round(((rate - discountedPrice) / rate) * 100);
+    }
+
+    return {
+      hasDiscount,
+      discountedPrice: discountedPrice !== null ? discountedPrice : rate,
+      discountPercent,
+      rate,
+      amount
+    };
+  };
 
   // Precompute overall section totals
   const sectionTotals = items.reduce((acc, it) => {
@@ -71,11 +127,13 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
     const spec = item.specification || "";
     const prod = item.product || "";
     const cat = item.category || "";
+    const discInfo = getDiscountInfo(item);
+    const minLines = discInfo.hasDiscount ? 2 : 1;
     const maxLines = Math.max(
-      Math.ceil(spec.length / 45),
-      Math.ceil(prod.length / 16),
-      Math.ceil(cat.length / 16),
-      1
+      Math.ceil(spec.length / 42),
+      Math.ceil(prod.length / 15),
+      Math.ceil(cat.length / 15),
+      minLines
     );
     if (maxLines >= 4) return 14.0;
     if (maxLines === 3) return 11.0;
@@ -354,27 +412,69 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
                   <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-extrabold uppercase text-[9px] tracking-wider">
                     <th className="py-1 px-2 text-center w-8">SI</th>
                     <th className="py-1 px-2 w-28">Product</th>
-                    <th className="py-1 px-2 w-28">Category</th>
+                    <th className="py-1 px-2 w-24">Category</th>
                     <th className="py-1 px-2">Specification & Material</th>
                     <th className="py-1 px-1.5 text-center w-9">Qty</th>
                     <th className="py-1 px-1.5 text-center w-11">Unit</th>
                     <th className="py-1 px-2 text-right w-20">Rate</th>
+                    <th className="py-1 px-2 text-right w-22">Disc. Price</th>
                     <th className="py-1 px-2 text-right w-24">Amount</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-[9.5px]">
-                  {secGroup.items.map((it, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50/50">
-                      <td className="py-1 px-2 text-center text-slate-400 font-bold text-[9.5px] align-top">{it._globalIndex || idx + 1}</td>
-                      <td className="py-1 px-2 align-top text-slate-900 font-bold text-[10px] leading-tight">{it.product || "—"}</td>
-                      <td className="py-1 px-2 align-top text-slate-700 font-semibold text-[9.5px] leading-tight">{it.category || "—"}</td>
-                      <td className="py-1 px-2 align-top text-slate-700 font-normal text-[9.5px] leading-snug tracking-normal">{it.specification || "Standard Material & Hardware"}</td>
-                      <td className="py-1 px-1.5 text-center align-top font-bold text-slate-900 text-[10px]">{it.qty || 1}</td>
-                      <td className="py-1 px-1.5 text-center align-top text-slate-600 font-medium text-[9.5px]">{it.unit || "Sq.Ft"}</td>
-                      <td className="py-1 px-2 text-right align-top font-semibold text-slate-800 text-[10px]">{it.rate ? `₹${fmt(it.rate)}` : "—"}</td>
-                      <td className="py-1 px-2 text-right align-top font-black text-slate-950 text-[10.5px]">{it.amount ? `₹${fmt(it.amount)}` : "Incl."}</td>
-                    </tr>
-                  ))}
+                  {secGroup.items.map((it, idx) => {
+                    const discInfo = getDiscountInfo(it);
+                    return (
+                      <tr key={idx} className="hover:bg-slate-50/50">
+                        <td className="py-1 px-2 text-center text-slate-400 font-bold text-[9.5px] align-top">{it._globalIndex || idx + 1}</td>
+                        <td className="py-1 px-2 align-top text-slate-900 font-bold text-[10px] leading-tight">{it.product || "—"}</td>
+                        <td className="py-1 px-2 align-top text-slate-700 font-semibold text-[9.5px] leading-tight">{it.category || "—"}</td>
+                        <td className="py-1 px-2 align-top text-slate-700 font-normal text-[9.5px] leading-snug tracking-normal">{it.specification || "Standard Material & Hardware"}</td>
+                        <td className="py-1 px-1.5 text-center align-top font-bold text-slate-900 text-[10px]">{it.qty || 1}</td>
+                        <td className="py-1 px-1.5 text-center align-top text-slate-600 font-medium text-[9.5px]">{it.unit || "Sq.Ft"}</td>
+                        <td className="py-1 px-2 text-right align-top font-semibold text-slate-800 text-[10px]">
+                          {it.rate ? (
+                            discInfo.hasDiscount ? (
+                              <span className="line-through text-slate-400 text-[9px] block leading-tight font-medium">
+                                ₹{fmt(it.rate)}
+                              </span>
+                            ) : (
+                              <span>₹{fmt(it.rate)}</span>
+                            )
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                        <td className="py-1 px-2 text-right align-top font-bold text-slate-900 text-[10px]">
+                          {discInfo.hasDiscount ? (
+                            <div>
+                              <span className="font-bold text-slate-950 text-[10px]">
+                                ₹{fmt(discInfo.discountedPrice)}
+                              </span>
+                              {discInfo.discountPercent > 0 && (
+                                <span className="text-[7.5px] font-extrabold text-amber-700 block leading-tight">
+                                  (-{discInfo.discountPercent}%)
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-slate-400 font-medium">—</span>
+                          )}
+                        </td>
+                        <td className="py-1 px-2 text-right align-top font-black text-slate-950 text-[10.5px]">
+                          {it.amount !== undefined && it.amount !== null && it.amount !== "" && parseFloat(it.amount) > 0 ? (
+                            `₹${fmt(it.amount)}`
+                          ) : (it.amount === 0 || it.amount === "0") && discInfo.hasDiscount ? (
+                            <span className="text-emerald-700 font-black text-[9.5px]">Incl.</span>
+                          ) : it.amount ? (
+                            `₹${fmt(it.amount)}`
+                          ) : (
+                            "Incl."
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -436,10 +536,27 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
           <table className="w-full text-[9.5px]">
             <tbody className="divide-y divide-slate-100">
-              <tr className="bg-slate-50/80">
-                <td className="py-0.5 px-2 font-bold text-slate-700">Sub Total</td>
-                <td className="py-0.5 px-2 text-right font-black text-slate-900 text-[10px]">INR {fmt(subTotal)}</td>
-              </tr>
+              {totalItemDiscount > 0 ? (
+                <>
+                  <tr className="bg-slate-50/80">
+                    <td className="py-0.5 px-2 text-slate-600 font-medium">Gross Sub Total</td>
+                    <td className="py-0.5 px-2 text-right font-semibold text-slate-700">INR {fmt(grossSubTotal)}</td>
+                  </tr>
+                  <tr className="text-emerald-700 bg-emerald-50/40">
+                    <td className="py-0.5 px-2 font-bold">Item Discount Savings</td>
+                    <td className="py-0.5 px-2 text-right font-black">- INR {fmt(totalItemDiscount)}</td>
+                  </tr>
+                  <tr className="bg-slate-50/80 border-t border-slate-200">
+                    <td className="py-0.5 px-2 font-bold text-slate-800">Sub Total (After Item Disc.)</td>
+                    <td className="py-0.5 px-2 text-right font-black text-slate-900 text-[10px]">INR {fmt(subTotal)}</td>
+                  </tr>
+                </>
+              ) : (
+                <tr className="bg-slate-50/80">
+                  <td className="py-0.5 px-2 font-bold text-slate-700">Sub Total</td>
+                  <td className="py-0.5 px-2 text-right font-black text-slate-900 text-[10px]">INR {fmt(subTotal)}</td>
+                </tr>
+              )}
               <tr>
                 <td className="py-0.5 px-2 text-slate-600 font-medium">Installation Material</td>
                 <td className="py-0.5 px-2 text-right font-semibold text-slate-800">{installation ? `INR ${fmt(installation)}` : "Included"}</td>

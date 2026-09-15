@@ -121,15 +121,14 @@ export const buildQuotationPDF = (data = {}) => {
   doc.text(`Timeline: ${deliveryTimeline}`, 135, 51);
 
   // 3. Items Table
-  const tableColumn = ["#", "Section", "Product / Category", "Specification & Material", "Qty", "Unit", "Rate (₹)", "Disc (₹)", "Amount (₹)"];
+  const tableColumn = ["#", "Section", "Product / Category", "Specification & Material", "Qty", "Unit", "Rate (₹)", "Disc. Price (₹)", "Amount (₹)"];
   const tableRows = items.map((it, idx) => {
     const qty = parseFloat(it.qty) || 0;
     const rate = parseFloat(it.rate) || 0;
     const gross = qty * rate;
     const net = parseFloat(it.amount) || 0;
-    const disc = it.discountAmount !== undefined && it.discountAmount !== null && parseFloat(it.discountAmount) > 0
-      ? parseFloat(it.discountAmount)
-      : (gross > 0 && net < gross ? Math.max(0, gross - net) : 0);
+    const dp = it.discountPrice !== undefined && it.discountPrice !== null && it.discountPrice !== "" ? parseFloat(it.discountPrice) : null;
+    const discPrice = (dp !== null && (dp < rate || (rate > 0 && dp === 0))) ? dp : (qty > 0 && rate > 0 && net < gross - 0.01 ? net / qty : null);
 
     return [
       idx + 1,
@@ -139,7 +138,7 @@ export const buildQuotationPDF = (data = {}) => {
       it.qty || "0",
       it.unit || "Sq.Ft",
       formatINR(rate),
-      disc > 0 ? formatINR(disc) : "—",
+      discPrice !== null ? formatINR(discPrice) : "—",
       formatINR(net)
     ];
   });
