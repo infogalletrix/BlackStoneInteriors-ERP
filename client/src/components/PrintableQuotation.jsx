@@ -400,7 +400,7 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-[#0d5c63]"></span>
                   <span className="font-black text-[10.5px] text-[#0b1e36] uppercase tracking-wider">
-                    {secGroup.sectionName} {isCont && <span className="text-slate-400 font-semibold text-[8.5px] lowercase tracking-normal">(contd.)</span>}
+                    {secGroup.sectionName}
                   </span>
                 </div>
                 <span className="text-[10px] font-black text-[#0d5c63]">Section Total: INR {fmt(overallTotal)}</span>
