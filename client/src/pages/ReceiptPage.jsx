@@ -4,6 +4,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   Receipt,
   Printer,
+  Download,
+  ExternalLink,
   User,
   Trash2,
   Save,
@@ -25,6 +27,7 @@ import { useDialog } from "../contexts/DialogContext";
 import NotificationWidget from "../components/NotificationWidget";
 import ReceiptPreviewModal from "../components/ReceiptPreviewModal";
 import PrintableReceipt from "../components/PrintableReceipt";
+import { downloadReceiptPDF, viewReceiptPDF } from "../utils/receiptPdfGenerator";
 
 export default function ReceiptPage() {
   const { showDialog } = useDialog();
@@ -245,6 +248,23 @@ export default function ReceiptPage() {
               setTimeout(() => navigate("/sites"), 500);
             }
           }, 100);
+        } else if (action === "download") {
+          try {
+            downloadReceiptPDF(storedReceipt);
+          } catch (e) {
+            console.error(e);
+          }
+          showDialog({
+            title: isEditing ? "Updated & Downloaded" : "Generated & Downloaded",
+            message: isEditing ? "Receipt updated and PDF downloaded." : "Receipt generated and PDF downloaded.",
+            type: "success"
+          });
+          if (location.state?.returnToSites) {
+            navigate("/sites");
+          } else {
+            resetForm();
+            setShowHistory(true);
+          }
         } else {
           showDialog({
             title: isEditing ? "Updated" : "Generated",
@@ -347,6 +367,37 @@ export default function ReceiptPage() {
     setTimeout(() => {
       handlePrintAction();
     }, 100);
+  };
+
+  const handleDownloadReceipt = (receipt) => {
+    if (receipt.status === "Draft") {
+      showDialog({
+        title: "Cannot Download Draft",
+        message: "Draft receipts cannot be downloaded as official documents. Please generate the receipt first.",
+        type: "alert"
+      });
+      return;
+    }
+    try {
+      downloadReceiptPDF(receipt);
+    } catch (err) {
+      console.error("Failed to download receipt PDF:", err);
+      showDialog({ title: "Download Error", message: "Failed to download receipt PDF: " + err.message, type: "error" });
+    }
+  };
+
+  const downloadSelectedReceipts = () => {
+    const toDownload = receipts.filter((r) => selectedReceipts.includes(r.id) && r.status !== "Draft");
+    if (toDownload.length === 0) {
+      showDialog({ title: "No Valid Receipts", message: "Please select completed receipts to download.", type: "alert" });
+      return;
+    }
+    try {
+      downloadReceiptPDF(toDownload);
+    } catch (err) {
+      console.error("Failed to download selected receipts:", err);
+      showDialog({ title: "Download Error", message: "Failed to download selected receipts: " + err.message, type: "error" });
+    }
   };
 
   const toggleSelectReceipt = (id) => {
@@ -606,12 +657,22 @@ export default function ReceiptPage() {
                       </button>
                     ))}
                     {selectedReceipts.length > 0 && (
-                      <button
-                        onClick={printSelectedReceipts}
-                        className="px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest transition btn-accent shadow flex items-center gap-1.5"
-                      >
-                        <Printer size={12} /> Print Selected ({selectedReceipts.length})
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={printSelectedReceipts}
+                          className="px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest transition btn-accent shadow flex items-center gap-1.5"
+                          title="Print selected receipts"
+                        >
+                          <Printer size={12} /> Print Selected ({selectedReceipts.length})
+                        </button>
+                        <button
+                          onClick={downloadSelectedReceipts}
+                          className="px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest transition bg-emerald-600 hover:bg-emerald-700 text-white shadow flex items-center gap-1.5"
+                          title="Download selected receipts as PDF"
+                        >
+                          <Download size={12} /> Download Selected ({selectedReceipts.length})
+                        </button>
+                      </div>
                     )}
                   </div>
 
@@ -727,9 +788,20 @@ export default function ReceiptPage() {
                                 <button
                                   onClick={() => setPreviewReceipt(r)}
                                   className="p-1.5 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 rounded-lg transition"
-                                  title="View Receipt (In-place)"
+                                  title="View Receipt"
                                 >
                                   <Eye size={13} />
+                                </button>
+                                <button
+                                  onClick={() => handleDownloadReceipt(r)}
+                                  className={`p-1.5 rounded-lg transition ${
+                                    r.status === "Draft"
+                                      ? "bg-slate-500/10 text-slate-400 opacity-40 cursor-not-allowed"
+                                      : "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20"
+                                  }`}
+                                  title="Download PDF"
+                                >
+                                  <Download size={13} />
                                 </button>
                                 <button
                                   onClick={() => printPastReceipt(r)}
@@ -968,6 +1040,13 @@ export default function ReceiptPage() {
                         >
                           <Printer size={15} /> Generate & Print
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => handleGenerateClick("download")}
+                          className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl font-black uppercase tracking-widest transition flex justify-center items-center gap-2 text-xs shadow-sm"
+                        >
+                          <Download size={15} /> Generate & Download
+                        </button>
                       </div>
                     </div>
                   </form>
@@ -991,12 +1070,22 @@ export default function ReceiptPage() {
                         </button>
                       ))}
                       {selectedReceipts.length > 0 && (
-                        <button
-                          onClick={printSelectedReceipts}
-                          className="px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition btn-accent shadow flex items-center gap-2"
-                        >
-                          <Printer size={12} /> Print Selected ({selectedReceipts.length})
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={printSelectedReceipts}
+                            className="px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition btn-accent shadow flex items-center gap-1.5"
+                            title="Print Selected"
+                          >
+                            <Printer size={12} /> Print Selected ({selectedReceipts.length})
+                          </button>
+                          <button
+                            onClick={downloadSelectedReceipts}
+                            className="px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition bg-emerald-600 hover:bg-emerald-700 text-white shadow flex items-center gap-1.5"
+                            title="Download Selected"
+                          >
+                            <Download size={12} /> Download Selected ({selectedReceipts.length})
+                          </button>
+                        </div>
                       )}
                     </div>
                     <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -1074,34 +1163,46 @@ export default function ReceiptPage() {
                               ₹ {parseFloat(r.amountPaid || r.totalAmount || 0).toLocaleString()}
                             </td>
                             <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                              <div className="flex justify-end gap-1.5">
+                              <div className="flex justify-end items-center gap-1.5">
                                 <button
                                   onClick={() => setPreviewReceipt(r)}
-                                  className="p-1 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 rounded-lg transition"
-                                  title="View Receipt (In-place)"
+                                  className="p-1.5 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 rounded-lg transition"
+                                  title="View Receipt"
                                 >
                                   <Eye size={14} />
                                 </button>
                                 <button
+                                  onClick={() => handleDownloadReceipt(r)}
+                                  className={`p-1.5 rounded-lg transition ${
+                                    r.status === "Draft"
+                                      ? "bg-slate-500/10 text-slate-400 opacity-40 cursor-not-allowed"
+                                      : "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20"
+                                  }`}
+                                  title="Download PDF"
+                                >
+                                  <Download size={14} />
+                                </button>
+                                <button
                                   onClick={() => printPastReceipt(r)}
-                                  className={`font-bold text-[9px] uppercase tracking-widest px-2 py-1 rounded-lg transition ${
+                                  className={`font-bold text-[9px] uppercase tracking-widest px-2.5 py-1.5 rounded-lg transition ${
                                     r.status === "Draft"
                                       ? "bg-[var(--accent-soft)] text-muted cursor-not-allowed opacity-50"
                                       : "bg-[var(--accent)]/10 text-[var(--accent)] hover:bg-[var(--accent)]/20"
                                   }`}
+                                  title="Print Receipt"
                                 >
                                   Print
                                 </button>
                                 <button
                                   onClick={() => handleEditReceipt(r)}
-                                  className="text-indigo-500 hover:text-indigo-400 p-1 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-lg transition"
+                                  className="text-indigo-500 hover:text-indigo-400 p-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-lg transition"
                                   title="Edit"
                                 >
                                   <Pencil size={14} />
                                 </button>
                                 <button
                                   onClick={() => deleteReceipt(r.id)}
-                                  className="text-rose-500 hover:text-rose-400 p-1 bg-rose-500/10 hover:bg-rose-500/20 rounded-lg transition"
+                                  className="text-rose-500 hover:text-rose-400 p-1.5 bg-rose-500/10 hover:bg-rose-500/20 rounded-lg transition"
                                   title="Delete"
                                 >
                                   <Trash2 size={14} />
@@ -1134,6 +1235,7 @@ export default function ReceiptPage() {
           onClose={() => setPreviewReceipt(null)}
           onPrint={printPastReceipt}
           onEdit={handleEditReceipt}
+          onDownload={handleDownloadReceipt}
         />
       )}
 

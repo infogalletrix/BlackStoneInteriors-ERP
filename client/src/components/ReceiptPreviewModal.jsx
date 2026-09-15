@@ -1,7 +1,8 @@
 import React from "react";
-import { Printer, X, Pencil, CheckCircle2, FileText, Calendar, Building, User, CreditCard, Tag } from "lucide-react";
+import { Printer, Download, ExternalLink, X, Pencil, CheckCircle2, FileText, Calendar, Building, User, CreditCard, Tag } from "lucide-react";
+import { downloadReceiptPDF, viewReceiptPDF } from "../utils/receiptPdfGenerator";
 
-export default function ReceiptPreviewModal({ receipt, onClose, onPrint, onEdit }) {
+export default function ReceiptPreviewModal({ receipt, onClose, onPrint, onEdit, onDownload }) {
   if (!receipt) return null;
 
   const formattedDate = receipt.date ? new Date(receipt.date).toLocaleDateString("en-IN", {
@@ -53,10 +54,32 @@ export default function ReceiptPreviewModal({ receipt, onClose, onPrint, onEdit 
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => viewReceiptPDF(receipt)}
+              className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition shadow-sm cursor-pointer"
+              title="View / Open PDF in new tab"
+            >
+              <ExternalLink size={13} /> View PDF
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (onDownload) {
+                  onDownload(receipt);
+                } else {
+                  downloadReceiptPDF(receipt);
+                }
+              }}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition shadow-sm cursor-pointer"
+              title="Download Receipt PDF"
+            >
+              <Download size={14} /> Download PDF
+            </button>
             {onPrint && receipt.status !== "Draft" && (
               <button
                 onClick={() => onPrint(receipt)}
-                className="bg-teal-600 hover:bg-teal-700 text-white px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition shadow-sm"
+                className="bg-teal-600 hover:bg-teal-700 text-white px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition shadow-sm cursor-pointer"
               >
                 <Printer size={14} /> Print
               </button>
@@ -67,14 +90,14 @@ export default function ReceiptPreviewModal({ receipt, onClose, onPrint, onEdit 
                   onClose();
                   onEdit(receipt);
                 }}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition shadow-sm"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition shadow-sm cursor-pointer"
               >
                 <Pencil size={14} /> Edit
               </button>
             )}
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition"
+              className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition cursor-pointer"
               title="Close"
             >
               <X size={20} />
@@ -195,23 +218,48 @@ export default function ReceiptPreviewModal({ receipt, onClose, onPrint, onEdit 
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 px-6 border-t border-[var(--border-color)] bg-[var(--bg-surface)] flex justify-end gap-3 shrink-0">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-5 py-2 rounded-xl text-xs font-bold text-muted border border-[var(--border-color)] hover:bg-white/5 transition"
-          >
-            Close
-          </button>
-          {onPrint && receipt.status !== "Draft" && (
+        <div className="p-4 px-6 border-t border-[var(--border-color)] bg-[var(--bg-surface)] flex flex-wrap items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => onPrint(receipt)}
-              className="px-5 py-2 rounded-xl text-xs font-black uppercase tracking-wider btn-accent flex items-center gap-1.5 shadow-md transition"
+              onClick={() => viewReceiptPDF(receipt)}
+              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 border border-[var(--border-color)] hover:bg-black/5 dark:hover:bg-white/5 transition flex items-center gap-1.5 cursor-pointer"
             >
-              <Printer size={14} /> Print Receipt
+              <ExternalLink size={14} /> Open in New Tab
             </button>
-          )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl text-xs font-bold text-muted border border-[var(--border-color)] hover:bg-black/5 dark:hover:bg-white/5 transition cursor-pointer"
+            >
+              Close
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (onDownload) {
+                  onDownload(receipt);
+                } else {
+                  downloadReceiptPDF(receipt);
+                }
+              }}
+              className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5 shadow-sm hover:shadow transition cursor-pointer"
+            >
+              <Download size={14} /> Download PDF
+            </button>
+            {onPrint && receipt.status !== "Draft" && (
+              <button
+                type="button"
+                onClick={() => onPrint(receipt)}
+                className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider btn-accent flex items-center gap-1.5 shadow-sm hover:shadow transition cursor-pointer"
+              >
+                <Printer size={14} /> Print Receipt
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
