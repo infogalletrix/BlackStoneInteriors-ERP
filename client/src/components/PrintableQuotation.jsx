@@ -127,13 +127,11 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
     const spec = item.specification || "";
     const prod = item.product || "";
     const cat = item.category || "";
-    const discInfo = getDiscountInfo(item);
-    const minLines = discInfo.hasDiscount ? 2 : 1;
     const maxLines = Math.max(
       Math.ceil(spec.length / 42),
       Math.ceil(prod.length / 15),
       Math.ceil(cat.length / 15),
-      minLines
+      1
     );
     if (maxLines >= 4) return 14.0;
     if (maxLines === 3) return 11.0;
@@ -437,16 +435,9 @@ const PrintableQuotation = forwardRef(({ data }, ref) => {
                         </td>
                         <td className="py-1 px-2 text-right align-top font-bold text-slate-900 text-[10px]">
                           {discInfo.hasDiscount ? (
-                            <div>
-                              <span className="font-bold text-slate-950 text-[10px]">
-                                ₹{fmt(discInfo.discountedPrice)}
-                              </span>
-                              {discInfo.discountPercent > 0 && (
-                                <span className="text-[7.5px] font-extrabold text-amber-700 block leading-tight">
-                                  (-{discInfo.discountPercent}%)
-                                </span>
-                              )}
-                            </div>
+                            <span className="font-bold text-slate-950 text-[10px]">
+                              ₹{fmt(discInfo.discountedPrice)}
+                            </span>
                           ) : (
                             <span className="text-slate-400 font-medium">—</span>
                           )}
