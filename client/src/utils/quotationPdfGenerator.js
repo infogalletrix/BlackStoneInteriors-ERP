@@ -307,6 +307,66 @@ export const formatSafeQuoteData = (quoteData = {}) => {
 };
 
 /**
+ * Cross-platform PDF file saver for desktop & mobile (Safari, Chrome, Edge, Firefox, iOS, Android).
+ * Prevents "Safari can't open this page" by:
+ * 1. Using Web Share API on mobile Apple devices (iOS/iPadOS) where available, opening the native Save to Files/Share sheet.
+ * 2. Creating a DOM-attached <a> tag with target="_self" and delayed URL revocation (preventing WebKitBlobResource error).
+ */
+export const savePdfFile = async (pdf, fileName = "Quotation.pdf") => {
+  const blob = pdf.output("blob");
+  const cleanFileName = fileName.endsWith(".pdf") ? fileName : `${fileName}.pdf`;
+
+  // 1. On iOS / iPadOS Safari, Web Share API provides the native system share/save sheet
+  const isAppleMobile = typeof navigator !== "undefined" && (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  );
+
+  if (isAppleMobile && typeof navigator !== "undefined" && typeof File !== "undefined") {
+    try {
+      const file = new File([blob], cleanFileName, { type: "application/pdf" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: cleanFileName,
+        });
+        return;
+      }
+    } catch (shareErr) {
+      if (shareErr.name === "AbortError") {
+        // User cancelled the share sheet
+        return;
+      }
+      console.warn("navigator.share failed, using direct anchor download:", shareErr);
+    }
+  }
+
+  // 2. Standard DOM anchor download (Safari desktop, Chrome, Firefox, Edge, Android)
+  const blobUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.style.display = "none";
+  link.href = blobUrl;
+  link.download = cleanFileName;
+  link.rel = "noopener";
+  link.target = "_self"; // Must be _self; _blank triggers Safari's popup blocker or WebKitBlobResource error
+
+  document.body.appendChild(link);
+  link.click();
+
+  // Keep the blob URL alive long enough for Safari to process the download
+  setTimeout(() => {
+    try {
+      if (link.parentNode) {
+        document.body.removeChild(link);
+      }
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      // Ignore cleanup error
+    }
+  }, 5000);
+};
+
+/**
  * Captures the exact DOM elements of PrintableQuotation (.print-page) and converts them
  * into a high-resolution, pixel-perfect multi-page PDF matching PrintableQuotation 100%.
  */
@@ -350,7 +410,7 @@ export const exportPrintableQuotationToPDF = async (containerOrElement, fileName
     pdf.addImage(imgData, "JPEG", 0, 0, 210, 297, undefined, "FAST");
   }
 
-  pdf.save(fileName);
+  await savePdfFile(pdf, fileName);
   return pdf;
 };
 

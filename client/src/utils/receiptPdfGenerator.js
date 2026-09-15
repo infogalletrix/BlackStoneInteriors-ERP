@@ -3,6 +3,7 @@ import { toJpeg } from "html-to-image";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import PrintableReceipt from "../components/PrintableReceipt";
+import { savePdfFile } from "./quotationPdfGenerator";
 
 /**
  * Derives a clean filename for single or bulk receipt PDF downloads.
@@ -61,7 +62,7 @@ export const exportPrintableReceiptToPDF = async (containerOrElement, fileName =
     pdf.addImage(imgData, "JPEG", 0, 0, 210, 297, undefined, "FAST");
   }
 
-  pdf.save(fileName);
+  await savePdfFile(pdf, fileName);
   return pdf;
 };
 
@@ -176,16 +177,16 @@ export const buildReceiptPDFFromDOM = async (receiptOrList, targetElement = null
 export const downloadReceiptPDF = async (receiptOrList, targetElement = null) => {
   const fileName = getReceiptFileName(receiptOrList);
   const pdf = await buildReceiptPDFFromDOM(receiptOrList, targetElement);
-  pdf.save(fileName);
+  await savePdfFile(pdf, fileName);
   return pdf;
 };
 
 /**
- * Opens and views the receipt PDF in a new browser tab/window.
+ * Opens and views the receipt PDF in a new browser tab/window or downloads it.
  */
 export const viewReceiptPDF = async (receiptOrList, targetElement = null) => {
+  const fileName = getReceiptFileName(receiptOrList);
   const pdf = await buildReceiptPDFFromDOM(receiptOrList, targetElement);
-  const blobUrl = pdf.output("bloburl");
-  window.open(blobUrl, "_blank");
+  await savePdfFile(pdf, fileName);
   return pdf;
 };

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { X, Printer, Download, ZoomIn, ZoomOut, RotateCcw, FileText, CheckCircle2, Loader2 } from "lucide-react";
+import { useReactToPrint } from "react-to-print";
 import PrintableQuotation from "./PrintableQuotation";
 import { exportPrintableQuotationToPDF, downloadQuotationPDF } from "../utils/quotationPdfGenerator";
 
@@ -12,6 +13,7 @@ export default function QuotationPdfPreviewModal({
   if (!isOpen || !quoteData) return null;
 
   const documentCanvasRef = useRef(null);
+  const printContentRef = useRef(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
   // Format data for PrintableQuotation
@@ -39,6 +41,12 @@ export default function QuotationPdfPreviewModal({
     sgstPercent: quoteData.sgstPercent !== undefined ? quoteData.sgstPercent : "9"
   };
 
+  // Dedicated react-to-print handler
+  const handleReactToPrint = useReactToPrint({
+    contentRef: printContentRef,
+    documentTitle: `${(safeData.quoteNo || "Quotation").replace(/[^a-zA-Z0-9_-]/g, "_")}_${(safeData.clientName || "Client").replace(/\s+/g, "_")}`,
+  });
+
   // Determine initial zoom level based on device screen width
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
   const initialZoom = isMobile
@@ -47,22 +55,13 @@ export default function QuotationPdfPreviewModal({
 
   const [zoom, setZoom] = useState(initialZoom);
 
-  // Direct print handler for mobile Safari & Desktop
+  // Print handler using standard react-to-print
   const handlePrintDocument = () => {
     if (onPrint) {
-      onPrint();
+      onPrint(safeData);
       return;
     }
-    document.body.classList.add("bsi-direct-print-active");
-    const cleanup = () => {
-      document.body.classList.remove("bsi-direct-print-active");
-      window.removeEventListener("afterprint", cleanup);
-    };
-    window.addEventListener("afterprint", cleanup);
-    setTimeout(() => {
-      document.body.classList.remove("bsi-direct-print-active");
-    }, 3000);
-    window.print();
+    handleReactToPrint();
   };
 
   const handleDownload = async () => {
@@ -231,6 +230,11 @@ export default function QuotationPdfPreviewModal({
         >
           <PrintableQuotation data={safeData} />
         </div>
+      </div>
+
+      {/* ── CLEAN OFFSCREEN PRINT CONTAINER (react-to-print) ── */}
+      <div className="opacity-0 fixed top-0 left-0 pointer-events-none" style={{ zIndex: -100 }}>
+        <PrintableQuotation ref={printContentRef} data={safeData} />
       </div>
     </div>
   );

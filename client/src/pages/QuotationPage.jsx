@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { createPortal } from "react-dom";
 import { useReactToPrint } from "react-to-print";
 import { useNavigate, useLocation } from "react-router-dom";
 import jsPDF from "jspdf";
@@ -418,7 +417,6 @@ export default function QuotationPage() {
     applySessionData(quoteData);
   };
 
-  const componentRef = useRef();
   const descRef = useRef();
   const addItemButtonRef = useRef();
   const bottomActionRef = useRef();
@@ -426,25 +424,16 @@ export default function QuotationPage() {
   const shouldScrollToBottomRef = useRef(false);
   const [newlyAddedItemId, setNewlyAddedItemId] = useState(null);
 
-  const handlePrint = useReactToPrint({ contentRef: componentRef });
-
-  // ── DIRECT TOP-LEVEL PRINTING SYSTEM (100% Mobile Safari & AirPrint Safe) ──
+  const hiddenPrintDocRef = useRef(null);
   const [isMobilePrintModalOpen, setIsMobilePrintModalOpen] = useState(false);
   const [isPreviewPdfModalOpen, setIsPreviewPdfModalOpen] = useState(false);
   const [savedQuoteDetails, setSavedQuoteDetails] = useState(null);
 
-  const handleDirectPrint = () => {
-    document.body.classList.add("bsi-direct-print-active");
-    const cleanup = () => {
-      document.body.classList.remove("bsi-direct-print-active");
-      window.removeEventListener("afterprint", cleanup);
-    };
-    window.addEventListener("afterprint", cleanup);
-    setTimeout(() => {
-      document.body.classList.remove("bsi-direct-print-active");
-    }, 3000);
-    window.print();
-  };
+  const handleDirectPrint = useReactToPrint({
+    contentRef: hiddenPrintDocRef,
+    documentTitle: `${(savedQuoteDetails?.quoteNo || quoteNo || "Quotation").replace(/[^a-zA-Z0-9_-]/g, "_")}_${(clientName || "Client").replace(/\s+/g, "_")}`,
+  });
+  const handlePrint = handleDirectPrint;
 
   const getCurrentQuoteData = () => ({
     clientName,
@@ -476,7 +465,6 @@ export default function QuotationPage() {
     setIsPreviewPdfModalOpen(true);
   };
 
-  const hiddenPrintDocRef = useRef(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
   const handleDownloadPDF = async () => {
@@ -1503,19 +1491,16 @@ export default function QuotationPage() {
         onPrint={handleDirectPrint}
       />
 
-      {/* Top-Level Portal for Direct Window Printing & PDF Export (Zero Iframe, AirPrint & Mobile Safari Safe) */}
-      {typeof document !== "undefined" && createPortal(
-        <div
-          id="bsi-portal-print-root"
-          ref={hiddenPrintDocRef}
-          style={{ position: "fixed", left: "-9999px", top: 0, width: "210mm", zIndex: -100, pointerEvents: "none" }}
-        >
-          <PrintableQuotation
-            data={getCurrentQuoteData()}
-          />
-        </div>,
-        document.body
-      )}
+      {/* Offscreen Clean Printable Quotation (react-to-print & PDF Export) */}
+      <div
+        ref={hiddenPrintDocRef}
+        className="opacity-0 fixed top-0 left-0 pointer-events-none"
+        style={{ zIndex: -100 }}
+      >
+        <PrintableQuotation
+          data={getCurrentQuoteData()}
+        />
+      </div>
       {/* ── QUOTATION ITEM MODAL ── */}
       <QuotationItemModal
         isOpen={isItemModalOpen}
