@@ -1,24 +1,75 @@
-import React from "react";
-import { Printer, Download, ExternalLink, X, Pencil, CheckCircle2, FileText, Calendar, Building, User, CreditCard, Tag } from "lucide-react";
-import { downloadReceiptPDF, viewReceiptPDF } from "../utils/receiptPdfGenerator";
+import React, { useState, useRef } from "react";
+import {
+  Printer,
+  Download,
+  ExternalLink,
+  X,
+  Pencil,
+  FileText,
+  Calendar,
+  Loader2,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw
+} from "lucide-react";
+import PrintableReceipt from "./PrintableReceipt";
+import { downloadReceiptPDF, viewReceiptPDF, getReceiptFileName } from "../utils/receiptPdfGenerator";
 
 export default function ReceiptPreviewModal({ receipt, onClose, onPrint, onEdit, onDownload }) {
   if (!receipt) return null;
 
-  const formattedDate = receipt.date ? new Date(receipt.date).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric"
-  }) : "—";
+  const documentCanvasRef = useRef(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
-  const amount = parseFloat(receipt.amountPaid || receipt.totalAmount || 0);
+  const formattedDate = receipt.date
+    ? new Date(receipt.date).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric"
+      })
+    : "—";
+
+  // Initial responsive zoom based on window width (794px is approx 210mm at 96dpi)
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+  const initialZoom = isMobile
+    ? Math.max(0.42, Math.min(0.65, (window.innerWidth - 32) / 794))
+    : 0.95;
+
+  const [zoom, setZoom] = useState(initialZoom);
+
+  const handlePrint = () => {
+    if (onPrint) {
+      onPrint(receipt);
+    } else {
+      window.print();
+    }
+  };
+
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    try {
+      if (documentCanvasRef.current) {
+        const originalTransform = documentCanvasRef.current.style.transform;
+        documentCanvasRef.current.style.transform = "none";
+        await downloadReceiptPDF(receipt, documentCanvasRef.current);
+        documentCanvasRef.current.style.transform = originalTransform;
+      } else {
+        await downloadReceiptPDF(receipt);
+      }
+    } catch (err) {
+      console.error("Failed to download receipt PDF from canvas, falling back:", err);
+      await downloadReceiptPDF(receipt);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const getStatusBadge = (status) => {
     switch (status) {
       case "Completed":
-        return "bg-emerald-500/15 text-emerald-500 border-emerald-500/30";
+        return "bg-emerald-500/15 text-emerald-400 border-emerald-500/30";
       case "Partial":
-        return "bg-amber-500/15 text-amber-500 border-amber-500/30";
+        return "bg-amber-500/15 text-amber-400 border-amber-500/30";
       case "Draft":
         return "bg-slate-500/15 text-slate-400 border-slate-500/30";
       default:
@@ -27,239 +78,182 @@ export default function ReceiptPreviewModal({ receipt, onClose, onPrint, onEdit,
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 md:p-6 z-50 animate-fadeIn">
-      <div className="bg-white dark:bg-slate-900 text-themed rounded-[32px] w-full max-w-2xl shadow-2xl overflow-hidden border border-[var(--border-color)] flex flex-col max-h-[90vh]">
-        {/* Modal Header */}
-        <div className="bg-slate-900 text-white p-5 px-6 flex justify-between items-center border-b border-slate-800 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-blue-500/15 text-blue-400 rounded-2xl">
-              <FileText size={20} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-black text-lg text-white tracking-tight">{receipt.receiptNo}</h3>
-                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${getStatusBadge(receipt.status)}`}>
-                  {receipt.status || "Completed"}
-                </span>
-              </div>
-              <p className="text-slate-400 text-xs font-medium mt-0.5 flex items-center gap-2">
-                <Calendar size={12} /> {formattedDate}
-                {receipt.siteId && (
-                  <span className="bg-slate-800 text-slate-300 text-[10px] px-2 py-0.5 rounded-md font-bold">
-                    WO: {receipt.siteId}
-                  </span>
-                )}
-              </p>
-            </div>
+    <div className="fixed inset-0 z-[200] flex flex-col bg-slate-950/90 backdrop-blur-md animate-fadeIn select-none">
+      {/* ── TOP RECEIPT VIEWER TOOLBAR ── */}
+      <div className="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between gap-3 text-white shrink-0 shadow-lg">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-[#C9A227]/20 border border-[#C9A227]/40 text-[#C9A227] flex items-center justify-center shrink-0">
+            <FileText size={18} />
           </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => viewReceiptPDF(receipt)}
-              className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition shadow-sm cursor-pointer"
-              title="View / Open PDF in new tab"
-            >
-              <ExternalLink size={13} /> View PDF
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (onDownload) {
-                  onDownload(receipt);
-                } else {
-                  downloadReceiptPDF(receipt);
-                }
-              }}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition shadow-sm cursor-pointer"
-              title="Download Receipt PDF"
-            >
-              <Download size={14} /> Download PDF
-            </button>
-            {onPrint && receipt.status !== "Draft" && (
-              <button
-                onClick={() => onPrint(receipt)}
-                className="bg-teal-600 hover:bg-teal-700 text-white px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition shadow-sm cursor-pointer"
-              >
-                <Printer size={14} /> Print
-              </button>
-            )}
-            {onEdit && (
-              <button
-                onClick={() => {
-                  onClose();
-                  onEdit(receipt);
-                }}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition shadow-sm cursor-pointer"
-              >
-                <Pencil size={14} /> Edit
-              </button>
-            )}
-            <button
-              onClick={onClose}
-              className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition cursor-pointer"
-              title="Close"
-            >
-              <X size={20} />
-            </button>
-          </div>
-        </div>
-
-        {/* Modal Body: Styled Official Receipt Card */}
-        <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar space-y-6">
-          {/* Company Branding & Meta */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-[var(--border-color)] gap-4">
-            <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 bg-slate-900 rounded-xl p-1.5 flex items-center justify-center shrink-0">
-                <img
-                  src="/logo.png"
-                  alt="Logo"
-                  className="w-full h-full object-contain"
-                  onError={(e) => {
-                    e.target.style.display = "none";
-                    e.target.parentElement.innerHTML = '<span class="text-white font-black text-sm">BSI</span>';
-                  }}
-                />
-              </div>
-              <div>
-                <h4 className="font-black text-themed text-base uppercase tracking-tight">
-                  Black Stone Interiors
-                </h4>
-                <p className="text-[11px] text-muted font-medium">Official Payment Receipt</p>
-                <p className="text-[10px] text-muted">GSTIN: 06ABFFB6382G1ZF</p>
-              </div>
-            </div>
-
-            <div className="sm:text-right">
-              <span className="text-[10px] font-black uppercase tracking-widest text-muted block">Amount Paid</span>
-              <span className="text-3xl font-black text-emerald-600 tracking-tight">
-                ₹ {amount.toLocaleString("en-IN")}
+          <div className="truncate">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-black tracking-wide truncate">
+                {receipt.receiptNo ? `Receipt #${receipt.receiptNo}` : "Receipt Preview"}
+              </h3>
+              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${getStatusBadge(receipt.status)}`}>
+                {receipt.status || "Completed"}
+              </span>
+              <span className="hidden md:inline-block px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase tracking-wider">
+                Official Printable Format
               </span>
             </div>
-          </div>
-
-          {/* Key Details Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Client Info */}
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[var(--border-color)] shadow-sm">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted flex items-center gap-1.5 mb-1.5">
-                <User size={12} className="text-[var(--accent)]" /> Received From
-              </p>
-              <p className="font-black text-themed text-base">{receipt.clientName || "—"}</p>
-              {receipt.organizationName && (
-                <p className="text-xs font-bold text-muted mt-0.5 flex items-center gap-1">
-                  <Building size={11} /> {receipt.organizationName}
-                </p>
-              )}
-              {receipt.siteName && (
-                <p className="text-[11px] text-muted mt-1 font-medium">
-                  Project: {receipt.siteName}
-                </p>
-              )}
-            </div>
-
-            {/* Payment Mode & Category */}
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[var(--border-color)] shadow-sm">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted flex items-center gap-1.5 mb-1.5">
-                    <CreditCard size={12} className="text-[var(--accent)]" /> Mode
-                  </p>
-                  <p className="font-bold text-themed text-sm">{receipt.paymentMode || "Cash"}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted flex items-center gap-1.5 mb-1.5">
-                    <Tag size={12} className="text-[var(--accent)]" /> Category
-                  </p>
-                  <p className="font-bold text-themed text-sm">{receipt.category || "Payment"}</p>
-                </div>
-              </div>
+            <p className="text-xs text-slate-400 truncate flex items-center gap-2 mt-0.5">
+              <span>{receipt.clientName || "Valued Client"}</span>
+              {receipt.organizationName && <span>• {receipt.organizationName}</span>}
               {receipt.siteId && (
-                <div className="mt-2 pt-2 border-t border-[var(--border-color)] text-[11px] text-muted font-medium">
-                  Work Order Ref: <strong className="text-themed font-bold">{receipt.siteId}</strong>
-                </div>
+                <span className="bg-slate-800 text-slate-300 text-[10px] px-1.5 py-0.2 rounded font-bold">
+                  WO: {receipt.siteId}
+                </span>
               )}
-            </div>
-          </div>
-
-          {/* Description & Remarks */}
-          <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-[var(--border-color)] space-y-3 shadow-sm">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-1">
-                Towards (Description)
-              </p>
-              <p className="text-sm font-medium text-themed">
-                {receipt.description || "No description provided"}
-              </p>
-            </div>
-
-            {receipt.comments && (
-              <div className="pt-3 border-t border-[var(--border-color)]">
-                <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-1">
-                  Remarks / Comments
-                </p>
-                <p className="text-xs text-muted italic font-medium">
-                  "{receipt.comments}"
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Status Note */}
-          <div className="p-3 rounded-2xl bg-white/5 border border-[var(--border-color)] flex items-center justify-between text-xs text-muted">
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 size={14} className="text-emerald-500" />
-              Computer-generated official receipt
-            </span>
-            <span className="font-mono text-[10px]">
-              ID: {receipt.id}
-            </span>
+              <span className="flex items-center gap-1 text-[11px] text-slate-400">
+                <Calendar size={11} /> {formattedDate}
+              </span>
+            </p>
           </div>
         </div>
 
-        {/* Modal Footer */}
-        <div className="p-4 px-6 border-t border-[var(--border-color)] bg-[var(--bg-surface)] flex flex-wrap items-center justify-between gap-3 shrink-0">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => viewReceiptPDF(receipt)}
-              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 border border-[var(--border-color)] hover:bg-black/5 dark:hover:bg-white/5 transition flex items-center gap-1.5 cursor-pointer"
-            >
-              <ExternalLink size={14} /> Open in New Tab
-            </button>
-          </div>
+        {/* Zoom Controls (Desktop/Tablet) */}
+        <div className="hidden sm:flex items-center bg-slate-800 border border-slate-700 rounded-xl p-1 gap-1">
+          <button
+            type="button"
+            onClick={() => setZoom((prev) => Math.max(0.35, prev - 0.1))}
+            className="p-1.5 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition cursor-pointer"
+            title="Zoom Out"
+          >
+            <ZoomOut size={15} />
+          </button>
+          <span className="px-2 text-xs font-black text-slate-300 min-w-[50px] text-center font-mono">
+            {Math.round(zoom * 100)}%
+          </span>
+          <button
+            type="button"
+            onClick={() => setZoom((prev) => Math.min(1.8, prev + 0.1))}
+            className="p-1.5 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition cursor-pointer"
+            title="Zoom In"
+          >
+            <ZoomIn size={15} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoom(initialZoom)}
+            className="p-1.5 hover:bg-slate-700 text-slate-400 hover:text-white rounded-lg transition text-xs font-bold cursor-pointer"
+            title="Reset Zoom"
+          >
+            <RotateCcw size={13} />
+          </button>
+        </div>
 
-          <div className="flex items-center gap-2">
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => viewReceiptPDF(receipt)}
+            className="hidden lg:flex bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-2 rounded-xl font-bold text-xs items-center gap-1.5 transition shadow-sm cursor-pointer"
+            title="Open PDF in new tab"
+          >
+            <ExternalLink size={14} />
+            <span>Open PDF</span>
+          </button>
+
+          {onPrint && receipt.status !== "Draft" && (
             <button
               type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-bold text-muted border border-[var(--border-color)] hover:bg-black/5 dark:hover:bg-white/5 transition cursor-pointer"
+              onClick={handlePrint}
+              className="bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white px-3 sm:px-4 py-2 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-sm transition active:scale-[0.98] cursor-pointer"
+              title="Print Receipt Document"
             >
-              Close
+              <Printer size={15} />
+              <span className="hidden sm:inline">Print</span>
             </button>
+          )}
+
+          <button
+            type="button"
+            onClick={handleDownload}
+            disabled={isDownloading}
+            className="bg-[#C9A227] hover:bg-[#B8911F] active:bg-[#A8811A] text-white px-3 sm:px-4 py-2 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-sm transition active:scale-[0.98] cursor-pointer disabled:opacity-50"
+            title="Download PDF matching the printable receipt"
+          >
+            {isDownloading ? (
+              <>
+                <Loader2 size={15} className="animate-spin" />
+                <span className="hidden sm:inline">Generating PDF...</span>
+              </>
+            ) : (
+              <>
+                <Download size={15} />
+                <span className="hidden sm:inline">Download PDF</span>
+              </>
+            )}
+          </button>
+
+          {onEdit && (
             <button
               type="button"
               onClick={() => {
-                if (onDownload) {
-                  onDownload(receipt);
-                } else {
-                  downloadReceiptPDF(receipt);
-                }
+                onClose();
+                onEdit(receipt);
               }}
-              className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5 shadow-sm hover:shadow transition cursor-pointer"
+              className="hidden sm:flex bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-xl font-bold text-xs items-center gap-1.5 transition shadow-sm cursor-pointer"
+              title="Edit Receipt"
             >
-              <Download size={14} /> Download PDF
+              <Pencil size={14} />
+              <span>Edit</span>
             </button>
-            {onPrint && receipt.status !== "Draft" && (
-              <button
-                type="button"
-                onClick={() => onPrint(receipt)}
-                className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider btn-accent flex items-center gap-1.5 shadow-sm hover:shadow transition cursor-pointer"
-              >
-                <Printer size={14} /> Print Receipt
-              </button>
-            )}
-          </div>
+          )}
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+            title="Close Preview"
+          >
+            <X size={20} />
+          </button>
+        </div>
+      </div>
+
+      {/* ── MOBILE ZOOM BAR ── */}
+      <div className="sm:hidden bg-slate-900/90 border-b border-slate-800 px-4 py-1.5 flex items-center justify-between text-xs text-slate-400">
+        <span className="font-bold">Receipt Preview</span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setZoom((prev) => Math.max(0.35, prev - 0.1))}
+            className="px-2 py-0.5 bg-slate-800 rounded font-black text-white"
+          >
+            -
+          </button>
+          <span className="font-mono text-white">{Math.round(zoom * 100)}%</span>
+          <button
+            type="button"
+            onClick={() => setZoom((prev) => Math.min(1.8, prev + 0.1))}
+            className="px-2 py-0.5 bg-slate-800 rounded font-black text-white"
+          >
+            +
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoom(initialZoom)}
+            className="px-2 py-0.5 bg-slate-800 rounded font-bold text-slate-300"
+          >
+            Fit
+          </button>
+        </div>
+      </div>
+
+      {/* ── DOCUMENT CANVAS (Scrollable viewport for exact PrintableReceipt) ── */}
+      <div className="flex-1 overflow-y-auto overflow-x-auto p-4 sm:p-8 flex justify-center bg-slate-900/60 select-text">
+        <div
+          ref={documentCanvasRef}
+          style={{
+            transform: `scale(${zoom})`,
+            transformOrigin: "top center",
+            marginBottom: `${Math.max(40, 80 * zoom)}px`
+          }}
+          className="transition-transform duration-150 ease-out shadow-2xl rounded-sm"
+        >
+          <PrintableReceipt receipt={receipt} />
         </div>
       </div>
     </div>

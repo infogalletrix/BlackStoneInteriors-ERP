@@ -250,7 +250,7 @@ export default function ReceiptPage() {
           }, 100);
         } else if (action === "download") {
           try {
-            downloadReceiptPDF(storedReceipt);
+            await downloadReceiptPDF(storedReceipt);
           } catch (e) {
             console.error(e);
           }
@@ -369,7 +369,7 @@ export default function ReceiptPage() {
     }, 100);
   };
 
-  const handleDownloadReceipt = (receipt) => {
+  const handleDownloadReceipt = async (receipt) => {
     if (receipt.status === "Draft") {
       showDialog({
         title: "Cannot Download Draft",
@@ -379,21 +379,21 @@ export default function ReceiptPage() {
       return;
     }
     try {
-      downloadReceiptPDF(receipt);
+      await downloadReceiptPDF(receipt);
     } catch (err) {
       console.error("Failed to download receipt PDF:", err);
       showDialog({ title: "Download Error", message: "Failed to download receipt PDF: " + err.message, type: "error" });
     }
   };
 
-  const downloadSelectedReceipts = () => {
+  const downloadSelectedReceipts = async () => {
     const toDownload = receipts.filter((r) => selectedReceipts.includes(r.id) && r.status !== "Draft");
     if (toDownload.length === 0) {
       showDialog({ title: "No Valid Receipts", message: "Please select completed receipts to download.", type: "alert" });
       return;
     }
     try {
-      downloadReceiptPDF(toDownload);
+      await downloadReceiptPDF(toDownload);
     } catch (err) {
       console.error("Failed to download selected receipts:", err);
       showDialog({ title: "Download Error", message: "Failed to download selected receipts: " + err.message, type: "error" });

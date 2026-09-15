@@ -110,20 +110,34 @@ const PrintableReceipt = forwardRef(({ receipts = [], receipt = null }, ref) => 
     </div>
   );
 
+  // Group receipts into pages of up to 2 receipts per A4 sheet
+  const pages = [];
+  for (let i = 0; i < dataList.length; i += 2) {
+    pages.push(dataList.slice(i, i + 2));
+  }
+
   return (
     <div ref={ref} className="bg-white print-container">
-      {dataList.map((data, idx) => (
-        <React.Fragment key={data.id || idx}>
-          {renderSingleReceipt(data)}
-          {idx % 2 === 0 && idx !== dataList.length - 1 && (
-            <div className="w-[210mm] mx-auto flex items-center justify-center relative overflow-hidden py-1 opacity-60">
-              <div className="w-full border-t border-dashed border-gray-500"></div>
-              <span className="absolute bg-white px-2 text-[10px] uppercase tracking-widest font-black text-gray-500">
-                ✂ Cut Here
-              </span>
-            </div>
-          )}
-        </React.Fragment>
+      {pages.map((pageReceipts, pageIdx) => (
+        <div
+          key={pageIdx}
+          className="receipt-page bg-white w-[210mm] min-h-[297mm] mx-auto relative box-border flex flex-col justify-start"
+          style={{ pageBreakAfter: pageIdx < pages.length - 1 ? "always" : "auto" }}
+        >
+          {pageReceipts.map((data, idx) => (
+            <React.Fragment key={data.id || data.receiptNo || idx}>
+              {renderSingleReceipt(data)}
+              {idx === 0 && pageReceipts.length === 2 && (
+                <div className="w-[210mm] mx-auto flex items-center justify-center relative overflow-hidden py-1 opacity-60">
+                  <div className="w-full border-t border-dashed border-gray-500"></div>
+                  <span className="absolute bg-white px-2 text-[10px] uppercase tracking-widest font-black text-gray-500">
+                    ✂ Cut Here
+                  </span>
+                </div>
+              )}
+            </React.Fragment>
+          ))}
+        </div>
       ))}
     </div>
   );
