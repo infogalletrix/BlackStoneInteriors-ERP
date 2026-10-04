@@ -372,7 +372,7 @@ export default function SitesPage() {
     const isNeg = fd.get("isNegotiated") === "on";
     const budget = isNeg && fd.get("negotiatedBudget") ? parseFloat(fd.get("negotiatedBudget")) : parseFloat(fd.get("budget") || 0);
 
-    const qObj = selectedLoadQuoteId ? quotations.find(q => q.id === selectedLoadQuoteId) : null;
+    const qObj = selectedLoadQuoteId ? quotations.find(q => String(q.id) === String(selectedLoadQuoteId)) : null;
     // Using camelCase and ensuring NO null values for required DB columns
     const newSitePayload = {
       name: fd.get("name") || "",
@@ -387,7 +387,7 @@ export default function SitesPage() {
       negotiationDetails: fd.get("negotiationDetails") || "",
       isArchived: false,
       workHistory: selectedLoadQuoteId
-        ? [{ id: `init-quote-${selectedLoadQuoteId}`, action: "loaded_from_quotation", quotationId: String(selectedLoadQuoteId), quoteNo: qObj?.quoteNo || "", date: new Date().toISOString().split("T")[0], desc: "Created from Quotation" }]
+        ? [{ id: `init-quote-${selectedLoadQuoteId}`, action: "loaded_from_quotation", quotationId: String(selectedLoadQuoteId), quoteNo: qObj?.quoteNo || "", billType: qObj?.billType || "GST", cgstPercent: qObj?.cgstPercent ?? 9, sgstPercent: qObj?.sgstPercent ?? 9, date: new Date().toISOString().split("T")[0], desc: "Created from Quotation" }]
         : [],
       media: []
     };

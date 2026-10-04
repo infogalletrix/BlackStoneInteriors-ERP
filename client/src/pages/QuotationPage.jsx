@@ -742,8 +742,8 @@ export default function QuotationPage() {
       deliveryLoading: parseFloat(deliveryLoading || 0),
       transportationCharges: parseFloat(transportationCharges || 0),
       additionalDiscount: parseFloat(additionalDiscount || 0),
-      cgstPercent,
-      sgstPercent
+      cgstPercent: Number(cgstPercent || 0),
+      sgstPercent: Number(sgstPercent || 0)
     };
     try {
       persistEnteredSections(items);

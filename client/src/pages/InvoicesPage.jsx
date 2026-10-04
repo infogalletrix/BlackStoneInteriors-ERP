@@ -150,7 +150,7 @@ export default function HistoryPage() {
         q.clientName?.toLowerCase().includes(s) ||
         q.quoteNo?.toLowerCase().includes(s) ||
         q.projectTitle?.toLowerCase().includes(s) ||
-        q.organizationName?.toLowerCase().includes(s)
+        q.organizationName?.toLowerCase().includes(s) || q.createdByEmail?.toLowerCase().includes(s) || q.createdByName?.toLowerCase().includes(s)
       );
     })
     .sort((a, b) => {
@@ -294,6 +294,7 @@ export default function HistoryPage() {
                     <th className="px-8 py-4 bg-white dark:bg-slate-900">Quote No.</th>
                     <th className="px-8 py-4 bg-white dark:bg-slate-900">Date</th>
                     <th className="px-8 py-4 bg-white dark:bg-slate-900">Client</th>
+                    <th className="px-8 py-4 bg-white dark:bg-slate-900">Created by</th>
                     <th className="px-8 py-4 text-right bg-white dark:bg-slate-900">Total</th>
                     <th className="px-8 py-4 text-center bg-white dark:bg-slate-900">Status</th>
                     <th className="px-8 py-4 text-center bg-white dark:bg-slate-900">Actions</th>
@@ -312,6 +313,7 @@ export default function HistoryPage() {
                           <p className="font-black text-themed text-sm">{q.clientName}</p>
                           <p className="text-xs text-muted font-medium mt-0.5">{q.clientAddress}</p>
                         </td>
+                        <td className="px-8 py-5 text-sm"><p>{q.createdByName || "Legacy record"}</p><p className="text-xs text-muted">{q.createdByEmail || "Creator not recorded"}</p></td>
                         <td className="px-8 py-5 text-right font-black text-themed text-base">₹{parseFloat(q.total || 0).toLocaleString()}</td>
                         <td className="px-8 py-5 text-center">
                           <div className="relative inline-block w-full max-w-[120px]">
